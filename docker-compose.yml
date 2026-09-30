@@ -36,11 +36,27 @@ services:
       - REDIS_URL=redis://redis:6379
       - PASETO_LOCAL_KEY=${PASETO_LOCAL_KEY:-}
       - TOKEN_EXPIRY=24h
+      - AGENT_URL=http://agent:8000
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.gateway.rule=PathPrefix(`/health`) || PathPrefix(`/auth`) || PathPrefix(`/api`) || PathPrefix(`/ws`)"
       - "traefik.http.routers.gateway.entrypoints=web"
       - "traefik.http.services.gateway.loadbalancer.server.port=8080"
+    depends_on:
+      - redis
+      - agent
+    restart: unless-stopped
+
+  agent:
+    build: ./ai-python
+    environment:
+      - DOCKER_API_VERSION=1.44
+      - REDIS_URL=redis://redis:6379
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash-lite}
+      - PORTFOLIO_PATH=/docs/portfolio-content.json
+    volumes:
+      - ./docs:/docs:ro
     depends_on:
       - redis
     restart: unless-stopped

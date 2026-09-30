@@ -10,6 +10,7 @@ type Config struct {
 	RedisURL    string
 	PasetoKey   string
 	TokenExpiry time.Duration
+	AgentURL    string
 }
 
 func Load() *Config {
@@ -24,6 +25,7 @@ func Load() *Config {
 		RedisURL:    getenv("REDIS_URL", "redis://localhost:6379"),
 		PasetoKey:   os.Getenv("PASETO_LOCAL_KEY"),
 		TokenExpiry: expiry,
+		AgentURL:    getenv("AGENT_URL", "http://localhost:8000"),
 	}
 }
 
