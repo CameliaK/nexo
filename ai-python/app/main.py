@@ -6,13 +6,15 @@ from pydantic import BaseModel
 
 from .agent.router import run as run_agent
 from .config import load
-from .llm.gemini import GeminiProvider
+from .llm.deepseek import DeepSeekProvider
+
+# from .llm.gemini import GeminiProvider  # disponible si se vuelve a Gemini
 from .portfolio import load_portfolio
 
 cfg = load()
 
 _portfolio: dict = {}
-_llm: GeminiProvider | None = None
+_llm: DeepSeekProvider | None = None
 _rdb: aioredis.Redis | None = None
 
 
@@ -23,7 +25,7 @@ async def lifespan(app: FastAPI):
     _portfolio = load_portfolio(cfg.portfolio_path)
     print(f"portfolio loaded ({len(_portfolio)} nodes)", flush=True)
 
-    _llm = GeminiProvider(api_key=cfg.gemini_api_key, model=cfg.gemini_model)
+    _llm = DeepSeekProvider(api_key=cfg.deepseek_api_key, model=cfg.deepseek_model)
     print("llm ready", flush=True)
 
     _rdb = aioredis.Redis.from_url(cfg.redis_url, decode_responses=True)
