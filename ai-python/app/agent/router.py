@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import time
 from typing import AsyncIterator
@@ -7,6 +8,8 @@ import redis.asyncio as aioredis
 
 from ..events import EventPublisher
 from ..llm.base import LLMProvider
+
+log = logging.getLogger(__name__)
 
 CONFIDENCE_THRESHOLD = 0.7
 
@@ -54,6 +57,7 @@ async def run(
         try:
             result = await _understand(llm, input_text, portfolio)
         except Exception as exc:
+            log.exception("LLM understand failed run=%s visitor=%s", run_id, visitor_id)
             h3_ms = int((time.monotonic() - h3_start) * 1000)
             await pub.publish("trace.hop", {
                 "hop_id": "h3", "from": "agent", "to": "llm",
@@ -120,6 +124,7 @@ async def run(
             async for chunk in llm.stream(system=answer_system, user=input_text):
                 await pub.publish("answer.chunk", {"text": chunk})
         except Exception as exc:
+            log.exception("LLM stream failed run=%s visitor=%s", run_id, visitor_id)
             h4_ms = int((time.monotonic() - h4_start) * 1000)
             await pub.publish("trace.hop", {
                 "hop_id": "h4", "from": "agent", "to": "llm",
@@ -160,6 +165,7 @@ async def run(
         })
 
     except Exception:
+        log.exception("unexpected error run=%s visitor=%s", run_id, visitor_id)
         h2_ms = int((time.monotonic() - h2_start) * 1000)
         await pub.publish("trace.hop", {
             "hop_id": "h2", "from": "gateway", "to": "agent",
