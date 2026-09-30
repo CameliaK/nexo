@@ -9,7 +9,13 @@ const scenes=new Map();
 const statuses={actual:'Actual',practicado:'Practicado',favorito:'Favorito',en_construccion:'En construcción'};
 const branchColors={personal:'mint',hobbies:'rose',aprendizaje:'amber','proyectos-personales':'purple',experiencia:'blue'};
 const kindColors={client:'cyan',api:'blue',service:'mint',data:'amber',ml:'purple',infra:'rose',tool:'cyan',concern:'gray'};
-const orderedChildren=id=>portfolio.nodes.filter(n=>n.parent===id).sort((a,b)=>a.order-b.order);
+const orderedChildren=id=>portfolio.nodes.filter(n=>n.parent===id&&n.type!=='live_chat').sort((a,b)=>a.order-b.order);
+function nodeWeight(record){
+  const children=orderedChildren(record.id),descendants=children.reduce((total,child)=>total+1+nodeWeight(child).descendants,0);
+  const architecture=record.architecture;
+  const score=children.length*2+descendants*.55+(architecture?.components.length||0)*.8+(architecture?.connections.length||0)*.25+(record.links?.length||0)*.5;
+  return{descendants,tier:score>=8?3:score>=3?2:1};
+}
 function positions(count){
   if(count===1)return[[0,.08]];
   if(count===2)return[[-.37,.05],[.37,.05]];
@@ -19,9 +25,10 @@ function positions(count){
 function sceneNode(record,index,total,reference=false){
   const [x,y]=positions(total)[index],tint=branchColors[record.id.split('.')[0]]||'mint';
   const description=record.status==='en_construccion'?statuses[record.status]:record.summary||record.content?.body||'';
+  const tier=reference?1:nodeWeight(record).tier;
   return{ id:record.id,name:record.label,meta:reference?'RELACIONADO · IR A ESTE NODO':record.content?.display||statuses[record.status]||record.tagline||'',
-    color:colors[record.status==='en_construccion'?'gray':tint],x,y,r:record.status==='actual'?56:record.type==='group'||record.type==='architecture'?50:39,
-    type:'ico',children:reference?null:(record.type==='architecture'||orderedChildren(record.id).length?buildScene(record.id):null),description,record,reference,
+    color:colors[record.status==='en_construccion'?'gray':tint],x,y,r:reference?23:(record.status==='actual'?52:35)+tier*5,
+    type:tier===3?'orb':tier===2?'ico':'oct',weightTier:tier,children:reference?null:(record.type==='architecture'||orderedChildren(record.id).length?buildScene(record.id):null),description,record,reference,
     active:record.status==='actual',pending:record.status==='en_construccion'};
 }
 function buildScene(id){
@@ -38,7 +45,9 @@ function buildScene(id){
       const concern=component.kind==='concern',index=(concern?satellites:main).indexOf(component);
       const [x,y]=concern?[(index-(satellites.length-1)/2)*.65,.59]:positions(main.length)[index];
       const contribution=component.contribution||record.architecture.contribution;
-      return{id:component.id,name:component.label,meta:component.tech,color:colors[kindColors[component.kind]||'mint'],x,y,r:concern?24:component.kind==='api'?51:42,type:'ico',children:null,component,record,
+      const degree=record.architecture.connections.filter(edge=>edge.from===component.id||edge.to===component.id).length;
+      const tier=concern?1:degree>=3?3:degree>=2?2:1;
+      return{id:component.id,name:component.label,meta:component.tech,color:colors[kindColors[component.kind]||'mint'],x,y,r:concern?24:38+tier*4,type:tier===3?'orb':tier===2?'ico':'oct',weightTier:tier,children:null,component,record,
         description:`${component.tech}. Qué es: ${component.what}${contribution?'\n\nMi aportación: '+contribution:''}`};
     });
     scene.edges=record.architecture.connections.map(connection=>{
@@ -54,7 +63,7 @@ function buildScene(id){
   if(children.length===2)scene.edges.push([0,1]);
   if(children.length>2)children.forEach((_,i)=>scene.edges.push([i,(i+1)%children.length]));
   children.forEach((n,i)=>(n.links||[]).forEach(target=>scene.edges.push([i,visible.findIndex(n=>n.id===target),{related:true}])));
-  if(isRoot){const points=[[-.36,-.28],[.35,-.28],[.57,.2],[0,.35],[-.57,.2]],radii=[59,46,49,57,65];scene.nodes.forEach((n,i)=>{[n.x,n.y]=points[i];n.r=radii[i]})}
+  if(isRoot){const points=[[-.36,-.28],[.35,-.28],[.57,.2],[0,.35],[-.57,.2]];scene.nodes.forEach((n,i)=>{[n.x,n.y]=points[i];n.r=38+n.weightTier*9})}
   return scene;
 }
 const root=buildScene(portfolio.root.id);
@@ -91,7 +100,9 @@ function geometry(type){return type==='system'?systemMesh:type==='orb'?orbMesh:t
 const systemScene={id:'system',title:'Sistema',description:'Cada conexión cuenta lo que ocurre detrás de este portafolio.',intro:'Este es el sistema de atrás. Acércate a un componente para conocer qué hace.',tint:'mint',architecture:true,system:true,nodes:[],edges:[]};
 systemScene.nodes=system.architecture.components.map(component=>{
   const peers=system.architecture.components.filter(c=>c.layer===component.layer),index=peers.indexOf(component);
-  return{id:component.id,name:component.label,meta:component.tech,description:component.what+(component.contribution?'\n\nMi aportación: '+component.contribution:''),component,color:colors[kindColors[component.kind]||'mint'],x:-.66+component.layer*.285,y:(index-(peers.length-1)/2)*.29,r:component.layer===4?29:37,type:'system',children:null,system:true};
+  const degree=system.architecture.edges.filter(edge=>edge.from===component.id||edge.to===component.id).length;
+  const tier=degree>=4?3:degree>=2?2:1;
+  return{id:component.id,name:component.label,meta:component.tech,description:component.what+(component.contribution?'\n\nMi aportación: '+component.contribution:''),component,color:colors[kindColors[component.kind]||'mint'],x:-.66+component.layer*.285,y:(index-(peers.length-1)/2)*.29,r:(component.layer===4?27:33)+tier*3,type:tier===3?'orb':tier===2?'system':'oct',weightTier:tier,children:null,system:true};
 });
 systemScene.edges=system.architecture.edges.map(edge=>[systemScene.nodes.findIndex(n=>n.id===edge.from),systemScene.nodes.findIndex(n=>n.id===edge.to),{label:edge.label,text:edge.label,directed:true,event:edge.kind==='event'}]);
 let systemReturn=null,systemTravel=null,disposed=false;
@@ -116,12 +127,23 @@ function renderAperture(){
   const bounds=button.getBoundingClientRect(),items=apertureNodes(bounds);drawAperture(bounds);drawEdges(systemScene,items);for(const n of items)drawNode(n);drawApertureLabels(items);
 }
 const generatedRegistry=new Map();let navigationComplete=null,liveUnread=0;
+const chatTarget=document.createElement('button');chatTarget.id='floating-live-chat';chatTarget.type='button';chatTarget.className='floating-live-chat';
+chatTarget.setAttribute('aria-controls','live-panel');chatTarget.setAttribute('aria-expanded','false');
+const chatCaption=document.createElement('span');chatCaption.className='floating-live-caption';chatCaption.textContent='CHAT CON KIRBITH';
+const chatPreview=document.createElement('span');chatPreview.className='floating-live-preview';chatPreview.hidden=true;
+const chatAuthor=document.createElement('span');chatAuthor.className='floating-live-author';
+const chatMessage=document.createElement('span');chatMessage.className='floating-live-message';chatPreview.append(chatAuthor,chatMessage);chatTarget.append(chatCaption,chatPreview);
+chatTarget.addEventListener('click',()=>system.onLiveOpen?.());document.body.append(chatTarget);
+function setChatMessage(text,from){chatAuthor.textContent=from==='owner'?'Kirbith':'Tú';chatMessage.textContent=text;chatPreview.hidden=!text}
 function generatedVisual(record,x,y,parentId){
   const childScene=record.children?.length?{id:record.id,title:record.label,description:record.summary,intro:record.summary,tint:'mint',generated:true,generatedRecord:record,nodes:record.children.map((child,i)=>generatedVisual(child,...positions(record.children.length)[i],record.id)),edges:[]}:null;
   return{id:record.id,name:record.label,meta:'GENERADO PARA TI',description:record.summary,color:colors.mint,x,y,r:30,type:'ico',children:childScene,generated:record,generatedParent:parentId||record.id,born:performance.now()};
 }
 function syncGenerated(){
-  for(const n of nodes){if(!n.el)continue;const badge=n.el.querySelector?.('.unread-badge');if(n.id==='personal.contacto.chat'){if(badge)badge.remove();if(liveUnread){const label=document.createElement('span');label.className='unread-badge';label.textContent=String(liveUnread);n.el.append(label)}}}
+  const badge=chatTarget.querySelector?.('.unread-badge');badge?.remove();
+  if(liveUnread){const label=document.createElement('span');label.className='unread-badge';label.textContent=String(liveUnread);chatTarget.append(label)}
+  chatTarget.classList.toggle('has-unread',!!liveUnread);
+  chatTarget.setAttribute('aria-label',liveUnread?`Chat con Kirbith, ${liveUnread} mensajes nuevos. Abrir conversación`:'Chat con Kirbith. Abrir conversación');
 }
 function reconcileGenerated(){
   if(travel||systemTravel||level.system)return;
@@ -318,6 +340,13 @@ function drawNode(n,alpha=1){
   if(n.system){const state=system.traces.light(n.id).state;n={...n,color:state==='error'?[240,115,125]:state==='done'?colors.mint:state==='active'?colors.cyan:n.color,active:state==='active',hover:state==='active'?Math.max(.7,n.hover):n.hover};alpha*=state==='idle'?(n.hover>.1?.85:.35):1}
   if(alpha<.003||n.sr<.5)return;drawGlow(n.sx,n.sy,n.sr,n.color,alpha,n.hover);
   for(const f of meshFaces(n).sort((a,b)=>a.z-b.z))paintFace(f,n.color,n.sx,n.sy,n.sr,alpha,1,n.hover);
+  if(n.weightTier>=2){
+    ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=rgba(n.color,(n.weightTier===3?.42:.22)+n.hover*.2);ctx.lineWidth=n.weightTier===3?1.35:.8;
+    const reach=n.sr*(n.weightTier===3?1.34:1.2);
+    ctx.beginPath();ctx.ellipse(n.sx,n.sy,reach,reach*.72,-.35,.1,Math.PI*1.62);ctx.stroke();
+    if(n.weightTier===3){ctx.beginPath();ctx.ellipse(n.sx,n.sy,reach*1.17,reach*.86,.55,Math.PI*.9,Math.PI*1.86);ctx.stroke()}
+    ctx.restore();
+  }
   if(n.active||n.id==='core'){const pulse=(Math.sin(clock*1.3)+1)/2;ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=rgba(n.color,.15);ctx.lineWidth=.7;for(const start of[-.2,Math.PI-.2]){ctx.beginPath();ctx.arc(n.sx,n.sy,n.sr*1.37+pulse*4,start,start+1.4);ctx.stroke()}ctx.restore()}
 }
 
@@ -332,19 +361,20 @@ function createMorphPlan(parent,children){
   for(const p of pairs)if(available.has(p.face)&&groups[p.child].length<capacity[p.child]){groups[p.child].push(p.face);available.delete(p.face)}
   const plan=[];
   groups.forEach((group,child)=>{
-    const targetCount=geometry(children[child].type).faces.length,sourcePieces=[];
-    group.forEach((face,j)=>{const count=Math.floor(targetCount/group.length)+(j<targetCount%group.length?1:0);for(let k=0;k<count;k++)sourcePieces.push({face,bary:[[1,0,0],[0,1-k/count,k/count],[0,1-(k+1)/count,(k+1)/count]]})});
-    const targetFaces=meshFaces(children[child]);
+    const targetFaces=meshFaces(children[child]),pieceCount=Math.max(group.length,targetFaces.length),sourcePieces=[],targetPieces=[];
+    group.forEach((face,j)=>{const count=Math.floor(pieceCount/group.length)+(j<pieceCount%group.length?1:0);for(let k=0;k<count;k++)sourcePieces.push({face,bary:[[1,0,0],[0,1-k/count,k/count],[0,1-(k+1)/count,(k+1)/count]]})});
+    targetFaces.forEach((face,j)=>{const count=Math.floor(pieceCount/targetFaces.length)+(j<pieceCount%targetFaces.length?1:0);for(let k=0;k<count;k++)targetPieces.push({face:face.i,bary:[[1,0,0],[0,1-k/count,k/count],[0,1-(k+1)/count,(k+1)/count]]})});
     sourcePieces.sort((a,b)=>Math.atan2(faces[a.face].center[1],faces[a.face].center[0])-Math.atan2(faces[b.face].center[1],faces[b.face].center[0]));
-    targetFaces.sort((a,b)=>Math.atan2(a.center[1],a.center[0])-Math.atan2(b.center[1],b.center[0]));
-    sourcePieces.forEach((piece,i)=>plan.push({...piece,child,target:targetFaces[i].i}));
+    targetPieces.sort((a,b)=>Math.atan2(targetFaces[a.face].center[1],targetFaces[a.face].center[0])-Math.atan2(targetFaces[b.face].center[1],targetFaces[b.face].center[0]));
+    sourcePieces.forEach((piece,i)=>plan.push({...piece,child,target:targetPieces[i].face,targetBary:targetPieces[i].bary}));
   });
   return plan;
 }
 function refreshTravelGeometry(t){
   project(t.parent);project(t.child);t.parentFaces=meshFaces(t.entry);t.childFaces=t.child.nodes.map(n=>meshFaces(n));
   t.triangles=t.parent.plan.map(part=>{
-    const source=t.parentFaces[part.face],target=t.childFaces[part.child][part.target];
+    const source=t.parentFaces[part.face],face=t.childFaces[part.child][part.target];
+    const target={...face,points:part.targetBary.map(weights=>[0,1,2].map(axis=>weights.reduce((sum,w,j)=>sum+w*face.points[j][axis],0)))};
     const points=part.bary.map(weights=>[0,1,2].map(axis=>weights.reduce((sum,w,j)=>sum+w*source.points[j][axis],0)));
     return{...part,source,target,points};
   });
@@ -512,6 +542,16 @@ function drawCompanion(dt){
   for(const eye of[-1,1]){const x=orb.sx+eye*radius*.23+gazeX,y=orb.sy+gazeY;ctx.beginPath();ctx.moveTo(x,y-1.6*blink);ctx.lineTo(x,y+1.6*blink);ctx.stroke()}ctx.restore();
   const hitSize=width<650?52:62;$('companion-target').style.transform=`translate(${orb.sx-hitSize/2}px,${orb.sy-hitSize/2}px)`;
 }
+function drawChatSatellite(){
+  const radius=width<650?17:21;
+  const drift=paused||reduced.matches?0:1;
+  const x=clamp(width*(width<650?.78:.79)+Math.sin(clock*.46+.7)*27*drift,64,width-40);
+  const y=clamp(height*(width<650?.67:.69)+Math.cos(clock*.37+.9)*31*drift,205,height-158);
+  const glow=liveUnread?1:.2;
+  drawNode({type:'ico',seed:4.9,color:colors.rose,hover:glow,weightTier:liveUnread?2:1,sx:x,sy:y,sr:radius},.96);
+  ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=rgba([245,226,233],.9);ctx.font=`${width<650?13:15}px sans-serif`;ctx.fillText('✉',x,y+1);ctx.restore();
+  chatTarget.style.transform=`translate(${x-radius-8}px,${y-radius-8}px)`;
+}
 function render(now){
   if(disposed)return;
   const dt=Math.min((now-last)/16.667||1,2.5);last=now;
@@ -525,7 +565,7 @@ function render(now){
     for(const n of[...nodes].sort((a,b)=>a.r-b.r))drawNode(n,hoverId&&hoverId!==n.id?.55:1);
     placeTargets(1);
   }
-  renderAperture();placePanel();drawCompanion(dt);renderGuide();requestAnimationFrame(render);
+  renderAperture();placePanel();drawCompanion(dt);drawChatSatellite();renderGuide();requestAnimationFrame(render);
 }
 function setPaused(value){paused=value;$('pause').setAttribute('aria-pressed',String(value));$('pause').setAttribute('aria-label',value?'Reanudar movimiento':'Pausar movimiento');$('pause').title=value?'Reanudar movimiento':'Pausar movimiento';$('pause').innerHTML=value?'<svg viewBox="0 0 24 24"><path d="m9 5 10 7-10 7Z"/></svg>':'<svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg>';$('motion-status').textContent=value?'Movimiento en pausa':'Sistema en movimiento';document.querySelector('.live-dot').style.background=value?'#7d8790':'var(--mint)'}
 function changeZoom(amount){if(travel||systemTravel)return;targetZoom=clamp(targetZoom+amount,.65,1.6);syncZoomUI()}
@@ -596,5 +636,5 @@ const stopPanelDrag=()=>{panelDrag=null};handle.addEventListener('pointerup',sto
 handle.addEventListener('keydown',event=>{const step=event.shiftKey?30:10,delta={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[event.key];if(!delta)return;event.preventDefault();event.stopPropagation();panelWorld.x+=delta[0]/zoom;panelWorld.y+=delta[1]/zoom;placePanel()});
 
 $('level-title').setAttribute('tabindex','-1');resize();nodes=instantiate(root);bindNodes();updateUI();setPaused(paused);say('Tu recorrido',root.intro,'welcome',12000);requestAnimationFrame(render);
-return {dispose(){disposed=true},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
+return {dispose(){disposed=true},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>chatTarget.setAttribute('aria-expanded',String(open)),focusLiveNode:()=>chatTarget.focus({preventScroll:true}),nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
 }

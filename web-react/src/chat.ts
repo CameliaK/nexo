@@ -8,7 +8,7 @@ import type { TracePlayer } from './system/traces';
 export interface Universe {
   navigate(id:string):Promise<unknown>;isSystem():boolean;exitSystem():Promise<unknown>;openAgent():void;
   spawnGenerated(node:GeneratedNode,anchor?:string|null,restored?:boolean):void;removeGenerated(id:string):void;
-  inspectGenerated(id:string):void;setUnread(count:number):void;nodeExists(id:string):boolean;nodeLabel(id:string):string;
+  inspectGenerated(id:string):void;setUnread(count:number):void;setChatMessage(text:string,from:'owner'|'visitor'):void;setLiveOpen(open:boolean):void;focusLiveNode():void;nodeExists(id:string):boolean;nodeLabel(id:string):string;
 }
 function element<K extends keyof HTMLElementTagNameMap>(tag:K,text='',className='') {const e=document.createElement(tag);e.textContent=text;e.className=className;return e}
 const read=(key:string)=>{try{return localStorage.getItem(key)}catch{return null}};
@@ -24,7 +24,7 @@ export class Chats {
   private livePanel=element('section','','live-panel');private liveHistory=element('div','','chat-history live-history');
   private liveInput=element('textarea');private liveName=element('input');private nameWrap=element('label','','live-name');
   private liveHint=element('p','','chat-hint');private liveCounter=element('span','','chat-counter');private liveSend=element('button','Enviar','chat-send');
-  private notice=element('button','','live-notification');private agentHistory=element('div','','chat-history agent-history');
+  private agentHistory=element('div','','chat-history agent-history');
   private process=element('details','','agent-process');private steps=new Map<string,HTMLElement>();private sources=element('div','','rag-sources');
   private agentInput=document.getElementById('nexo-input') as HTMLInputElement;
   private agentSend=document.querySelector('.panel-compose button') as HTMLButtonElement;
@@ -72,16 +72,15 @@ export class Chats {
     this.liveInput.maxLength=content.max_chars;this.liveInput.rows=2;this.liveInput.placeholder=content.placeholder;this.liveInput.setAttribute('aria-label','Mensaje para Kirbith');this.liveInput.addEventListener('input',()=>this.refresh());this.liveInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();void this.sendLive()}});
     this.liveSend.type='button';this.liveSend.onclick=()=>void this.sendLive();const compose=element('div','','live-compose');compose.append(this.nameWrap,this.liveInput,this.liveCounter,this.liveSend,this.liveHint);
     surface.append(header,intro,this.liveHistory,compose,element('p',content.note,'chat-note'));if(this.simulated)surface.append(element('span','SIMULADO · LOS MENSAJES NO SE ENVÍAN','simulation-label'));this.livePanel.append(surface);document.body.append(this.livePanel);
-    this.notice.hidden=true;this.notice.onclick=()=>this.openLive();document.body.append(this.notice);
   }
   private buildNavigation(){
     const go=element('button','Ir ahora');go.onclick=async()=>{await this.universe.exitSystem();this.routeNotice.hidden=true;void this.drainRoute()};this.routeNotice.append(this.routeLabel,go);this.routeNotice.hidden=true;document.body.append(this.routeNotice);
     this.inventory.append(element('summary','Generado para ti'),this.inventoryList);this.inventory.hidden=true;document.body.append(this.inventory);
   }
-  openLive(){this.liveOpen=true;this.livePanel.hidden=false;this.unread.clear();save('nexo.live.readAt',new Date().toISOString());this.updateUnread();this.liveInput.focus();this.liveHistory.scrollTop=this.liveHistory.scrollHeight}
-  closeLive(){this.liveOpen=false;this.livePanel.hidden=true;this.updateUnread()}
+  openLive(){this.liveOpen=true;this.livePanel.hidden=false;this.universe.setLiveOpen(true);this.unread.clear();save('nexo.live.readAt',new Date().toISOString());this.updateUnread();this.liveInput.focus();this.liveHistory.scrollTop=this.liveHistory.scrollHeight}
+  closeLive(){this.liveOpen=false;this.livePanel.hidden=true;this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode()}
   escape(){if(this.liveOpen){this.closeLive();return true}return false}
-  private updateUnread(){this.universe.setUnread(this.unread.size);this.notice.hidden=!this.unread.size||this.liveOpen;this.notice.textContent=this.unread.size+' mensaje'+(this.unread.size===1?' nuevo':'s nuevos')+' de Kirbith';}
+  private updateUnread(){this.universe.setUnread(this.unread.size);}
   private refresh(){
     const remaining=Math.max(0,Math.ceil((this.cooldown-Date.now())/1000)),open=this.state==='open';
     this.agentInput.disabled=!open;this.agentSend.disabled=!open||this.busy||this.pendingSend||!!remaining||!this.agentInput.value.trim();
@@ -115,6 +114,7 @@ export class Chats {
   private addLive(message:LiveMessage,state:'sending'|LiveDeliveryStatus='sent',restored=false){
     if(this.liveRows.has(message.id))return;
     const root=element('div','','chat-message '+message.from);root.append(element('span',message.from==='owner'?portfolio.meta.owner:'Tú','message-author'),element('p',message.text));const status=element('span','','message-state');root.append(status);const row={message,root,status,state};this.liveRows.set(message.id,row);this.liveHistory.append(root);
+    this.universe.setChatMessage(message.text,message.from);
     if(message.from==='visitor')this.delivery(message.id,state);else if(!this.liveOpen&&(!restored||Date.parse(message.ts)>Date.parse(read('nexo.live.readAt')||'1970-01-01')))this.unread.add(message.id);
     if(this.liveOpen){save('nexo.live.readAt',new Date().toISOString());this.liveHistory.scrollTop=this.liveHistory.scrollHeight}this.updateUnread();
   }
