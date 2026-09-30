@@ -1,0 +1,2023 @@
+{
+  "meta": {
+    "contract_version": 2,
+    "content_version": 3,
+    "notes": [
+      "Uso exclusivo del MockBackend, solo en desarrollo. En producción nunca se simulan respuestas.",
+      "En los eventos, estos marcadores se reemplazan al reproducir: {{run_id}}, {{now}}, {{input}} (texto enviado), {{message_id}} y {{conversation_id}} (ids inventados y estables durante la sesión).",
+      "delay_ms es la pausa ANTES de emitir cada evento (no forma parte del contrato real).",
+      "trigger 'chat': se elige el escenario cuyo 'match' aparezca en la pregunta (en minúsculas); si ninguno coincide, se usa default_scenario.",
+      "trigger 'live_message': se reproduce al enviar un mensaje del chat en vivo.",
+      "followup: otro escenario que se reproduce después, simulando que el dueño responde.",
+      "Los tramos de retorno (redis → gateway → navegador) NO vienen en los eventos: los dibuja el frontend cada vez que recibe cualquier evento.",
+      "El tramo browser → traefik tampoco viene: lo dibuja el frontend al enviar la petición."
+    ]
+  },
+  "default_scenario": "unknown-tarifas",
+  "http_errors": {
+    "429": {
+      "status": 429,
+      "headers": {
+        "Retry-After": "30"
+      },
+      "body": {
+        "error": {
+          "code": "rate_limited",
+          "message": "Has hecho muchas preguntas seguidas. Intenta de nuevo en unos segundos."
+        }
+      }
+    },
+    "409": {
+      "status": 409,
+      "body": {
+        "error": {
+          "code": "busy",
+          "message": "Ya hay una consulta en curso."
+        }
+      }
+    }
+  },
+  "scenarios": [
+    {
+      "id": "route-infosys",
+      "trigger": "chat",
+      "outcome": "route",
+      "match": [
+        "infosys",
+        "india",
+        "internship",
+        "practicas",
+        "prácticas",
+        "experiencia"
+      ],
+      "events": [
+        {
+          "delay_ms": 0,
+          "event": {
+            "v": 2,
+            "type": "run.start",
+            "run_id": "{{run_id}}",
+            "seq": 1,
+            "ts": "{{now}}",
+            "data": {
+              "kind": "chat",
+              "input": "¿Qué hiciste en Infosys?",
+              "content_version": 3
+            }
+          }
+        },
+        {
+          "delay_ms": 100,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 2,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "start",
+              "label": "Recibe la petición"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 3,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "end",
+              "duration_ms": 12
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 4,
+            "ts": "{{now}}",
+            "data": {
+              "step": "understand",
+              "status": "active",
+              "label": "Entendiendo la pregunta"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 5,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "agent",
+              "phase": "start",
+              "label": "Envía la pregunta al agente"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 6,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "agent",
+              "to": "llm",
+              "phase": "start",
+              "label": "Entiende la pregunta"
+            }
+          }
+        },
+        {
+          "delay_ms": 850,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 7,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "agent",
+              "to": "llm",
+              "phase": "end",
+              "detail": "Tema: experiencia en Infosys",
+              "duration_ms": 850
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 8,
+            "ts": "{{now}}",
+            "data": {
+              "step": "understand",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 9,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_nodes",
+              "status": "active",
+              "label": "Buscando en mis nodos"
+            }
+          }
+        },
+        {
+          "delay_ms": 500,
+          "event": {
+            "v": 2,
+            "type": "route.plan",
+            "run_id": "{{run_id}}",
+            "seq": 10,
+            "ts": "{{now}}",
+            "data": {
+              "path": [
+                "experiencia",
+                "experiencia.infosys"
+              ],
+              "confidence": 0.92,
+              "reason": "La pregunta menciona Infosys, que es un nodo de Experiencia."
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 11,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_nodes",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 12,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_base",
+              "status": "skipped"
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 13,
+            "ts": "{{now}}",
+            "data": {
+              "step": "design_node",
+              "status": "skipped"
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 14,
+            "ts": "{{now}}",
+            "data": {
+              "step": "create_node",
+              "status": "skipped"
+            }
+          }
+        },
+        {
+          "delay_ms": 600,
+          "event": {
+            "v": 2,
+            "type": "route.step",
+            "run_id": "{{run_id}}",
+            "seq": 15,
+            "ts": "{{now}}",
+            "data": {
+              "node_id": "experiencia",
+              "index": 0
+            }
+          }
+        },
+        {
+          "delay_ms": 900,
+          "event": {
+            "v": 2,
+            "type": "route.step",
+            "run_id": "{{run_id}}",
+            "seq": 16,
+            "ts": "{{now}}",
+            "data": {
+              "node_id": "experiencia.infosys",
+              "index": 1
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 17,
+            "ts": "{{now}}",
+            "data": {
+              "step": "answer",
+              "status": "active",
+              "label": "Redactando la respuesta"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 18,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h4",
+              "from": "agent",
+              "to": "llm",
+              "phase": "start",
+              "label": "Redacta la respuesta"
+            }
+          }
+        },
+        {
+          "delay_ms": 180,
+          "event": {
+            "v": 2,
+            "type": "answer.chunk",
+            "run_id": "{{run_id}}",
+            "seq": 19,
+            "ts": "{{now}}",
+            "data": {
+              "text": "Fui Software Engineer Intern en Infosys, en Bangalore, de febrero a agosto de 2025. "
+            }
+          }
+        },
+        {
+          "delay_ms": 180,
+          "event": {
+            "v": 2,
+            "type": "answer.chunk",
+            "run_id": "{{run_id}}",
+            "seq": 20,
+            "ts": "{{now}}",
+            "data": {
+              "text": "Te llevé a ese nodo: ahí están los dos proyectos en los que trabajé."
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 21,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h4",
+              "from": "agent",
+              "to": "llm",
+              "phase": "end",
+              "duration_ms": 1100
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 22,
+            "ts": "{{now}}",
+            "data": {
+              "step": "answer",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 23,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "agent",
+              "phase": "end",
+              "duration_ms": 3900
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "run.done",
+            "run_id": "{{run_id}}",
+            "seq": 24,
+            "ts": "{{now}}",
+            "data": {
+              "outcome": "route",
+              "duration_ms": 4300
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "generated-ia",
+      "trigger": "chat",
+      "outcome": "generated",
+      "match": [
+        "ia",
+        "inteligencia artificial",
+        "herramientas",
+        "langchain",
+        "faiss",
+        "machine learning",
+        "ml"
+      ],
+      "events": [
+        {
+          "delay_ms": 0,
+          "event": {
+            "v": 2,
+            "type": "run.start",
+            "run_id": "{{run_id}}",
+            "seq": 1,
+            "ts": "{{now}}",
+            "data": {
+              "kind": "chat",
+              "input": "¿Qué herramientas de IA usas?",
+              "content_version": 3
+            }
+          }
+        },
+        {
+          "delay_ms": 100,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 2,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "start",
+              "label": "Recibe la petición"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 3,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "end",
+              "duration_ms": 11
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 4,
+            "ts": "{{now}}",
+            "data": {
+              "step": "understand",
+              "status": "active",
+              "label": "Entendiendo la pregunta"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 5,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "agent",
+              "phase": "start",
+              "label": "Envía la pregunta al agente"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 6,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "agent",
+              "to": "llm",
+              "phase": "start",
+              "label": "Entiende la pregunta"
+            }
+          }
+        },
+        {
+          "delay_ms": 800,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 7,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "agent",
+              "to": "llm",
+              "phase": "end",
+              "detail": "Tema: herramientas de IA",
+              "duration_ms": 800
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 8,
+            "ts": "{{now}}",
+            "data": {
+              "step": "understand",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 9,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_nodes",
+              "status": "active",
+              "label": "Buscando en mis nodos"
+            }
+          }
+        },
+        {
+          "delay_ms": 700,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 10,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_nodes",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 11,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_base",
+              "status": "active",
+              "label": "Buscando en la base de conocimiento"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 12,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h4",
+              "from": "agent",
+              "to": "n8n",
+              "phase": "start",
+              "label": "Lanza el flujo de búsqueda"
+            }
+          }
+        },
+        {
+          "delay_ms": 300,
+          "event": {
+            "v": 2,
+            "type": "rag.search",
+            "run_id": "{{run_id}}",
+            "seq": 13,
+            "ts": "{{now}}",
+            "data": {
+              "query": "herramientas de IA y ML que usa"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 14,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h5",
+              "from": "n8n",
+              "to": "postgres",
+              "phase": "start",
+              "label": "Búsqueda por significado (pgvector)"
+            }
+          }
+        },
+        {
+          "delay_ms": 700,
+          "event": {
+            "v": 2,
+            "type": "rag.result",
+            "run_id": "{{run_id}}",
+            "seq": 15,
+            "ts": "{{now}}",
+            "data": {
+              "hits": [
+                {
+                  "title": "CV: formación en IA en Infosys",
+                  "score": 0.86,
+                  "source": "cv"
+                },
+                {
+                  "title": "Buscador industrial de herramientas",
+                  "score": 0.81,
+                  "source": "portafolio"
+                },
+                {
+                  "title": "Plataformas educativas accesibles con IA",
+                  "score": 0.78,
+                  "source": "portafolio"
+                }
+              ],
+              "used": true
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 16,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h5",
+              "from": "n8n",
+              "to": "postgres",
+              "phase": "end",
+              "detail": "3 fragmentos relevantes",
+              "duration_ms": 420
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 17,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_base",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 18,
+            "ts": "{{now}}",
+            "data": {
+              "step": "design_node",
+              "status": "active",
+              "label": "Diseñando el nodo"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 19,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h6",
+              "from": "n8n",
+              "to": "llm",
+              "phase": "start",
+              "label": "Diseña el nodo"
+            }
+          }
+        },
+        {
+          "delay_ms": 1400,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 20,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h6",
+              "from": "n8n",
+              "to": "llm",
+              "phase": "end",
+              "detail": "Un padre con 3 hijos",
+              "duration_ms": 2300
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 21,
+            "ts": "{{now}}",
+            "data": {
+              "step": "design_node",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 22,
+            "ts": "{{now}}",
+            "data": {
+              "step": "create_node",
+              "status": "active",
+              "label": "Creando el nodo"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 23,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h7",
+              "from": "n8n",
+              "to": "postgres",
+              "phase": "start",
+              "label": "Guarda el nodo para este visitante"
+            }
+          }
+        },
+        {
+          "delay_ms": 900,
+          "event": {
+            "v": 2,
+            "type": "node.spawn",
+            "run_id": "{{run_id}}",
+            "seq": 24,
+            "ts": "{{now}}",
+            "data": {
+              "anchor": null,
+              "node": {
+                "id": "gen_ia_herramientas",
+                "label": "Herramientas de IA y ML",
+                "tagline": "GENERADO PARA TI",
+                "summary": "Las herramientas de IA y machine learning con las que he trabajado.",
+                "sources": [
+                  {
+                    "title": "CV"
+                  },
+                  {
+                    "title": "Infosys",
+                    "ref": "experiencia.infosys"
+                  }
+                ],
+                "layout": "tags",
+                "content": {
+                  "tags": [
+                    "LangChain",
+                    "FAISS",
+                    "scikit-learn",
+                    "FastAPI",
+                    "LLMs",
+                    "RAG",
+                    "AWS Bedrock",
+                    "AWS SageMaker"
+                  ]
+                },
+                "children": [
+                  {
+                    "id": "gen_ia_rag",
+                    "label": "RAG",
+                    "summary": "Dónde he construido sistemas de recuperación semántica.",
+                    "sources": [
+                      {
+                        "title": "Buscador industrial",
+                        "ref": "experiencia.infosys.buscador"
+                      }
+                    ],
+                    "layout": "text",
+                    "content": {
+                      "body": "Lo he usado para buscar herramientas industriales en Infosys (LangChain y FAISS, con web scraping de respaldo) y para el pipeline de contenido de las plataformas educativas en DEST (Python y FAISS)."
+                    },
+                    "generated": true,
+                    "created_at": "{{now}}"
+                  },
+                  {
+                    "id": "gen_ia_ml",
+                    "label": "Modelos de ML",
+                    "summary": "Modelos con los que he trabajado.",
+                    "sources": [
+                      {
+                        "title": "Digital Twin",
+                        "ref": "experiencia.infosys.digital-twin"
+                      }
+                    ],
+                    "layout": "text",
+                    "content": {
+                      "body": "Entrené modelos con scikit-learn durante la capacitación en Infosys. En el Digital Twin participé en la orquestación de Isolation Forest y Gradient Boosting."
+                    },
+                    "generated": true,
+                    "created_at": "{{now}}"
+                  },
+                  {
+                    "id": "gen_ia_aws",
+                    "label": "AWS",
+                    "summary": "Servicios de nube en los que me capacitaron.",
+                    "sources": [
+                      {
+                        "title": "Capacitación en Infosys",
+                        "ref": "aprendizaje.extras.infosys-aws"
+                      }
+                    ],
+                    "layout": "list",
+                    "content": {
+                      "items": [
+                        "EC2",
+                        "S3",
+                        "Lambda",
+                        "Bedrock",
+                        "SageMaker",
+                        "Despliegue del Digital Twin en AWS"
+                      ]
+                    },
+                    "generated": true,
+                    "created_at": "{{now}}"
+                  }
+                ],
+                "generated": true,
+                "created_at": "{{now}}"
+              }
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 25,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h7",
+              "from": "n8n",
+              "to": "postgres",
+              "phase": "end",
+              "duration_ms": 35
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 26,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h4",
+              "from": "agent",
+              "to": "n8n",
+              "phase": "end",
+              "duration_ms": 4600
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 27,
+            "ts": "{{now}}",
+            "data": {
+              "step": "create_node",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 28,
+            "ts": "{{now}}",
+            "data": {
+              "step": "answer",
+              "status": "active",
+              "label": "Redactando la respuesta"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 29,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h8",
+              "from": "agent",
+              "to": "llm",
+              "phase": "start",
+              "label": "Redacta la respuesta"
+            }
+          }
+        },
+        {
+          "delay_ms": 180,
+          "event": {
+            "v": 2,
+            "type": "answer.chunk",
+            "run_id": "{{run_id}}",
+            "seq": 30,
+            "ts": "{{now}}",
+            "data": {
+              "text": "No tenía un nodo dedicado a eso, así que creé uno para ti. "
+            }
+          }
+        },
+        {
+          "delay_ms": 180,
+          "event": {
+            "v": 2,
+            "type": "answer.chunk",
+            "run_id": "{{run_id}}",
+            "seq": 31,
+            "ts": "{{now}}",
+            "data": {
+              "text": "Ahí reuní las herramientas de IA y ML con las que he trabajado y de dónde salen."
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 32,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h8",
+              "from": "agent",
+              "to": "llm",
+              "phase": "end",
+              "duration_ms": 1000
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 33,
+            "ts": "{{now}}",
+            "data": {
+              "step": "answer",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 34,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "agent",
+              "phase": "end",
+              "duration_ms": 7000
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "run.done",
+            "run_id": "{{run_id}}",
+            "seq": 35,
+            "ts": "{{now}}",
+            "data": {
+              "outcome": "generated",
+              "duration_ms": 7200
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "unknown-tarifas",
+      "trigger": "chat",
+      "outcome": "unknown",
+      "match": [
+        "cobras",
+        "precio",
+        "tarifa",
+        "costo",
+        "salario"
+      ],
+      "events": [
+        {
+          "delay_ms": 0,
+          "event": {
+            "v": 2,
+            "type": "run.start",
+            "run_id": "{{run_id}}",
+            "seq": 1,
+            "ts": "{{now}}",
+            "data": {
+              "kind": "chat",
+              "input": "¿Cuánto cobras por proyecto?",
+              "content_version": 3
+            }
+          }
+        },
+        {
+          "delay_ms": 100,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 2,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "start",
+              "label": "Recibe la petición"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 3,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "end",
+              "duration_ms": 10
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 4,
+            "ts": "{{now}}",
+            "data": {
+              "step": "understand",
+              "status": "active",
+              "label": "Entendiendo la pregunta"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 5,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "agent",
+              "phase": "start",
+              "label": "Envía la pregunta al agente"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 6,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "agent",
+              "to": "llm",
+              "phase": "start",
+              "label": "Entiende la pregunta"
+            }
+          }
+        },
+        {
+          "delay_ms": 700,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 7,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "agent",
+              "to": "llm",
+              "phase": "end",
+              "detail": "Tema: tarifas",
+              "duration_ms": 700
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 8,
+            "ts": "{{now}}",
+            "data": {
+              "step": "understand",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 9,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_nodes",
+              "status": "active",
+              "label": "Buscando en mis nodos"
+            }
+          }
+        },
+        {
+          "delay_ms": 700,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 10,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_nodes",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 11,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_base",
+              "status": "active",
+              "label": "Buscando en la base de conocimiento"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 12,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h4",
+              "from": "agent",
+              "to": "n8n",
+              "phase": "start",
+              "label": "Lanza el flujo de búsqueda"
+            }
+          }
+        },
+        {
+          "delay_ms": 300,
+          "event": {
+            "v": 2,
+            "type": "rag.search",
+            "run_id": "{{run_id}}",
+            "seq": 13,
+            "ts": "{{now}}",
+            "data": {
+              "query": "tarifas y costo por proyecto"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 14,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h5",
+              "from": "n8n",
+              "to": "postgres",
+              "phase": "start",
+              "label": "Búsqueda por significado (pgvector)"
+            }
+          }
+        },
+        {
+          "delay_ms": 700,
+          "event": {
+            "v": 2,
+            "type": "rag.result",
+            "run_id": "{{run_id}}",
+            "seq": 15,
+            "ts": "{{now}}",
+            "data": {
+              "hits": [],
+              "used": false
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 16,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h5",
+              "from": "n8n",
+              "to": "postgres",
+              "phase": "end",
+              "detail": "0 fragmentos relevantes",
+              "duration_ms": 380
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 17,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h4",
+              "from": "agent",
+              "to": "n8n",
+              "phase": "end",
+              "duration_ms": 1500
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 18,
+            "ts": "{{now}}",
+            "data": {
+              "step": "search_base",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 19,
+            "ts": "{{now}}",
+            "data": {
+              "step": "design_node",
+              "status": "skipped"
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 20,
+            "ts": "{{now}}",
+            "data": {
+              "step": "create_node",
+              "status": "skipped"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 21,
+            "ts": "{{now}}",
+            "data": {
+              "step": "answer",
+              "status": "active",
+              "label": "Redactando la respuesta"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 22,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h6",
+              "from": "agent",
+              "to": "llm",
+              "phase": "start",
+              "label": "Redacta la respuesta"
+            }
+          }
+        },
+        {
+          "delay_ms": 180,
+          "event": {
+            "v": 2,
+            "type": "answer.chunk",
+            "run_id": "{{run_id}}",
+            "seq": 23,
+            "ts": "{{now}}",
+            "data": {
+              "text": "No tengo información sobre eso en mi portafolio. "
+            }
+          }
+        },
+        {
+          "delay_ms": 180,
+          "event": {
+            "v": 2,
+            "type": "answer.chunk",
+            "run_id": "{{run_id}}",
+            "seq": 24,
+            "ts": "{{now}}",
+            "data": {
+              "text": "Si quieres, escríbeme por el chat en vivo o por LinkedIn y lo platicamos."
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 25,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h6",
+              "from": "agent",
+              "to": "llm",
+              "phase": "end",
+              "duration_ms": 900
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 26,
+            "ts": "{{now}}",
+            "data": {
+              "step": "answer",
+              "status": "done"
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 27,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "agent",
+              "phase": "end",
+              "duration_ms": 3600
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "run.done",
+            "run_id": "{{run_id}}",
+            "seq": 28,
+            "ts": "{{now}}",
+            "data": {
+              "outcome": "unknown",
+              "duration_ms": 3900
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "error-llm",
+      "trigger": "chat",
+      "outcome": "error",
+      "match": [
+        "error",
+        "falla"
+      ],
+      "events": [
+        {
+          "delay_ms": 0,
+          "event": {
+            "v": 2,
+            "type": "run.start",
+            "run_id": "{{run_id}}",
+            "seq": 1,
+            "ts": "{{now}}",
+            "data": {
+              "kind": "chat",
+              "input": "¿Con qué tecnologías trabajas?",
+              "content_version": 3
+            }
+          }
+        },
+        {
+          "delay_ms": 100,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 2,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "start",
+              "label": "Recibe la petición"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 3,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "end",
+              "duration_ms": 12
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "process.step",
+            "run_id": "{{run_id}}",
+            "seq": 4,
+            "ts": "{{now}}",
+            "data": {
+              "step": "understand",
+              "status": "active",
+              "label": "Entendiendo la pregunta"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 5,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "agent",
+              "phase": "start",
+              "label": "Envía la pregunta al agente"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 6,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "agent",
+              "to": "llm",
+              "phase": "start",
+              "label": "Entiende la pregunta"
+            }
+          }
+        },
+        {
+          "delay_ms": 1200,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 7,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "agent",
+              "to": "llm",
+              "phase": "error",
+              "detail": "El proveedor no respondió",
+              "duration_ms": 1200
+            }
+          }
+        },
+        {
+          "delay_ms": 100,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 8,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "agent",
+              "phase": "error",
+              "detail": "El agente no pudo completar la consulta",
+              "duration_ms": 1300
+            }
+          }
+        },
+        {
+          "delay_ms": 200,
+          "event": {
+            "v": 2,
+            "type": "run.error",
+            "run_id": "{{run_id}}",
+            "seq": 9,
+            "ts": "{{now}}",
+            "data": {
+              "code": "llm_unavailable",
+              "message": "El modelo no está disponible en este momento. Intenta de nuevo en un momento.",
+              "retryable": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "live-out",
+      "trigger": "live_message",
+      "outcome": "delivered",
+      "followup": {
+        "scenario": "live-in",
+        "delay_ms": 6000
+      },
+      "events": [
+        {
+          "delay_ms": 0,
+          "event": {
+            "v": 2,
+            "type": "run.start",
+            "run_id": "{{run_id}}",
+            "seq": 1,
+            "ts": "{{now}}",
+            "data": {
+              "kind": "live_out",
+              "input": "{{input}}",
+              "content_version": 3
+            }
+          }
+        },
+        {
+          "delay_ms": 100,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 2,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "start",
+              "label": "Recibe tu mensaje"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 3,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "traefik",
+              "to": "gateway",
+              "phase": "end",
+              "duration_ms": 10
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 4,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "postgres",
+              "phase": "start",
+              "label": "Guarda tu mensaje"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 5,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "gateway",
+              "to": "postgres",
+              "phase": "end",
+              "duration_ms": 18
+            }
+          }
+        },
+        {
+          "delay_ms": 100,
+          "event": {
+            "v": 2,
+            "type": "live.delivery",
+            "run_id": "{{run_id}}",
+            "seq": 6,
+            "ts": "{{now}}",
+            "data": {
+              "message_id": "{{message_id}}",
+              "status": "sent"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 7,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "gateway",
+              "to": "n8n",
+              "phase": "start",
+              "label": "Pasa el mensaje al flujo"
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 8,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h4",
+              "from": "n8n",
+              "to": "owner_channel",
+              "phase": "start",
+              "label": "Lo envía a mi teléfono"
+            }
+          }
+        },
+        {
+          "delay_ms": 900,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 9,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h4",
+              "from": "n8n",
+              "to": "owner_channel",
+              "phase": "end",
+              "detail": "Entregado",
+              "duration_ms": 640
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 10,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h3",
+              "from": "gateway",
+              "to": "n8n",
+              "phase": "end",
+              "duration_ms": 800
+            }
+          }
+        },
+        {
+          "delay_ms": 100,
+          "event": {
+            "v": 2,
+            "type": "live.delivery",
+            "run_id": "{{run_id}}",
+            "seq": 11,
+            "ts": "{{now}}",
+            "data": {
+              "message_id": "{{message_id}}",
+              "status": "delivered_to_owner"
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "run.done",
+            "run_id": "{{run_id}}",
+            "seq": 12,
+            "ts": "{{now}}",
+            "data": {
+              "outcome": "delivered",
+              "duration_ms": 1100
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "live-in",
+      "trigger": "followup",
+      "outcome": "received",
+      "events": [
+        {
+          "delay_ms": 0,
+          "event": {
+            "v": 2,
+            "type": "run.start",
+            "run_id": "{{run_id}}",
+            "seq": 1,
+            "ts": "{{now}}",
+            "data": {
+              "kind": "live_in",
+              "content_version": 3
+            }
+          }
+        },
+        {
+          "delay_ms": 100,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 2,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "owner_channel",
+              "to": "n8n",
+              "phase": "start",
+              "label": "Llega mi respuesta"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 3,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h1",
+              "from": "owner_channel",
+              "to": "n8n",
+              "phase": "end",
+              "duration_ms": 25
+            }
+          }
+        },
+        {
+          "delay_ms": 250,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 4,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "n8n",
+              "to": "postgres",
+              "phase": "start",
+              "label": "Guarda la respuesta"
+            }
+          }
+        },
+        {
+          "delay_ms": 350,
+          "event": {
+            "v": 2,
+            "type": "trace.hop",
+            "run_id": "{{run_id}}",
+            "seq": 5,
+            "ts": "{{now}}",
+            "data": {
+              "hop_id": "h2",
+              "from": "n8n",
+              "to": "postgres",
+              "phase": "end",
+              "duration_ms": 20
+            }
+          }
+        },
+        {
+          "delay_ms": 300,
+          "event": {
+            "v": 2,
+            "type": "live.message",
+            "run_id": "{{run_id}}",
+            "seq": 6,
+            "ts": "{{now}}",
+            "data": {
+              "conversation_id": "{{conversation_id}}",
+              "message": {
+                "id": "{{message_id}}",
+                "from": "owner",
+                "text": "¡Hola! Gracias por escribirme. Te respondo en cuanto pueda.",
+                "ts": "{{now}}"
+              }
+            }
+          }
+        },
+        {
+          "delay_ms": 150,
+          "event": {
+            "v": 2,
+            "type": "run.done",
+            "run_id": "{{run_id}}",
+            "seq": 7,
+            "ts": "{{now}}",
+            "data": {
+              "outcome": "received",
+              "duration_ms": 900
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
