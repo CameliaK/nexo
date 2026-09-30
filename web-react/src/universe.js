@@ -135,6 +135,61 @@ const chatAuthor=document.createElement('span');chatAuthor.className='floating-l
 const chatMessage=document.createElement('span');chatMessage.className='floating-live-message';chatPreview.append(chatAuthor,chatMessage);chatTarget.append(chatCaption,chatPreview);
 chatTarget.addEventListener('click',()=>system.onLiveOpen?.());document.body.append(chatTarget);
 function setChatMessage(text,from){chatAuthor.textContent=from==='owner'?'Kirbith':'Tú';chatMessage.textContent=text;chatPreview.hidden=!text}
+let livePanelOpen=false,chatMorph=null,morphCanvas=null,morphCtx=null;
+function chatOrbit(){
+  const r=width<650?17:21,drift=paused||reduced.matches?0:1;
+  return{x:clamp(width*(width<650?.78:.79)+Math.sin(clock*.46+.7)*27*drift,64,width-40),
+    y:clamp(height*(width<650?.67:.69)+Math.cos(clock*.37+.9)*31*drift,205,height-158),r};
+}
+function panelTriangles(bounds){
+  const triangles=[];
+  for(let row=0;row<2;row++)for(let col=0;col<5;col++){
+    const x0=bounds.left+bounds.width*col/5,x1=bounds.left+bounds.width*(col+1)/5;
+    const y0=bounds.top+bounds.height*row/2,y1=bounds.top+bounds.height*(row+1)/2;
+    triangles.push([[x0,y0],[x1,y0],[x0,y1]],[[x1,y0],[x1,y1],[x0,y1]]);
+  }
+  const cx=bounds.left+bounds.width/2,cy=bounds.top+bounds.height/2;
+  return triangles.sort((a,b)=>Math.atan2(a[0][1]+a[1][1]+a[2][1]-cy*3,a[0][0]+a[1][0]+a[2][0]-cx*3)-Math.atan2(b[0][1]+b[1][1]+b[2][1]-cy*3,b[0][0]+b[1][0]+b[2][0]-cx*3));
+}
+function morphLivePanel(panel,opening,complete){
+  const origin=chatOrbit();
+  if(opening){
+    const panelWidth=panel.offsetWidth,panelHeight=panel.offsetHeight;
+    panel.style.left=clamp(origin.x-panelWidth-26,16,Math.max(16,width-panelWidth-16))+'px';
+    panel.style.top=clamp(origin.y-panelHeight*.55,92,Math.max(92,height-panelHeight-116))+'px';
+    panel.style.bottom='auto';
+  }
+  if(reduced.matches){panel.style.opacity='';panel.style.pointerEvents='';complete();return}
+  if(!morphCanvas){morphCanvas=document.createElement('canvas');morphCanvas.className='live-morph-canvas';morphCtx=morphCanvas.getContext('2d');document.body.append(morphCanvas)}
+  const bounds=panel.getBoundingClientRect();
+  if(!bounds.width||!bounds.height||!morphCtx){panel.style.opacity='';panel.style.pointerEvents='';complete();return}
+  const faces=meshFaces({type:'ico',seed:4.9,sx:origin.x,sy:origin.y,sr:origin.r}).sort((a,b)=>Math.atan2(a.center[1],a.center[0])-Math.atan2(b.center[1],b.center[0]));
+  const targets=panelTriangles(bounds);
+  chatMorph={opening,complete,panel,origin,faces,targets,start:performance.now(),duration:720};
+  panel.style.pointerEvents='none';panel.style.opacity=opening?'0':'1';chatTarget.hidden=true;
+  morphCanvas.hidden=false;
+}
+function drawLiveMorph(now){
+  if(!chatMorph)return;
+  const m=chatMorph,t=clamp((now-m.start)/m.duration),u=smooth(m.opening?t:1-t),scatter=Math.sin(Math.PI*t);
+  const pixelWidth=Math.round(width*dpr),pixelHeight=Math.round(height*dpr);
+  if(morphCanvas.width!==pixelWidth||morphCanvas.height!==pixelHeight){morphCanvas.width=pixelWidth;morphCanvas.height=pixelHeight;morphCanvas.style.width=width+'px';morphCanvas.style.height=height+'px'}
+  morphCtx.setTransform(dpr,0,0,dpr,0,0);morphCtx.clearRect(0,0,width,height);
+  m.faces.forEach((face,i)=>{
+    const target=m.targets[i],sourceCenter=face.points.reduce((sum,p)=>[sum[0]+p[0]/3,sum[1]+p[1]/3],[0,0]);
+    const targetCenter=target.reduce((sum,p)=>[sum[0]+p[0]/3,sum[1]+p[1]/3],[0,0]);
+    const centerProgress=smooth((u-.04)/.92),sizeProgress=smooth((u-.4)/.58);
+    const angle=Math.atan2(targetCenter[1]-sourceCenter[1],targetCenter[0]-sourceCenter[0])+(i%2?.65:-.65);
+    const travel=20+(i%4)*7,dx=Math.cos(angle)*scatter*travel,dy=Math.sin(angle)*scatter*travel;
+    const cx=lerp(sourceCenter[0],targetCenter[0],centerProgress)+dx,cy=lerp(sourceCenter[1],targetCenter[1],centerProgress)+dy;
+    const points=face.points.map((p,j)=>[cx+lerp(p[0]-sourceCenter[0],target[j][0]-targetCenter[0],sizeProgress),cy+lerp(p[1]-sourceCenter[1],target[j][1]-targetCenter[1],sizeProgress)]);
+    morphCtx.beginPath();morphCtx.moveTo(...points[0]);morphCtx.lineTo(...points[1]);morphCtx.lineTo(...points[2]);morphCtx.closePath();
+    morphCtx.fillStyle=rgba(mix(colors.rose,[18,34,39],u),.64+.24*Math.sin(Math.PI*t));morphCtx.fill();
+    morphCtx.strokeStyle=rgba(mix(colors.rose,colors.mint,u),.45+.25*scatter);morphCtx.lineWidth=.9;morphCtx.stroke();
+  });
+  m.panel.style.opacity=String(m.opening?smooth((t-.72)/.28):1-smooth(t/.28));
+  if(t>=1){if(m.opening)morphCanvas.hidden=true;m.panel.style.opacity='';m.panel.style.pointerEvents='';chatMorph=null;m.complete()}
+}
 function generatedVisual(record,x,y,parentId){
   const childScene=record.children?.length?{id:record.id,title:record.label,description:record.summary,intro:record.summary,tint:'mint',generated:true,generatedRecord:record,nodes:record.children.map((child,i)=>generatedVisual(child,...positions(record.children.length)[i],record.id)),edges:[]}:null;
   return{id:record.id,name:record.label,meta:'GENERADO PARA TI',description:record.summary,color:colors.mint,x,y,r:30,type:'ico',children:childScene,generated:record,generatedParent:parentId||record.id,born:performance.now()};
@@ -487,7 +542,7 @@ function closePanel(keyboard=false){
 }
 function renderGuide(){
   const now=performance.now();if(pendingSpeech&&now>=pendingSpeech.at){const p=pendingSpeech;say(p.title,p.text,p.key,0)}
-  const bubble=$('speech-bubble');bubble.hidden=panelOpen||!speech||now>speech.expires;
+  const bubble=$('speech-bubble');bubble.hidden=panelOpen||livePanelOpen||!!chatMorph||!speech||now>speech.expires;
   if(bubble.hidden)return;
   const bw=bubble.offsetWidth||270,bh=bubble.offsetHeight||140,orbR=width<650?18:24;
   const left=clamp(companion.x-bw*.6,16,Math.max(16,width-bw-16));
@@ -543,14 +598,13 @@ function drawCompanion(dt){
   const hitSize=width<650?52:62;$('companion-target').style.transform=`translate(${orb.sx-hitSize/2}px,${orb.sy-hitSize/2}px)`;
 }
 function drawChatSatellite(){
-  const radius=width<650?17:21;
-  const drift=paused||reduced.matches?0:1;
-  const x=clamp(width*(width<650?.78:.79)+Math.sin(clock*.46+.7)*27*drift,64,width-40);
-  const y=clamp(height*(width<650?.67:.69)+Math.cos(clock*.37+.9)*31*drift,205,height-158);
+  if(livePanelOpen||chatMorph){chatTarget.hidden=true;return}
+  const {x,y,r:radius}=chatOrbit();chatTarget.hidden=false;
   const glow=liveUnread?1:.2;
   drawNode({type:'ico',seed:4.9,color:colors.rose,hover:glow,weightTier:liveUnread?2:1,sx:x,sy:y,sr:radius},.96);
   ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=rgba([245,226,233],.9);ctx.font=`${width<650?13:15}px sans-serif`;ctx.fillText('✉',x,y+1);ctx.restore();
   chatTarget.style.transform=`translate(${x-radius-8}px,${y-radius-8}px)`;
+  if(morphCanvas&&!morphCanvas.hidden)morphCanvas.hidden=true;
 }
 function render(now){
   if(disposed)return;
@@ -565,7 +619,7 @@ function render(now){
     for(const n of[...nodes].sort((a,b)=>a.r-b.r))drawNode(n,hoverId&&hoverId!==n.id?.55:1);
     placeTargets(1);
   }
-  renderAperture();placePanel();drawCompanion(dt);drawChatSatellite();renderGuide();requestAnimationFrame(render);
+  renderAperture();placePanel();drawCompanion(dt);drawChatSatellite();drawLiveMorph(now);renderGuide();requestAnimationFrame(render);
 }
 function setPaused(value){paused=value;$('pause').setAttribute('aria-pressed',String(value));$('pause').setAttribute('aria-label',value?'Reanudar movimiento':'Pausar movimiento');$('pause').title=value?'Reanudar movimiento':'Pausar movimiento';$('pause').innerHTML=value?'<svg viewBox="0 0 24 24"><path d="m9 5 10 7-10 7Z"/></svg>':'<svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg>';$('motion-status').textContent=value?'Movimiento en pausa':'Sistema en movimiento';document.querySelector('.live-dot').style.background=value?'#7d8790':'var(--mint)'}
 function changeZoom(amount){if(travel||systemTravel)return;targetZoom=clamp(targetZoom+amount,.65,1.6);syncZoomUI()}
@@ -636,5 +690,5 @@ const stopPanelDrag=()=>{panelDrag=null};handle.addEventListener('pointerup',sto
 handle.addEventListener('keydown',event=>{const step=event.shiftKey?30:10,delta={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[event.key];if(!delta)return;event.preventDefault();event.stopPropagation();panelWorld.x+=delta[0]/zoom;panelWorld.y+=delta[1]/zoom;placePanel()});
 
 $('level-title').setAttribute('tabindex','-1');resize();nodes=instantiate(root);bindNodes();updateUI();setPaused(paused);say('Tu recorrido',root.intro,'welcome',12000);requestAnimationFrame(render);
-return {dispose(){disposed=true},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>chatTarget.setAttribute('aria-expanded',String(open)),focusLiveNode:()=>chatTarget.focus({preventScroll:true}),nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
+return {dispose(){disposed=true;morphCanvas?.remove();chatTarget.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
 }

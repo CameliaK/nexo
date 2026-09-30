@@ -8,7 +8,7 @@ import type { TracePlayer } from './system/traces';
 export interface Universe {
   navigate(id:string):Promise<unknown>;isSystem():boolean;exitSystem():Promise<unknown>;openAgent():void;
   spawnGenerated(node:GeneratedNode,anchor?:string|null,restored?:boolean):void;removeGenerated(id:string):void;
-  inspectGenerated(id:string):void;setUnread(count:number):void;setChatMessage(text:string,from:'owner'|'visitor'):void;setLiveOpen(open:boolean):void;focusLiveNode():void;nodeExists(id:string):boolean;nodeLabel(id:string):string;
+  inspectGenerated(id:string):void;setUnread(count:number):void;setChatMessage(text:string,from:'owner'|'visitor'):void;setLiveOpen(open:boolean):void;morphLivePanel(panel:HTMLElement,opening:boolean,complete:()=>void):void;focusLiveNode():void;nodeExists(id:string):boolean;nodeLabel(id:string):string;
 }
 function element<K extends keyof HTMLElementTagNameMap>(tag:K,text='',className='') {const e=document.createElement(tag);e.textContent=text;e.className=className;return e}
 const read=(key:string)=>{try{return localStorage.getItem(key)}catch{return null}};
@@ -20,7 +20,7 @@ export class Chats {
   private state:ConnectionState='closed';private busy=false;private cooldown=0;private pendingSend=false;private lastQuestion='';private stopped=false;
   private inbox:EventInbox;private runs=new Map<string,AgentRun>();private activeRun:string|null=null;
   private routeQueue:string[]=[];private routing=false;private generated=new Map<string,GeneratedNode>();
-  private ids=new Set(portfolio.nodes.map(n=>n.id));private liveRows=new Map<string,LiveRow>();private liveOpen=false;private unread=new Set<string>();
+  private ids=new Set(portfolio.nodes.map(n=>n.id));private liveRows=new Map<string,LiveRow>();private liveOpen=false;private liveTransition:'opening'|'closing'|null=null;private closeAfterOpen=false;private unread=new Set<string>();
   private livePanel=element('section','','live-panel');private liveHistory=element('div','','chat-history live-history');
   private liveInput=element('textarea');private liveName=element('input');private nameWrap=element('label','','live-name');
   private liveHint=element('p','','chat-hint');private liveCounter=element('span','','chat-counter');private liveSend=element('button','Enviar','chat-send');
@@ -77,8 +77,24 @@ export class Chats {
     const go=element('button','Ir ahora');go.onclick=async()=>{await this.universe.exitSystem();this.routeNotice.hidden=true;void this.drainRoute()};this.routeNotice.append(this.routeLabel,go);this.routeNotice.hidden=true;document.body.append(this.routeNotice);
     this.inventory.append(element('summary','Generado para ti'),this.inventoryList);this.inventory.hidden=true;document.body.append(this.inventory);
   }
-  openLive(){this.liveOpen=true;this.livePanel.hidden=false;this.universe.setLiveOpen(true);this.unread.clear();save('nexo.live.readAt',new Date().toISOString());this.updateUnread();this.liveInput.focus();this.liveHistory.scrollTop=this.liveHistory.scrollHeight}
-  closeLive(){this.liveOpen=false;this.livePanel.hidden=true;this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode()}
+  openLive(){
+    if(this.liveOpen||this.liveTransition)return;
+    this.liveOpen=true;this.liveTransition='opening';this.livePanel.hidden=false;this.universe.setLiveOpen(true);
+    this.unread.clear();save('nexo.live.readAt',new Date().toISOString());this.updateUnread();
+    this.universe.morphLivePanel(this.livePanel,true,()=>{
+      this.liveTransition=null;
+      if(this.closeAfterOpen){this.closeAfterOpen=false;this.closeLive();return}
+      this.liveInput.focus();this.liveHistory.scrollTop=this.liveHistory.scrollHeight;
+    });
+  }
+  closeLive(){
+    if(this.liveTransition==='opening'){this.closeAfterOpen=true;return}
+    if(!this.liveOpen||this.liveTransition)return;
+    this.liveTransition='closing';this.liveInput.blur();
+    this.universe.morphLivePanel(this.livePanel,false,()=>{
+      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode();
+    });
+  }
   escape(){if(this.liveOpen){this.closeLive();return true}return false}
   private updateUnread(){this.universe.setUnread(this.unread.size);}
   private refresh(){

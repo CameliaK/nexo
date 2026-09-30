@@ -46,6 +46,7 @@
 @media(max-width:650px){.live-panel>.panel-surface{max-height:calc(100dvh - 225px);overflow-y:auto;scrollbar-width:thin}}
 
 /* The owner's conversation has its own drifting node in every scene. */
+.live-morph-canvas{position:fixed;inset:0;z-index:23;pointer-events:none}.live-morph-canvas[hidden]{display:none}
 .floating-live-chat{position:fixed;left:0;top:0;width:58px;height:58px;z-index:13;border:0;border-radius:50%;padding:0;background:transparent;cursor:pointer;color:#f6dce4;filter:drop-shadow(0 0 10px #e097a455);touch-action:manipulation}
 .floating-live-chat:hover{filter:drop-shadow(0 0 16px #e097a4aa)}.floating-live-chat:focus-visible{outline:1px solid #f4bbc9;outline-offset:4px}
 .floating-live-caption{position:absolute;top:59px;left:50%;transform:translateX(-50%);width:112px;text-align:center;font:8px 'Space Grotesk',sans-serif;letter-spacing:.12em;color:#d8b3bf;white-space:nowrap;text-shadow:0 2px 8px #071018}
