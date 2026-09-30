@@ -22,3 +22,28 @@ services:
       - "traefik.http.routers.web-nexo.entrypoints=web"
       - "traefik.http.services.web-nexo.loadbalancer.server.port=80"
     restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  gateway:
+    build: ./gateway-go
+    environment:
+      - DOCKER_API_VERSION=1.44
+      - REDIS_URL=redis://redis:6379
+      - PASETO_LOCAL_KEY=${PASETO_LOCAL_KEY:-}
+      - TOKEN_EXPIRY=24h
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gateway.rule=PathPrefix(`/health`) || PathPrefix(`/auth`) || PathPrefix(`/api`) || PathPrefix(`/ws`)"
+      - "traefik.http.routers.gateway.entrypoints=web"
+      - "traefik.http.services.gateway.loadbalancer.server.port=8080"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis_data:
