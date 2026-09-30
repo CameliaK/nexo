@@ -1,0 +1,341 @@
+{
+  "meta": {
+    "contract_version": 2,
+    "notes": [
+      "Grafo ESTÁTICO del backend. La UI lo dibuja y lo ilumina con los eventos trace.hop.",
+      "Un hop se dibuja sobre la arista que une from y to, sin importar el sentido.",
+      "layer sugiere la columna al dibujar, de izquierda a derecha (0 a 4). La UI decide el layout final.",
+      "Los ids de componentes son strings abiertos: se pueden agregar más (por ejemplo el ajedrez) sin cambiar los tipos.",
+      "contribution es opcional: el dueño puede añadir su aportación por componente. Mientras sea null, se omite.",
+      "flows es solo para la leyenda y la documentación; la animación real viene de trace.hop."
+    ]
+  },
+  "components": [
+    {
+      "id": "browser",
+      "label": "Tu navegador",
+      "tech": "React",
+      "kind": "client",
+      "layer": 0,
+      "what": "Donde estás ahora: la interfaz que ves y desde la que haces preguntas y escribes mensajes.",
+      "contribution": null
+    },
+    {
+      "id": "traefik",
+      "label": "Traefik",
+      "tech": "Traefik",
+      "kind": "edge",
+      "layer": 1,
+      "what": "La puerta de entrada. Recibe todo el tráfico, pone el candado HTTPS y lo reparte al servicio correcto.",
+      "contribution": null
+    },
+    {
+      "id": "gateway",
+      "label": "Gateway",
+      "tech": "Go",
+      "kind": "api",
+      "layer": 2,
+      "what": "Identifica al visitante, limita el uso y empuja a tu navegador, en vivo, todo lo que va pasando.",
+      "contribution": null
+    },
+    {
+      "id": "redis",
+      "label": "Redis",
+      "tech": "Redis",
+      "kind": "bus",
+      "layer": 2,
+      "what": "La mensajería instantánea entre servicios y la memoria rápida de las sesiones.",
+      "contribution": null
+    },
+    {
+      "id": "agent",
+      "label": "Agente",
+      "tech": "Python + FastAPI",
+      "kind": "service",
+      "layer": 3,
+      "what": "Decide a dónde llevarte, busca información y diseña los nodos nuevos cuando hace falta.",
+      "contribution": null
+    },
+    {
+      "id": "n8n",
+      "label": "n8n",
+      "tech": "n8n",
+      "kind": "orchestrator",
+      "layer": 4,
+      "what": "Ejecuta paso a paso los flujos largos, como crear un nodo o avisarme de tu mensaje, y se ve mientras trabaja.",
+      "contribution": null
+    },
+    {
+      "id": "llm",
+      "label": "Modelo de lenguaje",
+      "tech": "Proveedor de LLM",
+      "kind": "ml",
+      "layer": 4,
+      "what": "La IA que entiende la pregunta y redacta las respuestas. Está detrás de una interfaz, así que se puede cambiar.",
+      "contribution": null
+    },
+    {
+      "id": "postgres",
+      "label": "Postgres + pgvector",
+      "tech": "PostgreSQL",
+      "kind": "data",
+      "layer": 4,
+      "what": "Guarda los nodos generados y los mensajes del chat, y permite buscar por significado con vectores.",
+      "contribution": null
+    },
+    {
+      "id": "owner_channel",
+      "label": "Mi teléfono",
+      "tech": "WhatsApp o Telegram",
+      "kind": "external",
+      "layer": 4,
+      "what": "Donde me llegan los mensajes del chat en vivo. Respondo desde ahí y mi respuesta aparece en tu pantalla.",
+      "contribution": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "browser-traefik",
+      "from": "browser",
+      "to": "traefik",
+      "kind": "request",
+      "label": "HTTPS"
+    },
+    {
+      "id": "traefik-gateway",
+      "from": "traefik",
+      "to": "gateway",
+      "kind": "request",
+      "label": "Reparte la petición"
+    },
+    {
+      "id": "gateway-browser",
+      "from": "gateway",
+      "to": "browser",
+      "kind": "event",
+      "label": "WebSocket: eventos en vivo"
+    },
+    {
+      "id": "gateway-redis",
+      "from": "gateway",
+      "to": "redis",
+      "kind": "event",
+      "label": "Sesiones y eventos"
+    },
+    {
+      "id": "gateway-agent",
+      "from": "gateway",
+      "to": "agent",
+      "kind": "request",
+      "label": "Envía la pregunta"
+    },
+    {
+      "id": "gateway-postgres",
+      "from": "gateway",
+      "to": "postgres",
+      "kind": "request",
+      "label": "Guarda y lee mensajes"
+    },
+    {
+      "id": "gateway-n8n",
+      "from": "gateway",
+      "to": "n8n",
+      "kind": "request",
+      "label": "Pasa el mensaje del chat en vivo"
+    },
+    {
+      "id": "agent-llm",
+      "from": "agent",
+      "to": "llm",
+      "kind": "request",
+      "label": "Entiende y redacta"
+    },
+    {
+      "id": "agent-postgres",
+      "from": "agent",
+      "to": "postgres",
+      "kind": "request",
+      "label": "Busca y guarda"
+    },
+    {
+      "id": "agent-n8n",
+      "from": "agent",
+      "to": "n8n",
+      "kind": "request",
+      "label": "Lanza los flujos largos"
+    },
+    {
+      "id": "agent-redis",
+      "from": "agent",
+      "to": "redis",
+      "kind": "event",
+      "label": "Publica eventos"
+    },
+    {
+      "id": "n8n-postgres",
+      "from": "n8n",
+      "to": "postgres",
+      "kind": "request",
+      "label": "Lee y guarda"
+    },
+    {
+      "id": "n8n-llm",
+      "from": "n8n",
+      "to": "llm",
+      "kind": "request",
+      "label": "Diseña los nodos"
+    },
+    {
+      "id": "n8n-redis",
+      "from": "n8n",
+      "to": "redis",
+      "kind": "event",
+      "label": "Publica eventos"
+    },
+    {
+      "id": "n8n-owner_channel",
+      "from": "n8n",
+      "to": "owner_channel",
+      "kind": "request",
+      "label": "Envía y recibe mensajes"
+    }
+  ],
+  "flows": [
+    {
+      "id": "chat-rapido",
+      "label": "Pregunta que ya tiene nodo",
+      "description": "El agente entiende la pregunta y te lleva a un nodo que ya existe. No pasa por n8n.",
+      "hops": [
+        [
+          "browser",
+          "traefik"
+        ],
+        [
+          "traefik",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "agent"
+        ],
+        [
+          "agent",
+          "llm"
+        ],
+        [
+          "agent",
+          "redis"
+        ],
+        [
+          "redis",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "browser"
+        ]
+      ]
+    },
+    {
+      "id": "chat-profundo",
+      "label": "Pregunta que necesita un nodo nuevo",
+      "description": "No hay nodo: el agente lanza un flujo en n8n que busca en la base, diseña el nodo y lo guarda.",
+      "hops": [
+        [
+          "browser",
+          "traefik"
+        ],
+        [
+          "traefik",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "agent"
+        ],
+        [
+          "agent",
+          "llm"
+        ],
+        [
+          "agent",
+          "n8n"
+        ],
+        [
+          "n8n",
+          "postgres"
+        ],
+        [
+          "n8n",
+          "llm"
+        ],
+        [
+          "n8n",
+          "redis"
+        ],
+        [
+          "redis",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "browser"
+        ]
+      ]
+    },
+    {
+      "id": "live-out",
+      "label": "Tu mensaje me llega al teléfono",
+      "description": "El gateway guarda tu mensaje y n8n me lo envía.",
+      "hops": [
+        [
+          "browser",
+          "traefik"
+        ],
+        [
+          "traefik",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "postgres"
+        ],
+        [
+          "gateway",
+          "n8n"
+        ],
+        [
+          "n8n",
+          "owner_channel"
+        ]
+      ]
+    },
+    {
+      "id": "live-in",
+      "label": "Mi respuesta llega a tu pantalla",
+      "description": "Respondo desde el teléfono; n8n la guarda y el gateway te la empuja por el WebSocket.",
+      "hops": [
+        [
+          "owner_channel",
+          "n8n"
+        ],
+        [
+          "n8n",
+          "postgres"
+        ],
+        [
+          "n8n",
+          "redis"
+        ],
+        [
+          "redis",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "browser"
+        ]
+      ]
+    }
+  ]
+}
