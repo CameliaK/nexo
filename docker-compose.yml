@@ -29,6 +29,22 @@ services:
     volumes:
       - redis_data:/data
 
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      - POSTGRES_USER=nexo
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nexo}
+      - POSTGRES_DB=nexo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexo -d nexo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
   gateway:
     build: ./gateway-go
     environment:
@@ -52,14 +68,19 @@ services:
     environment:
       - DOCKER_API_VERSION=1.44
       - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://nexo:${POSTGRES_PASSWORD:-nexo}@postgres:5432/nexo
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
       - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
       - PORTFOLIO_PATH=/docs/portfolio-content.json
     volumes:
       - ./docs:/docs:ro
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   redis_data:
+  postgres_data:

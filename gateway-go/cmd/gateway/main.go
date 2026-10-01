@@ -35,6 +35,8 @@ func main() {
 	mux.HandleFunc("GET /auth/guest", auth.NewHandler(tokens, sessions))
 	mux.HandleFunc("GET /ws", ws.NewHandler(tokens, rdb))
 	mux.HandleFunc("POST /api/v1/chat", chat.NewHandler(tokens, rdb, cfg.AgentURL))
+	mux.HandleFunc("GET /api/v1/session/nodes", session.NewListNodesHandler(tokens.Verify, cfg.AgentURL))
+	mux.HandleFunc("DELETE /api/v1/session/nodes/{id}", session.NewDeleteNodeHandler(tokens.Verify, cfg.AgentURL))
 
 	log.Printf("gateway listening on :%s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
