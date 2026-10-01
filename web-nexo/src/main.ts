@@ -6,6 +6,7 @@ import { TracePlayer } from './system/traces';
 import { createSystemWindow, systemPositions } from './system/window';
 import createUniverse from './universe.js';
 import { Chats } from './chat';
+import { createChessUI, CHESS_NODE_VISIBLE } from './chess';
 
 async function start() {
   const setup = await createBackend(), backend = setup.backend;
@@ -16,7 +17,9 @@ async function start() {
   let reconnectTimer:ReturnType<typeof setTimeout>|undefined,reconnectDelay=1000,stopped=false;
   const reconnect=()=>{if(stopped||reconnectTimer)return;reconnectTimer=setTimeout(async()=>{reconnectTimer=undefined;try{await backend.connect()}catch{reconnectDelay=Math.min(15000,reconnectDelay*2);reconnect()}},reconnectDelay)};
   let chats: Chats;
+  const chess = createChessUI();
   const universe = createUniverse({ architecture, simulated: setup.simulated, traces, portal, positions: systemPositions(architecture), connection: () => connection,
+    chess, chessNodeVisible: CHESS_NODE_VISIBLE,
     onLiveOpen:()=>chats.openLive(),onSceneChanged:()=>chats?.sceneChanged(),onDiscard:(id:string)=>void chats.discard(id),onEscape:()=>chats.escape() });
   chats=new Chats(backend,universe,traces,setup.simulated);
   const stopEvents = backend.onEvent(event => {traces.receive(event);chats.receive(event)});
@@ -42,6 +45,6 @@ async function start() {
     panel.append(summary,help,buttons,status);document.body.append(panel);
   }
   try { await backend.connect(); } catch { portal.connection('closed'); }
-  addEventListener('pagehide', event => { if(event.persisted)return;stopped=true;clearTimeout(reconnectTimer);stopEvents(); stopConnection(); backend.disconnect(); chats.dispose();universe.dispose(); });
+  addEventListener('pagehide', event => { if(event.persisted)return;stopped=true;clearTimeout(reconnectTimer);stopEvents(); stopConnection(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
 }
 start().catch(error => { console.error(error);document.getElementById('announcement')!.textContent='No se pudo iniciar el explorador.'; });

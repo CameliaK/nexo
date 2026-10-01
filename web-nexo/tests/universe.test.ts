@@ -8,7 +8,7 @@ import architecture from '../src/data/backend-architecture.json';
 import { TracePlayer } from '../src/system/traces';
 import { systemPositions } from '../src/system/window';
 
-function fixture(){
+function fixture(withChess=false){
  let activeElement,now=0,raf;
  class Element{
   children=[];handlers={};attributes={};style={setProperty(k,v){this[k]=v}};dataset={};hidden=false;textContent='';classes=new Set();offsetWidth=260;offsetHeight=125;
@@ -20,14 +20,23 @@ function fixture(){
  const context=new Proxy({createRadialGradient:()=>gradient,createLinearGradient:()=>gradient},{get:(t,k)=>t[k]||((...args)=>{for(const v of args)if(typeof v==='number')assert.ok(Number.isFinite(v),'Canvas coordinates stay finite')})});
  el('space').getContext=()=>context;
  const listeners={},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
+ let chessOpen=false,closeChess;
+ if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,open:origin=>{assert.equal(origin.faces.length,80);chessOpen=true},setOnClosed:fn=>closeChess=fn};}
  const sandbox={console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:false,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:(k,f)=>listeners[k]=f,document:{getElementById:el,querySelector:el,createElement:tag=>{const item=new Element();if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener(){},body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let source=fs.readFileSync('src/universe.js','utf8').replace("import portfolio from './data/portfolio-content.json';",'').replace('export default function createUniverse(system) {','(function(system){');
- source=source.replace('return {dispose(){disposed=true;morphCanvas?.remove();chatTarget.remove()},', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,chatTarget,setLiveOpen:open=>{livePanelOpen=open},getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {dispose(){disposed=true;morphCanvas?.remove();chatTarget.remove()},');
+ source=source.replace('return {dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,chatTarget,setLiveOpen:open=>{livePanelOpen=open},getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {dispose(){');
  source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);
  const frames=(ms=2700)=>{const end=now+ms;while(now<end){now=Math.min(end,now+50);raf(now)}};
  const enter=id=>{el('node-targets').children.find(e=>e.dataset.node===id).click();frames()};
- return {api:sandbox.api,el,frames,enter,traces,sandbox,listeners};
+ return {api:sandbox.api,el,frames,enter,traces,sandbox,listeners,closeChess:()=>{chessOpen=false;closeChess()},chessTarget:()=>el('body').children.find(e=>e.id==='floating-chess')};
 }
+test('Chess satellite stays disconnected, freezes the camera, and returns without changing portfolio nodes',()=>{
+ const {api,frames,chessTarget,closeChess,enter}=fixture(true);frames(100);
+ assert.equal(api.records.size,54);assert.equal(api.getNodes().length,5);assert.equal(api.getLevel().edges.length,5);assert.equal(chessTarget().hidden,false);
+ api.setCamera({x:75,y:-30},1.2);frames(100);const camera=JSON.stringify(api.camera());chessTarget().click();frames(1500);assert.equal(chessTarget().hidden,true);assert.equal(JSON.stringify(api.camera()),camera);
+ closeChess();frames(100);assert.equal(chessTarget().hidden,false);assert.equal(api.getNodes().length,5);assert.equal(api.getLevel().edges.length,5);
+ enter('experiencia');assert.equal(chessTarget().hidden,true);api.goBack();frames();assert.equal(chessTarget().hidden,false);
+});
 test('Live chat fragments into its panel and reassembles as a node',()=>{
  const {api,el,frames}=fixture();frames(100);
  const panel=el('live-panel');panel.hidden=false;let opened=0,closed=0;

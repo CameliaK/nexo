@@ -39,6 +39,16 @@ Los recuadros LAB y «Generado para ti» solo aparecen en desarrollo. Los nodos 
 - Los diálogos explican los componentes y las conexiones anotadas. Tab permite acceder también a las conexiones.
 - Los datos personales, contactos, métricas y aportaciones usan el JSON local. La fecha de nacimiento no se presenta: solo la edad calculada.
 
+## Ajedrez local
+
+En Inicio, el satélite **AJEDREZ** flota sin conexiones. Sus caras se subdividen para formar un tablero en perspectiva dentro del mismo Canvas del universo. Las casillas tienen grosor y las piezas son sólidos tridimensionales triangulados, con caras translúcidas, iluminación y profundidad. Los nodos se apartan suavemente alrededor de la partida y siguen visibles; pulsarlos repliega el tablero y continúa la exploración. El zoom y desplazamiento del universo también afectan al ajedrez. `CHESS_NODE_VISIBLE` en `src/chess/index.ts` controla su visibilidad para una futura entrada oculta.
+
+La partida es local para dos personas: Visitante lleva blancas y Kirbith negras. Clic o toque para seleccionar y mover, arrastre para llevar una pieza y flechas + Enter para jugar con teclado. Se muestran destinos legales, turno, jaque, capturas y notación algebraica. Puedes girar el tablero y empezar otra partida. Esc cancela una selección o un selector abierto; de lo contrario repliega el tablero. Los controles son pequeños elementos flotantes; no se abre una pantalla ni se oscurece el universo.
+
+`src/chess/game.ts` usa chess.js para validar jugadas, enroque, captura al paso, promoción, jaque mate, ahogado y material insuficiente. Triple repetición y 50 movimientos se reclaman mediante el botón de tablas; también admite anunciar la jugada que cumple la condición. Quíntuple repetición y 75 movimientos terminan automáticamente, con prioridad para el jaque mate. `spatial.ts` construye los sólidos, proyecta sus caras y calcula la selección en perspectiva; `geometry.ts` conserva el área de las caras durante la transformación.
+
+El estado vive en memoria: cerrar y abrir conserva la partida durante esa visita; recargar la página la reinicia. El módulo no usa almacenamiento, red, bots ni adaptadores del backend. Movimiento reducido omite animaciones. `tests/chess.test.ts` se incluye en `npm test`.
+
 ## Organización
 
 - `src/universe.js`: renderizador existente, navegación y cámara.
