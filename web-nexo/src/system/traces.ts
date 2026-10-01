@@ -2,7 +2,7 @@ import { isBackendEvent } from '../backend/types';
 import type { BackendArchitecture, BackendEvent, TraceHopEvent } from '../backend/types';
 export type LightState = 'idle' | 'active' | 'done' | 'error';
 export interface Hop { run: string; id: string; from: string; to: string; phase: LightState; label: string; detail: string; started: number; expires: number; duration?: number; }
-interface Run { expected: number; buffer: Map<number, BackendEvent>; queue: BackendEvent[]; next: number; allowed: boolean; }
+interface Run { expected: number; buffer: Map<number, BackendEvent>; preauth: BackendEvent[]; queue: BackendEvent[]; next: number; allowed: boolean; }
 export class TracePlayer {
   private known = new Set<string>();
   private runs = new Map<string, Run>();
@@ -14,14 +14,28 @@ export class TracePlayer {
   processed = 0;
   constructor(private architecture: BackendArchitecture, private now = () => performance.now()) { this.componentIds = new Set(architecture.components.map(n => n.id)); }
   private edgeExists(from: string, to: string) { return this.architecture.edges.some(e => e.from === from && e.to === to || e.from === to && e.to === from); }
-  register(run: string, outgoing = true) { this.known.add(run); if (outgoing) this.pulse(run, 'browser', 'traefik', 'Enviando la petición'); }
+  register(run: string, outgoing = true) {
+    this.known.add(run);
+    if (outgoing) this.pulse(run, 'browser', 'traefik', 'Enviando la petición');
+    // Late-approval: flush preauth buffer if events arrived before register() was called.
+    const existing = this.runs.get(run);
+    if (existing && !existing.allowed) {
+      existing.allowed = true;
+      for (const event of existing.preauth) {
+        existing.queue.push(event);
+        this.pulse(run, 'redis', 'gateway', 'Evento recibido');
+        this.pulse(run, 'gateway', 'browser', 'Evento recibido', 180);
+      }
+      existing.preauth = [];
+    }
+  }
   receive(value: unknown) {
     if (!isBackendEvent(value) || !Number.isSafeInteger(value.seq) || value.seq < 1 || this.rejected.has(value.run_id)) return;
     const event = value;
     let run = this.runs.get(event.run_id);
     if (!run) {
       if (this.runs.size >= 64) return;
-      run = { expected: 1, buffer: new Map(), queue: [], next: 0, allowed: false }; this.runs.set(event.run_id, run);
+      run = { expected: 1, buffer: new Map(), preauth: [], queue: [], next: 0, allowed: false }; this.runs.set(event.run_id, run);
     }
     if (event.seq < run.expected || run.buffer.has(event.seq) || run.buffer.size >= 256) return;
     run.buffer.set(event.seq, event);
@@ -29,9 +43,8 @@ export class TracePlayer {
       const current = run.buffer.get(run.expected)!; run.buffer.delete(run.expected++);
       if (current.type === 'run.start') {
         run.allowed = this.known.has(current.run_id) || current.data.kind === 'live_in';
-        if (!run.allowed) { this.rejected.add(current.run_id); this.runs.delete(current.run_id); return; }
       }
-      if (!run.allowed) continue;
+      if (!run.allowed) { run.preauth.push(current); continue; }
       run.queue.push(current);
       // These pulses belong to transport reception, not to a service-emitted hop.
       this.pulse(current.run_id, 'redis', 'gateway', 'Evento recibido');

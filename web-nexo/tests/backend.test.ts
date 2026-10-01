@@ -57,8 +57,16 @@ test('Trace player: unsolicited live-in accepted; other tabs and unknown compone
   player.receive(event(1,'run.start',{kind:'live_in',content_version:3},'incoming'));player.tick();player.receive(hop(2,'h','owner_channel','n8n','start','incoming'));clock.advance(150);player.tick();assert.equal(player.light('n8n').state,'active');assert.equal(player.edge('n8n','owner_channel').state,'active');assert.equal(player.edge('redis','gateway').state,'active');
   player.receive(hop(3,'unknown','missing','llm','start','incoming'));clock.advance(150);player.tick();assert.equal(player.light('llm').state,'idle');
 });
-test('Real skeleton stays unavailable and never simulates',async()=>{
-  const backend=new RealBackend(),events:BackendEvent[]=[];backend.onEvent(e=>events.push(e));await assert.rejects(()=>backend.connect(),{status:503});await assert.rejects(()=>backend.sendMessage('Hola'),{status:503});assert.equal(events.length,0);
+test('Real backend: HTTP methods require token; live chat endpoints permanently unavailable',async()=>{
+  const backend=new RealBackend(),events:BackendEvent[]=[];backend.onEvent(e=>events.push(e));
+  // Without a prior connect() the token is null — all HTTP methods reject immediately.
+  await assert.rejects(()=>backend.sendMessage('Hola'),{status:503});
+  await assert.rejects(()=>backend.listGeneratedNodes(),{status:503});
+  await assert.rejects(()=>backend.deleteGeneratedNode('x'),{status:503});
+  // Phase 5 not built yet — live chat must always reject 503.
+  await assert.rejects(()=>backend.sendLiveMessage('Hola'),{status:503});
+  await assert.rejects(()=>backend.listLiveMessages(),{status:503});
+  assert.equal(events.length,0);
 });
 
 test('Chat inbox orders chunks, deduplicates, rejects other tabs and accepts live replies',()=>{
@@ -72,6 +80,23 @@ test('Chat inbox orders chunks, deduplicates, rejects other tabs and accepts liv
   assert.equal(received.length,5);assert.equal(received.at(-1)?.run_id,'owner');
 });
 
+test('Inbox + TracePlayer: late register approves events that arrived before the HTTP response (WS race)',()=>{
+  // Simulate: WS events arrive before register() (HTTP POST resolves after WS push)
+  const received:BackendEvent[]=[],inbox=new EventInbox(e=>received.push(e));
+  inbox.receive(event(1,'run.start',{kind:'chat',content_version:3},'r1'));
+  inbox.receive(event(2,'answer.chunk',{text:'streaming'},'r1'));
+  inbox.receive(event(3,'run.done',{outcome:'route',duration_ms:100},'r1'));
+  assert.equal(received.length,0,'nothing delivered before register');
+  inbox.register('r1');
+  assert.deepEqual(received.map(e=>e.seq),[1,2,3],'all events flushed in order on late register');
+  // TracePlayer: same race
+  const clock=new FakeClock(),player=new TracePlayer(architecture as BackendArchitecture,clock.now);
+  player.receive(event(1,'run.start',{kind:'chat',content_version:3},'r2'));
+  player.receive(hop(2,'h1','gateway','agent','start','r2'));
+  player.tick();assert.equal(player.light('agent').state,'idle','no events processed before register');
+  player.register('r2');player.tick();clock.advance(150);player.tick();
+  assert.equal(player.light('agent').state,'active','events flushed and hop applied after late register');
+});
 test('Generated schema checks every layout, sources, nested IDs and bounds',()=>{
   const ids=new Set(portfolio.nodes.map(n=>n.id));
   const base={id:'gen_test',generated:true,label:'Prueba',summary:'Resumen',created_at:'2026-09-29T00:00:00Z',sources:[{title:'Infosys',ref:'experiencia.infosys'}]};

@@ -5,20 +5,35 @@ import type { BackendEvent } from './types';
  * affect this tab; owner replies are allowed without an outgoing request. */
 export class EventInbox {
   private known=new Set<string>();
-  private runs=new Map<string,{next:number;allowed:boolean;pending:Map<number,BackendEvent>}>();
+  private runs=new Map<string,{next:number;allowed:boolean;pending:Map<number,BackendEvent>;preauth:BackendEvent[]}>();
   private closed=new Set<string>();
   constructor(private deliver:(event:BackendEvent)=>void){}
-  register(id:string){this.known.add(id)}
+  register(id:string){
+    this.known.add(id);
+    // Late-approval: WS events can arrive before the HTTP response that carries run_id.
+    const run=this.runs.get(id);
+    if(run&&!run.allowed){
+      run.allowed=true;
+      for(const event of run.preauth)this.deliver(event);
+      run.preauth=[];
+      while(run.pending.has(run.next)){
+        const event=run.pending.get(run.next)!;run.pending.delete(run.next++);
+        this.deliver(event);
+        if(event.type==='run.done'||event.type==='run.error'){this.finish(id);return}
+      }
+    }
+  }
   receive(value:unknown){
     if(!isBackendEvent(value)||!Number.isSafeInteger(value.seq)||value.seq<1||this.closed.has(value.run_id))return;
     let run=this.runs.get(value.run_id);
-    if(!run){if(this.runs.size>=64)return;run={next:1,allowed:false,pending:new Map()};this.runs.set(value.run_id,run)}
+    if(!run){if(this.runs.size>=64)return;run={next:1,allowed:false,pending:new Map(),preauth:[]};this.runs.set(value.run_id,run)}
     if(value.seq<run.next||run.pending.has(value.seq)||run.pending.size>=256)return;
     run.pending.set(value.seq,value);
     while(run.pending.has(run.next)){
       const event=run.pending.get(run.next)!;run.pending.delete(run.next++);
-      if(event.type==='run.start'){run.allowed=this.known.has(event.run_id)||event.data.kind==='live_in';if(!run.allowed){this.finish(event.run_id);return}}
-      if(run.allowed)this.deliver(event);
+      if(event.type==='run.start'){run.allowed=this.known.has(event.run_id)||event.data.kind==='live_in'}
+      if(!run.allowed){run.preauth.push(event);continue}
+      this.deliver(event);
       if(event.type==='run.done'||event.type==='run.error'){this.finish(event.run_id);return}
     }
   }
