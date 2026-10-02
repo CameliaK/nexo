@@ -72,6 +72,9 @@ services:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
       - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
       - PORTFOLIO_PATH=/docs/portfolio-content.json
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/nexo-deep-route
+      - RAG_SIMILARITY_THRESHOLD=${RAG_SIMILARITY_THRESHOLD:-0.75}
+      - ROUTE_CONFIDENCE_THRESHOLD=${ROUTE_CONFIDENCE_THRESHOLD:-0.7}
     volumes:
       - ./docs:/docs:ro
     depends_on:
@@ -79,8 +82,36 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    restart: unless-stopped
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:1
+    environment:
+      - DOCKER_API_VERSION=1.44
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-nexo-dev-change-in-prod}
+      - N8N_LOG_LEVEL=info
+      - WEBHOOK_URL=http://n8n:5678/
+      - EXECUTIONS_PROCESS=main
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
+    entrypoint: ["/bin/sh", "/scripts/entrypoint.sh"]
+    volumes:
+      - ./orchestrator-n8n:/scripts:ro
+      - ./orchestrator-n8n/workflows:/workflows:ro
+      - n8n_data:/home/node/.n8n
+    ports:
+      - "5678:5678"
+    depends_on:
+      agent:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   redis_data:
   postgres_data:
+  n8n_data:

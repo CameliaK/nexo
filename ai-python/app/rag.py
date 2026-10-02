@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 log = logging.getLogger(__name__)
 
 _MODEL_NAME = "all-MiniLM-L6-v2"
-SIMILARITY_THRESHOLD = 0.75
+_SIMILARITY_THRESHOLD_DEFAULT = 0.75
 _TOP_K = 5
 
 
@@ -40,7 +40,7 @@ async def search(
     query: str,
     model: EmbeddingModel,
     pool: asyncpg.Pool,
-    threshold: float = SIMILARITY_THRESHOLD,
+    threshold: float = _SIMILARITY_THRESHOLD_DEFAULT,
     top_k: int = _TOP_K,
 ) -> list[RagHit]:
     loop = asyncio.get_running_loop()
@@ -59,17 +59,20 @@ async def search(
             top_k,
         )
 
-    return [
-        RagHit(
-            node_id=row["node_id"],
-            title=row["title"],
-            score=float(row["score"]),
-            source=row["source"],
-            body=row["body"],
-        )
-        for row in rows
-        if float(row["score"]) >= threshold
-    ]
+    hits = []
+    for row in rows:
+        score = float(row["score"])
+        log.debug("rag candidate: %s score=%.4f threshold=%.2f", row["title"], score, threshold)
+        if score >= threshold:
+            hits.append(RagHit(
+                node_id=row["node_id"],
+                title=row["title"],
+                score=score,
+                source=row["source"],
+                body=row["body"],
+            ))
+    log.info("rag search '%s': %d/%d rows above threshold %.2f", query[:60], len(hits), len(rows), threshold)
+    return hits
 
 
 async def ingest(portfolio_path: str, model: EmbeddingModel, pool: asyncpg.Pool) -> int:

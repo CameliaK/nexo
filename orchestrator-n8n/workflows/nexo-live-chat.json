@@ -1,0 +1,49 @@
+{
+  "id": "a1b2c3d4-e5f6-7891-a2b3-c4d5e6f7a8b9",
+  "name": "Nexo Live Chat",
+  "active": true,
+  "nodes": [
+    {
+      "id": "lc-01-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [80, 300],
+      "webhookId": "nexo-live-chat-v1",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexo-live-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "lc-02-respond",
+      "name": "Respond Not Implemented",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [300, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { 'status': 'not_implemented', 'phase': 5, 'message': 'Live chat workflow (Phase 5) not built yet' } }}",
+        "options": {
+          "responseCode": 501
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [{"node": "Respond Not Implemented", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "versionId": "1"
+}

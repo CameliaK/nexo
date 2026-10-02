@@ -1,0 +1,323 @@
+{
+  "id": "f1e2d3c4-b5a6-7891-0a1b-2c3d4e5f6a7b",
+  "name": "Nexo Deep Route",
+  "active": true,
+  "nodes": [
+    {
+      "id": "01-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [80, 300],
+      "webhookId": "nexo-deep-route-v1",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexo-deep-route",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "02-pub-rag-start",
+      "name": "Publish RAG Start",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent:8000/internal/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'events': [{'type': 'rag.search', 'data': {'query': $('Webhook Trigger').first().json.body.query} }, {'type': 'trace.hop', 'data': {'hop_id': 'h5', 'from': 'n8n', 'to': 'postgres', 'phase': 'start', 'label': 'Búsqueda por significado (pgvector)'} }] } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "03-rag-search",
+      "name": "RAG Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent:8000/internal/rag_search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'query': $('Webhook Trigger').first().json.body.query } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "04-pub-rag-end",
+      "name": "Publish RAG End",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [740, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent:8000/internal/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'events': [{'type': 'rag.result', 'data': {'hits': $('RAG Search').first().json.hits.map(h => ({title: h.title, score: h.score, source: h.source})), 'used': $('RAG Search').first().json.used} }, {'type': 'trace.hop', 'data': {'hop_id': 'h5', 'from': 'n8n', 'to': 'postgres', 'phase': 'end', 'detail': String($('RAG Search').first().json.hits.length) + ' fragmentos relevantes', 'duration_ms': 0} }] } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "05-check-hits",
+      "name": "Check Hits Used",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [960, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-hits",
+              "leftValue": "={{ $('RAG Search').first().json.used }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "06-pub-design-start",
+      "name": "Publish Design Start",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1180, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent:8000/internal/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'events': [{'type': 'process.step', 'data': {'step': 'search_base', 'status': 'done'} }, {'type': 'process.step', 'data': {'step': 'design_node', 'status': 'active', 'label': 'Diseñando el nodo'} }, {'type': 'trace.hop', 'data': {'hop_id': 'h6', 'from': 'n8n', 'to': 'llm', 'phase': 'start', 'label': 'Diseña el nodo'} }] } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "07-design-node",
+      "name": "Design Node",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent:8000/internal/design_node",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'question': $('Webhook Trigger').first().json.body.question, 'hits': $('RAG Search').first().json.hits } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "08-pub-design-end",
+      "name": "Publish Design End",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1620, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent:8000/internal/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'events': [{'type': 'trace.hop', 'data': {'hop_id': 'h6', 'from': 'n8n', 'to': 'llm', 'phase': 'end', 'detail': $('Design Node').first().json.node ? 'Nodo diseñado' : 'Diseño fallido', 'duration_ms': 0} }, {'type': 'process.step', 'data': {'step': 'design_node', 'status': $('Design Node').first().json.node ? 'done' : 'skipped'} }] } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "09-check-node",
+      "name": "Check Node Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1840, 200],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-node",
+              "leftValue": "={{ !!$('Design Node').first().json.node }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "10-pub-save-start",
+      "name": "Publish Save Start",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2060, 100],
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent:8000/internal/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'events': [{'type': 'process.step', 'data': {'step': 'create_node', 'status': 'active', 'label': 'Creando el nodo'} }, {'type': 'trace.hop', 'data': {'hop_id': 'h7', 'from': 'n8n', 'to': 'postgres', 'phase': 'start', 'label': 'Guarda el nodo para este visitante'} }] } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "11-save-node",
+      "name": "Save Node",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2280, 100],
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent:8000/internal/save_node",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'node': $('Design Node').first().json.node } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "12-pub-save-end",
+      "name": "Publish Save End",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2500, 100],
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent:8000/internal/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'events': [{'type': 'node.spawn', 'data': {'anchor': $('Save Node').first().json.anchor, 'node': $('Design Node').first().json.node} }, {'type': 'trace.hop', 'data': {'hop_id': 'h7', 'from': 'n8n', 'to': 'postgres', 'phase': 'end', 'duration_ms': 0} }] } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "13-respond-generated",
+      "name": "Respond Generated",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2720, 100],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { 'outcome': 'generated', 'node': $('Design Node').first().json.node } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "14-respond-unknown-no-node",
+      "name": "Respond Unknown No Node",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2060, 320],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { 'outcome': 'unknown', 'node': null } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "15-respond-unknown-no-hits",
+      "name": "Respond Unknown No Hits",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1180, 440],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { 'outcome': 'unknown', 'node': null } }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [{"node": "Publish RAG Start", "type": "main", "index": 0}]
+      ]
+    },
+    "Publish RAG Start": {
+      "main": [
+        [{"node": "RAG Search", "type": "main", "index": 0}]
+      ]
+    },
+    "RAG Search": {
+      "main": [
+        [{"node": "Publish RAG End", "type": "main", "index": 0}]
+      ]
+    },
+    "Publish RAG End": {
+      "main": [
+        [{"node": "Check Hits Used", "type": "main", "index": 0}]
+      ]
+    },
+    "Check Hits Used": {
+      "main": [
+        [{"node": "Publish Design Start", "type": "main", "index": 0}],
+        [{"node": "Respond Unknown No Hits", "type": "main", "index": 0}]
+      ]
+    },
+    "Publish Design Start": {
+      "main": [
+        [{"node": "Design Node", "type": "main", "index": 0}]
+      ]
+    },
+    "Design Node": {
+      "main": [
+        [{"node": "Publish Design End", "type": "main", "index": 0}]
+      ]
+    },
+    "Publish Design End": {
+      "main": [
+        [{"node": "Check Node Valid", "type": "main", "index": 0}]
+      ]
+    },
+    "Check Node Valid": {
+      "main": [
+        [{"node": "Publish Save Start", "type": "main", "index": 0}],
+        [{"node": "Respond Unknown No Node", "type": "main", "index": 0}]
+      ]
+    },
+    "Publish Save Start": {
+      "main": [
+        [{"node": "Save Node", "type": "main", "index": 0}]
+      ]
+    },
+    "Save Node": {
+      "main": [
+        [{"node": "Publish Save End", "type": "main", "index": 0}]
+      ]
+    },
+    "Publish Save End": {
+      "main": [
+        [{"node": "Respond Generated", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "versionId": "1"
+}

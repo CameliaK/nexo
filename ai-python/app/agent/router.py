@@ -5,6 +5,7 @@ import time
 from typing import AsyncIterator  # noqa: F401 — kept for LLMProvider type doc
 
 import asyncpg
+import httpx
 import redis.asyncio as aioredis
 
 from .. import node_builder
@@ -17,8 +18,14 @@ log = logging.getLogger(__name__)
 
 CONFIDENCE_THRESHOLD = 0.7
 
-# Raised when the LLM call fails so the outer handler can close the right hops.
+
 class _LLMError(Exception):
+    def __init__(self, h2_start: float) -> None:
+        self.h2_start = h2_start
+
+
+class _N8NError(Exception):
+    """Raised when the n8n webhook call fails; outer handler publishes run.error."""
     def __init__(self, h2_start: float) -> None:
         self.h2_start = h2_start
 
@@ -35,8 +42,16 @@ async def run(
     db_pool: asyncpg.Pool,
     rag_model: EmbeddingModel,
     route_threshold: float = CONFIDENCE_THRESHOLD,
+    n8n_webhook_url: str,
 ) -> None:
-    pub = EventPublisher(rdb, visitor_id, run_id, seq_start)
+    # Initialise the atomic seq counter and run metadata for /internal/events validation.
+    # TTL of 3600 s is intentional: a run this stale is already abandoned from the
+    # visitor's perspective; any late events would be silently dropped (404 from
+    # /internal/events), which is preferable to keeping stale keys forever.
+    await rdb.set(f"run:{run_id}:seq",     seq_start - 1, ex=3600)
+    await rdb.set(f"run:{run_id}:visitor", visitor_id,    ex=3600)
+
+    pub = EventPublisher(rdb, visitor_id, run_id)
     run_start = time.monotonic()
     h2_start = run_start
 
@@ -98,15 +113,14 @@ async def run(
             answer_system = _route_answer_system(input_text, path, portfolio)
         else:
             await pub.publish("process.step", {"step": "search_nodes", "status": "done"})
-            final_outcome, answer_hop_id, answer_system = await _deep_route(
+            final_outcome, answer_hop_id, answer_system = await _n8n_deep_route(
                 pub=pub,
-                llm=llm,
-                rag_model=rag_model,
-                db_pool=db_pool,
-                visitor_id=visitor_id,
                 run_id=run_id,
+                visitor_id=visitor_id,
                 input_text=input_text,
                 understand_result=result,
+                n8n_webhook_url=n8n_webhook_url,
+                h2_start=h2_start,
             )
 
         # ── Answer phase (shared for all outcomes) ────────────────────────────
@@ -148,6 +162,20 @@ async def run(
         run_ms = int((time.monotonic() - run_start) * 1000)
         await pub.publish("run.done", {"outcome": final_outcome, "duration_ms": run_ms})
 
+    except _N8NError as exc:
+        h2_ms = int((time.monotonic() - exc.h2_start) * 1000)
+        await pub.publish("trace.hop", {
+            "hop_id": "h2", "from": "gateway", "to": "agent",
+            "phase": "error",
+            "detail": "El flujo de búsqueda no está disponible",
+            "duration_ms": h2_ms,
+        })
+        await pub.publish("run.error", {
+            "code": "internal",
+            "message": "El flujo de búsqueda no está disponible en este momento. Intenta de nuevo.",
+            "retryable": True,
+        })
+
     except _LLMError as exc:
         h2_ms = int((time.monotonic() - exc.h2_start) * 1000)
         await pub.publish("trace.hop", {
@@ -176,117 +204,81 @@ async def run(
         })
 
 
-async def _deep_route(
+async def _n8n_deep_route(
     *,
     pub: EventPublisher,
-    llm: LLMProvider,
-    rag_model: EmbeddingModel,
-    db_pool: asyncpg.Pool,
-    visitor_id: str,
     run_id: str,
+    visitor_id: str,
     input_text: str,
     understand_result: dict,
+    n8n_webhook_url: str,
+    h2_start: float,
 ) -> tuple[str, str, str]:
     """
-    Search pgvector, optionally design and save a generated node.
+    Call the n8n deep-route webhook (RAG + design + save).
+
+    n8n publishes h5/h6/h7 events and process.step intermediates via
+    /internal/events.  This function publishes h4 (agent→n8n) and the
+    process.step closing events after n8n responds.
+
     Returns (final_outcome, answer_hop_id, answer_system).
+    Raises _N8NError on network/HTTP failure so the outer handler closes
+    h2 and emits run.error — there is no silent fallback.
     """
     await pub.publish("process.step", {
         "step": "search_base", "status": "active", "label": "Buscando en la base de conocimiento",
     })
 
-    # h4: agent → postgres (RAG search)
     h4_start = time.monotonic()
     await pub.publish("trace.hop", {
-        "hop_id": "h4", "from": "agent", "to": "postgres",
-        "phase": "start", "label": "Búsqueda semántica (pgvector)",
+        "hop_id": "h4", "from": "agent", "to": "n8n",
+        "phase": "start", "label": "Lanza el flujo de búsqueda",
     })
 
     query = understand_result.get("topic", input_text)
-    await pub.publish("rag.search", {"query": query})
 
-    hits = await rag_mod.search(query, rag_model, db_pool)
-
-    used = len(hits) > 0
-    hits_data = [{"title": h.title, "score": round(h.score, 3), "source": h.source} for h in hits]
-    await pub.publish("rag.result", {"hits": hits_data, "used": used})
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                n8n_webhook_url,
+                json={
+                    "run_id": run_id,
+                    "visitor_id": visitor_id,
+                    "question": input_text,
+                    "query": query,
+                },
+                timeout=60.0,
+            )
+            resp.raise_for_status()
+            n8n_result = resp.json()
+    except Exception as exc:
+        log.exception("n8n webhook failed run=%s visitor=%s url=%s", run_id, visitor_id, n8n_webhook_url)
+        h4_ms = int((time.monotonic() - h4_start) * 1000)
+        await pub.publish("trace.hop", {
+            "hop_id": "h4", "from": "agent", "to": "n8n",
+            "phase": "error", "detail": "n8n no respondió", "duration_ms": h4_ms,
+        })
+        raise _N8NError(h2_start) from exc
 
     h4_ms = int((time.monotonic() - h4_start) * 1000)
-    detail = f"{len(hits)} fragmentos relevantes" if hits else "0 fragmentos relevantes"
     await pub.publish("trace.hop", {
-        "hop_id": "h4", "from": "agent", "to": "postgres",
-        "phase": "end", "detail": detail, "duration_ms": h4_ms,
-    })
-    await pub.publish("process.step", {"step": "search_base", "status": "done"})
-
-    # Check visitor node cap before attempting design
-    if used:
-        count = await node_builder.count_visitor_nodes(visitor_id, db_pool)
-        if count >= node_builder.NODES_PER_VISITOR:
-            log.info("visitor %s at node limit (%d), falling back to unknown", visitor_id, count)
-            used = False
-
-    if not used:
-        await pub.publish("process.step", {"step": "design_node", "status": "skipped"})
-        await pub.publish("process.step", {"step": "create_node", "status": "skipped"})
-        return "unknown", "h5", _unknown_answer_system(input_text)
-
-    # ── Design node ────────────────────────────────────────────────────────────
-    await pub.publish("process.step", {
-        "step": "design_node", "status": "active", "label": "Diseñando el nodo",
-    })
-    h5_start = time.monotonic()
-    await pub.publish("trace.hop", {
-        "hop_id": "h5", "from": "agent", "to": "llm",
-        "phase": "start", "label": "Diseña el nodo",
+        "hop_id": "h4", "from": "agent", "to": "n8n",
+        "phase": "end", "duration_ms": h4_ms,
     })
 
-    gen_node = await node_builder.design_node(input_text, hits, llm)
-    h5_ms = int((time.monotonic() - h5_start) * 1000)
+    outcome = n8n_result.get("outcome", "unknown")
+    node = n8n_result.get("node")
 
-    if gen_node is None:
-        log.warning("node design failed run=%s, falling back to unknown", run_id)
-        await pub.publish("trace.hop", {
-            "hop_id": "h5", "from": "agent", "to": "llm",
-            "phase": "error", "detail": "Diseño inválido", "duration_ms": h5_ms,
-        })
+    if outcome == "generated" and node is not None:
+        # n8n already published search_base:done, design_node:done, create_node:active, h7:end
+        await pub.publish("process.step", {"step": "create_node", "status": "done"})
+        return "generated", "h8", _generated_answer_system(input_text, node)
+    else:
+        # n8n published h5 events only; agent closes the process.step chain
+        await pub.publish("process.step", {"step": "search_base", "status": "done"})
         await pub.publish("process.step", {"step": "design_node", "status": "skipped"})
         await pub.publish("process.step", {"step": "create_node", "status": "skipped"})
         return "unknown", "h6", _unknown_answer_system(input_text)
-
-    child_count = len(gen_node.get("children", []))
-    node_desc = f"Un nodo con {child_count} hijos" if child_count else "Un nodo sin hijos"
-    await pub.publish("trace.hop", {
-        "hop_id": "h5", "from": "agent", "to": "llm",
-        "phase": "end", "detail": node_desc, "duration_ms": h5_ms,
-    })
-    await pub.publish("process.step", {"step": "design_node", "status": "done"})
-
-    # ── Save node ──────────────────────────────────────────────────────────────
-    await pub.publish("process.step", {
-        "step": "create_node", "status": "active", "label": "Creando el nodo",
-    })
-    h6_start = time.monotonic()
-    await pub.publish("trace.hop", {
-        "hop_id": "h6", "from": "agent", "to": "postgres",
-        "phase": "start", "label": "Guarda el nodo para este visitante",
-    })
-
-    await node_builder.save_node(gen_node, visitor_id, db_pool)
-
-    # node.spawn before postgres-end — the frontend needs the node data now,
-    # the DB write completing in the background is invisible to the UI
-    anchor = hits[0].node_id if hits else None
-    await pub.publish("node.spawn", {"anchor": anchor, "node": gen_node})
-
-    h6_ms = int((time.monotonic() - h6_start) * 1000)
-    await pub.publish("trace.hop", {
-        "hop_id": "h6", "from": "agent", "to": "postgres",
-        "phase": "end", "duration_ms": h6_ms,
-    })
-    await pub.publish("process.step", {"step": "create_node", "status": "done"})
-
-    return "generated", "h7", _generated_answer_system(input_text, gen_node)
 
 
 # ── LLM helpers ───────────────────────────────────────────────────────────────

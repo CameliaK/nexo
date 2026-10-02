@@ -9,7 +9,9 @@ class Config:
     redis_url: str
     postgres_url: str
     portfolio_path: str
+    n8n_webhook_url: str
     route_confidence_threshold: float = 0.7
+    rag_similarity_threshold: float = 0.75
 
 
 def load() -> Config:
@@ -21,7 +23,13 @@ def load() -> Config:
             "POSTGRES_URL", "postgresql://nexo:nexo@postgres:5432/nexo"
         ),
         portfolio_path=os.environ.get("PORTFOLIO_PATH", "/docs/portfolio-content.json"),
+        n8n_webhook_url=os.environ.get(
+            "N8N_WEBHOOK_URL", "http://n8n:5678/webhook/nexo-deep-route"
+        ),
         route_confidence_threshold=float(
             os.environ.get("ROUTE_CONFIDENCE_THRESHOLD", "0.7")
+        ),
+        rag_similarity_threshold=float(
+            os.environ.get("RAG_SIMILARITY_THRESHOLD", "0.75")
         ),
     )
