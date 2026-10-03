@@ -78,7 +78,7 @@ export class TracePlayer {
       const next = run.queue[0]; if (!next || time < run.next) continue;
       if (next.type === 'trace.hop' && next.data.phase !== 'start') {
         const opened = this.hops.get(id + ':' + next.data.hop_id);
-        if (opened && time < opened.started + 500) continue;
+        if (opened && time < opened.started + 800) continue;
       }
       run.queue.shift(); this.apply(next, time); run.next = time + 120;
       if (next.type === 'run.done' || next.type === 'run.error') { this.runs.delete(id); this.known.delete(id); this.rejected.add(id); }

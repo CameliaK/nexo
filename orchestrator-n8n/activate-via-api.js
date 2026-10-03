@@ -40,7 +40,8 @@ async function main() {
     await new Promise(r => setTimeout(r, 2000));
   }
 
-  const loginBody = JSON.stringify({ emailOrLdapLoginId: 'owner@nexo.local', password: 'N3x0Dev2026!' });
+  const ownerPassword = process.env.N8N_OWNER_PASSWORD || 'N3x0Dev2026!';
+  const loginBody = JSON.stringify({ emailOrLdapLoginId: 'owner@nexo.local', password: ownerPassword });
   const loginRes = await request({
     hostname: 'localhost', port: 5678, path: '/rest/login', method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(loginBody) },

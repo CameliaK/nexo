@@ -134,3 +134,28 @@ No des una fase por terminada solo porque compiló. El estándar es:
    quien dispare el evento real).
 4. Si la fase toca algo que el frontend consume, levantar `web-react` también y confirmar en
    el navegador con `VITE_BACKEND=real`.
+
+## Lecciones aprendidas
+
+- **n8n 1.123.x: Code nodes corren en vm2, que bloquea `require()`, `fetch` y `process.env`.**
+  Los Code nodes son solo para manipulación de strings o lógica pura en JS. Cualquier llamada
+  HTTP va en un nodo HTTP Request nativo. Los tokens y credenciales se pasan en el body del
+  webhook desde el componente que sí tiene acceso a las variables de entorno (el agente Python),
+  no se leen desde el Code node.
+
+- **Docker Compose: `ports` y `volumes` son aditivos al hacer merge de overrides; no se pueden
+  "quitar" puertos en un override.** Solución: los puertos de debug (Traefik dashboard :8888,
+  n8n UI :5678) nunca van en el `docker-compose.yml` base. Van en
+  `docker-compose.override.yml` (auto-cargado solo en dev). El override de producción
+  (`docker-compose.prod.yml`) no necesita restarlos porque nunca estuvieron en la base.
+
+- **Los umbrales de confianza (`RAG_SIMILARITY_THRESHOLD`, `ROUTE_CONFIDENCE_THRESHOLD`) viven
+  en `docker-compose.yml`; nunca bajarlos "para probar" sin restaurarlos antes de cerrar la
+  fase.** Dejarlo bajo hace que el agente tome rutas inesperadas en fases posteriores y los
+  síntomas no son obvios.
+
+- **El frontend debe tolerar eventos WebSocket que lleguen antes de que el HTTP POST responda
+  (race de preautenticación).** El `TracePlayer` y el `EventInbox` tienen un buffer de
+  preauthenticación (`preauth`) que acumula eventos de un `run_id` desconocido y los libera
+  cuando `register(run_id)` se llama al resolver la promesa HTTP. Cualquier componente nuevo
+  que consuma eventos del WebSocket debe respetar este contrato.

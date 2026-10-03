@@ -1,0 +1,108 @@
+# Production override — use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Requires in .env: DOMAIN, ACME_EMAIL, PASETO_LOCAL_KEY, DEEPSEEK_API_KEY,
+#   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, N8N_ENCRYPTION_KEY,
+#   N8N_OWNER_PASSWORD, POSTGRES_PASSWORD
+#
+# Memory limits are calculated for an 8 GB VPS (Hetzner CX32):
+#   OS + Docker overhead ≈ 1.5 GB; total limits ≈ 2.3 GB → ~4 GB headroom.
+#   Measurements taken from docker stats on a running dev stack (see plan notes).
+
+services:
+
+  # ── Traefik ────────────────────────────────────────────────────────────────
+  # Replaces the entire command to:
+  #   - Remove --api.insecure (dashboard off)
+  #   - Add HTTPS entrypoint + Let's Encrypt ACME (HTTP-01 challenge)
+  #   - Redirect all HTTP → HTTPS permanently
+  # Port 443 is added; port 8888 (dashboard) is NOT added (only in override.yml).
+  traefik:
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "443:443"
+    volumes:
+      - ./traefik/acme.json:/acme.json
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ── Frontend ───────────────────────────────────────────────────────────────
+  # Routes on websecure (HTTPS) with TLS cert from letsencrypt resolver.
+  # Host() rule prevents serving requests for unknown domains.
+  web-nexo:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web-nexo.rule=Host(`${DOMAIN}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.web-nexo.entrypoints=websecure"
+      - "traefik.http.routers.web-nexo.tls=true"
+      - "traefik.http.routers.web-nexo.tls.certresolver=letsencrypt"
+      - "traefik.http.services.web-nexo.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+  # ── Gateway ────────────────────────────────────────────────────────────────
+  # Same host + path rules as dev, but on websecure with TLS.
+  # /internal/* lives on the agent and has NO Traefik labels — never exposed.
+  gateway:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gateway.rule=Host(`${DOMAIN}`) && (PathPrefix(`/health`) || PathPrefix(`/auth`) || PathPrefix(`/api`) || PathPrefix(`/ws`))"
+      - "traefik.http.routers.gateway.entrypoints=websecure"
+      - "traefik.http.routers.gateway.tls=true"
+      - "traefik.http.routers.gateway.tls.certresolver=letsencrypt"
+      - "traefik.http.services.gateway.loadbalancer.server.port=8080"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+  # ── Agent ──────────────────────────────────────────────────────────────────
+  # No Traefik labels — accessible only from the Docker-internal network.
+  # 768 MB covers the all-MiniLM-L6-v2 model (~90 MB) + FastAPI working set
+  # (~400 MB measured) + headroom for concurrent requests.
+  agent:
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  # ── Postgres ───────────────────────────────────────────────────────────────
+  # 512 MB: pgvector similarity searches on real data can spike over the ~20 MB
+  # measured in dev.
+  postgres:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ── n8n ────────────────────────────────────────────────────────────────────
+  # UI (port 5678) is NOT published — only accessible via SSH tunnel:
+  #   ssh -L 5678:localhost:5678 user@<vps-ip> -N
+  # 512 MB: 255 MB measured in dev with active workflows; 2× headroom.
+  n8n:
+    deploy:
+      resources:
+        limits:
+          memory: 512M

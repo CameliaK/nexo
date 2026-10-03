@@ -8,6 +8,11 @@ const sqlite3 = require('/usr/local/lib/node_modules/n8n/node_modules/sqlite3');
 const bcrypt  = require('/usr/local/lib/node_modules/n8n/node_modules/.pnpm/bcryptjs@2.4.3/node_modules/bcryptjs');
 const crypto  = require('crypto');
 
+const OWNER_PASSWORD = process.env.N8N_OWNER_PASSWORD || 'N3x0Dev2026!';
+if (!process.env.N8N_OWNER_PASSWORD) {
+  process.stdout.write('Warning: N8N_OWNER_PASSWORD not set — using insecure dev default\n');
+}
+
 const DB_PATH = (process.env.HOME || '/home/node') + '/.n8n/database.sqlite';
 const db = new sqlite3.Database(DB_PATH);
 
@@ -31,7 +36,7 @@ function close() { return new Promise(res => db.close(res)); }
       process.stdout.write('Owner already exists (' + ownerId + ') — skipping user insert\n');
     } else {
       ownerId = crypto.randomUUID();
-      const hash = bcrypt.hashSync('N3x0Dev2026!', 10);
+      const hash = bcrypt.hashSync(OWNER_PASSWORD, 10);
       await run(
         `INSERT INTO user
           (id, email, firstName, lastName, password, createdAt, updatedAt, disabled, mfaEnabled, roleSlug)

@@ -1,0 +1,12 @@
+# Auto-loaded in development: adds debug ports that must not be exposed in prod.
+# - Traefik dashboard at localhost:8888
+# - n8n UI at localhost:5678
+# Production uses docker-compose.prod.yml instead of this file.
+services:
+  traefik:
+    ports:
+      - "8888:8080"
+
+  n8n:
+    ports:
+      - "5678:5678"

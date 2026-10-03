@@ -9,7 +9,6 @@ services:
       - "--entrypoints.web.address=:80"
     ports:
       - "80:80"
-      - "8888:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
@@ -105,13 +104,12 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_OWNER_PASSWORD=${N8N_OWNER_PASSWORD:-N3x0Dev2026!}
     entrypoint: ["/bin/sh", "/scripts/entrypoint.sh"]
     volumes:
       - ./orchestrator-n8n:/scripts:ro
       - ./orchestrator-n8n/workflows:/workflows:ro
       - n8n_data:/home/node/.n8n
-    ports:
-      - "5678:5678"
     depends_on:
       agent:
         condition: service_healthy

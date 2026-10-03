@@ -48,7 +48,7 @@ test('Trace player: order, deduplication, overlapping hops, reverse edges and te
   player.receive(hop(2,'h1','gateway','agent','start'));player.receive(event(1,'run.start',{kind:'chat',content_version:3}));player.tick();clock.advance(150);player.tick();assert.equal(player.light('agent').state,'active');
   player.receive(hop(3,'h2','agent','llm','start'));clock.advance(150);player.tick();assert.equal(player.light('agent').state,'active');assert.equal(player.light('llm').state,'active');
   const before=player.processed;player.receive(hop(3,'h2','agent','llm','start'));clock.advance(150);player.tick();assert.equal(player.processed,before);
-  player.receive(hop(4,'h2','agent','llm','error'));clock.advance(550);player.tick();assert.equal(player.edge('llm','agent').state,'error');
+  player.receive(hop(4,'h2','agent','llm','error'));clock.advance(700);player.tick();assert.equal(player.edge('llm','agent').state,'error');
   player.receive(event(5,'run.done',{outcome:'route',duration_ms:1000}));clock.advance(150);player.tick();assert.equal(player.light('agent').state,'done');assert.equal(player.light('llm').state,'error');clock.advance(4500);player.tick();assert.equal(player.light('agent').state,'idle');assert.equal(player.light('llm').state,'idle');
 });
 test('Trace player: unsolicited live-in accepted; other tabs and unknown components ignored',()=>{
