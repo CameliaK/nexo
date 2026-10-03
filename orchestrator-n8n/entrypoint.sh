@@ -12,6 +12,7 @@ node /scripts/setup-owner.js
 # so activate-via-api.js re-activates them via REST after n8n is ready.
 n8n import:workflow --input=/workflows/nexo-deep-route.json
 n8n import:workflow --input=/workflows/nexo-live-chat.json
+n8n import:workflow --input=/workflows/nexo-live-inbound.json
 
 # Start n8n in the background so the REST API is available for activation.
 n8n start &

@@ -34,6 +34,26 @@ _STATEMENTS = [
     CREATE INDEX IF NOT EXISTS generated_nodes_visitor_idx
       ON generated_nodes (visitor_id)
     """,
+    """
+    CREATE TABLE IF NOT EXISTS live_messages (
+      id               TEXT PRIMARY KEY,
+      conversation_id  TEXT NOT NULL,
+      visitor_id       TEXT NOT NULL,
+      from_kind        TEXT NOT NULL CHECK (from_kind IN ('visitor', 'owner')),
+      name             TEXT,
+      text             TEXT NOT NULL,
+      telegram_msg_id  INTEGER,
+      ts               TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS live_messages_visitor
+      ON live_messages (visitor_id)
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS live_messages_conv
+      ON live_messages (conversation_id)
+    """,
 ]
 
 

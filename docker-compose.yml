@@ -73,6 +73,9 @@ services:
       - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
       - PORTFOLIO_PATH=/docs/portfolio-content.json
       - N8N_WEBHOOK_URL=http://n8n:5678/webhook/nexo-deep-route
+      - N8N_LIVE_OUTBOUND_URL=http://n8n:5678/webhook/nexo-live-outbound
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       - RAG_SIMILARITY_THRESHOLD=${RAG_SIMILARITY_THRESHOLD:-0.75}
       - ROUTE_CONFIDENCE_THRESHOLD=${ROUTE_CONFIDENCE_THRESHOLD:-0.7}
     volumes:
@@ -99,6 +102,9 @@ services:
       - WEBHOOK_URL=http://n8n:5678/
       - EXECUTIONS_PROCESS=main
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
     entrypoint: ["/bin/sh", "/scripts/entrypoint.sh"]
     volumes:
       - ./orchestrator-n8n:/scripts:ro

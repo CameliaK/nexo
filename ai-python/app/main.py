@@ -1,9 +1,11 @@
 import json
 import logging
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 import asyncpg
+import httpx
 import redis.asyncio as aioredis
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from pydantic import BaseModel
@@ -13,6 +15,7 @@ from .config import load
 from . import db as db_mod
 from . import rag as rag_mod
 from . import node_builder
+from .events import EventPublisher
 from .llm.deepseek import DeepSeekProvider
 
 log = logging.getLogger(__name__)
@@ -257,3 +260,247 @@ async def internal_save_node(body: _SaveNodeRequest):
         anchor = sources[0].get("ref")
 
     return {"saved": True, "anchor": anchor}
+
+
+# ── Live chat endpoints ───────────────────────────────────────────────────────
+
+
+async def _run_live_out(
+    *,
+    run_id: str,
+    visitor_id: str,
+    message_id: str,
+    text: str,
+    name: str | None,
+    seq_start: int,
+    rdb: aioredis.Redis,
+    db_pool: asyncpg.Pool,
+    n8n_url: str,
+) -> None:
+    conversation_id = f"conv:{visitor_id}"
+    await rdb.set(f"run:{run_id}:seq", seq_start - 1, ex=3600)
+    pub = EventPublisher(rdb, visitor_id, run_id)
+
+    ts = datetime.now(timezone.utc)
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                """INSERT INTO live_messages
+                     (id, conversation_id, visitor_id, from_kind, name, text, ts)
+                   VALUES ($1, $2, $3, 'visitor', $4, $5, $6)""",
+                message_id, conversation_id, visitor_id, name, text, ts,
+            )
+    except Exception as exc:
+        log.error("live_out: db insert failed run=%s: %s", run_id, exc)
+        await pub.publish("run.error", {"code": "internal", "message": "Error al guardar el mensaje.", "retryable": True})
+        return
+
+    await pub.publish("trace.hop", {"hop_id": "h1", "from": "gateway", "to": "postgres", "phase": "start", "label": "Guardando mensaje"})
+    await pub.publish("trace.hop", {"hop_id": "h1", "from": "gateway", "to": "postgres", "phase": "end", "duration_ms": 0})
+    await pub.publish("trace.hop", {"hop_id": "h2", "from": "gateway", "to": "n8n", "phase": "start", "label": "Enviando notificación"})
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(n8n_url, json={
+                "visitor_id": visitor_id,
+                "message_id": message_id,
+                "text": text,
+                "name": name or "visitante",
+                "run_id": run_id,
+                "telegram_bot_token": cfg.telegram_bot_token,
+                "telegram_chat_id": cfg.telegram_chat_id,
+            })
+
+        if resp.status_code == 200:
+            data = resp.json()
+            telegram_msg_id = data.get("telegram_msg_id")
+            if telegram_msg_id:
+                async with db_pool.acquire() as conn:
+                    await conn.execute(
+                        "UPDATE live_messages SET telegram_msg_id=$1 WHERE id=$2",
+                        telegram_msg_id, message_id,
+                    )
+            await pub.publish("live.delivery", {"message_id": message_id, "status": "sent"})
+            await pub.publish("trace.hop", {"hop_id": "h3", "from": "n8n", "to": "owner_channel", "phase": "start", "label": "Enviando a Telegram"})
+            await pub.publish("trace.hop", {"hop_id": "h3", "from": "n8n", "to": "owner_channel", "phase": "end", "duration_ms": 0})
+            await pub.publish("trace.hop", {"hop_id": "h2", "from": "gateway", "to": "n8n", "phase": "end", "duration_ms": 0})
+            await pub.publish("live.delivery", {"message_id": message_id, "status": "delivered_to_owner"})
+            await pub.publish("run.done", {"outcome": "delivered"})
+        else:
+            log.warning("live_out: n8n returned %d run=%s", resp.status_code, run_id)
+            await pub.publish("trace.hop", {"hop_id": "h2", "from": "gateway", "to": "n8n", "phase": "error", "detail": "Error en la notificación"})
+            await pub.publish("run.error", {"code": "delivery_failed", "message": "No se pudo enviar el mensaje.", "retryable": True})
+
+    except Exception as exc:
+        log.error("live_out: n8n call failed run=%s: %s", run_id, exc)
+        await pub.publish("trace.hop", {"hop_id": "h2", "from": "gateway", "to": "n8n", "phase": "error", "detail": str(exc)[:100]})
+        await pub.publish("run.error", {"code": "internal", "message": "Error de conexión interna.", "retryable": True})
+
+
+class _LiveMessageRequest(BaseModel):
+    run_id: str
+    visitor_id: str
+    message_id: str
+    text: str
+    name: str | None = None
+    seq_start: int
+
+
+@app.post("/internal/live/messages", status_code=202)
+async def internal_live_messages(body: _LiveMessageRequest, background_tasks: BackgroundTasks):
+    if _rdb is None or _db_pool is None:
+        raise HTTPException(status_code=503, detail="service not ready")
+    background_tasks.add_task(
+        _run_live_out,
+        run_id=body.run_id,
+        visitor_id=body.visitor_id,
+        message_id=body.message_id,
+        text=body.text,
+        name=body.name,
+        seq_start=body.seq_start,
+        rdb=_rdb,
+        db_pool=_db_pool,
+        n8n_url=cfg.n8n_live_outbound_url,
+    )
+    return {"status": "accepted"}
+
+
+@app.get("/internal/live/messages")
+async def internal_live_list(visitor_id: str = Query(...)):
+    if _db_pool is None:
+        raise HTTPException(status_code=503, detail="service not ready")
+    async with _db_pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id, from_kind, text, ts FROM live_messages WHERE visitor_id=$1 ORDER BY ts ASC",
+            visitor_id,
+        )
+    if not rows:
+        return {"conversation_id": None, "messages": []}
+    return {
+        "conversation_id": f"conv:{visitor_id}",
+        "messages": [
+            {
+                "id": r["id"],
+                "from": r["from_kind"],
+                "text": r["text"],
+                "ts": r["ts"].isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+            }
+            for r in rows
+        ],
+    }
+
+
+async def _dispatch_owner_reply(
+    telegram_reply_to_id: int,
+    text: str,
+    rdb: aioredis.Redis,
+    db_pool: asyncpg.Pool,
+) -> bool:
+    """Saves an owner reply and publishes live_in events. Returns False if message not found."""
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT visitor_id, conversation_id FROM live_messages WHERE telegram_msg_id=$1",
+            telegram_reply_to_id,
+        )
+
+    if not row:
+        return False
+
+    visitor_id = row["visitor_id"]
+    conversation_id = row["conversation_id"]
+    message_id = str(uuid.uuid4())
+    ts = datetime.now(timezone.utc)
+
+    async with db_pool.acquire() as conn:
+        await conn.execute(
+            """INSERT INTO live_messages (id, conversation_id, visitor_id, from_kind, text, ts)
+               VALUES ($1, $2, $3, 'owner', $4, $5)""",
+            message_id, conversation_id, visitor_id, text, ts,
+        )
+
+    run_id = str(uuid.uuid4())
+    await rdb.set(f"run:{run_id}:seq", 0, ex=3600)
+    pub = EventPublisher(rdb, visitor_id, run_id)
+
+    ts_str = ts.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    await pub.publish("run.start", {"kind": "live_in", "content_version": 2})
+    await pub.publish("trace.hop", {"hop_id": "h1", "from": "owner_channel", "to": "n8n", "phase": "start", "label": "Respuesta del dueño"})
+    await pub.publish("trace.hop", {"hop_id": "h1", "from": "owner_channel", "to": "n8n", "phase": "end", "duration_ms": 0})
+    await pub.publish("trace.hop", {"hop_id": "h2", "from": "n8n", "to": "postgres", "phase": "start", "label": "Guardando respuesta"})
+    await pub.publish("trace.hop", {"hop_id": "h2", "from": "n8n", "to": "postgres", "phase": "end", "duration_ms": 0})
+    await pub.publish("trace.hop", {"hop_id": "h3", "from": "n8n", "to": "redis", "phase": "start", "label": "Publicando evento"})
+    await pub.publish("live.message", {
+        "conversation_id": conversation_id,
+        "message": {"id": message_id, "from": "owner", "text": text, "ts": ts_str},
+    })
+    await pub.publish("trace.hop", {"hop_id": "h3", "from": "n8n", "to": "redis", "phase": "end", "duration_ms": 0})
+    await pub.publish("run.done", {"outcome": "received"})
+    return True
+
+
+class _OwnerReplyRequest(BaseModel):
+    telegram_reply_to_id: int
+    text: str
+
+
+@app.post("/internal/live/owner-reply")
+async def internal_live_owner_reply(body: _OwnerReplyRequest):
+    if _rdb is None or _db_pool is None:
+        raise HTTPException(status_code=503, detail="service not ready")
+    found = await _dispatch_owner_reply(body.telegram_reply_to_id, body.text, _rdb, _db_pool)
+    if not found:
+        raise HTTPException(status_code=422, detail="reply to unknown message")
+    return {"ok": True}
+
+
+@app.post("/internal/telegram/poll")
+async def internal_telegram_poll():
+    """Called by n8n on a schedule to poll Telegram for owner replies."""
+    if _rdb is None or _db_pool is None:
+        raise HTTPException(status_code=503, detail="service not ready")
+
+    token = cfg.telegram_bot_token
+    if not token:
+        raise HTTPException(status_code=503, detail="Telegram not configured")
+
+    offset_key = "telegram:poll:offset"
+    raw = await _rdb.get(offset_key)
+    offset = int(raw) if raw else 0
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"https://api.telegram.org/bot{token}/getUpdates",
+                params={"offset": offset, "timeout": 1, "allowed_updates": "message"},
+            )
+        data = resp.json()
+    except Exception as exc:
+        log.error("telegram poll failed: %s", exc)
+        return {"processed": 0, "error": str(exc)}
+
+    if not data.get("ok") or not data.get("result"):
+        return {"processed": 0}
+
+    updates = data["result"]
+    await _rdb.set(offset_key, updates[-1]["update_id"] + 1)
+
+    processed = 0
+    for update in updates:
+        msg = update.get("message", {})
+        if not msg.get("reply_to_message") or not msg.get("text"):
+            continue
+        try:
+            found = await _dispatch_owner_reply(
+                msg["reply_to_message"]["message_id"],
+                msg["text"],
+                _rdb,
+                _db_pool,
+            )
+            if found:
+                processed += 1
+            else:
+                log.warning("telegram poll: reply to unknown telegram_msg_id=%d", msg["reply_to_message"]["message_id"])
+        except Exception as exc:
+            log.error("telegram poll: error processing reply: %s", exc)
+
+    return {"processed": processed, "total_updates": len(updates)}

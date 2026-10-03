@@ -62,12 +62,12 @@ export class RealBackend implements PortfolioBackend {
     return this._request('POST', '/api/v1/chat', { message }) as Promise<ChatAccepted>;
   }
 
-  // Fase 5 — el backend de chat en vivo no existe todavía.
-  async sendLiveMessage(_text: string, _name?: string): Promise<LiveSendAccepted> {
-    throw new BackendError('internal', 'El chat en vivo aún no está disponible.', 503);
+  async sendLiveMessage(text: string, name?: string): Promise<LiveSendAccepted> {
+    return this._request('POST', '/api/v1/live/messages', { text, ...(name ? { name } : {}) }) as Promise<LiveSendAccepted>;
   }
+
   async listLiveMessages(): Promise<LiveHistoryResponse> {
-    throw new BackendError('internal', 'El chat en vivo aún no está disponible.', 503);
+    return this._request('GET', '/api/v1/live/messages') as Promise<LiveHistoryResponse>;
   }
 
   async listGeneratedNodes(): Promise<GeneratedNode[]> {

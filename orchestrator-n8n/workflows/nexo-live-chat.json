@@ -1,6 +1,6 @@
 {
   "id": "a1b2c3d4-e5f6-7891-a2b3-c4d5e6f7a8b9",
-  "name": "Nexo Live Chat",
+  "name": "Nexo Live Outbound",
   "active": true,
   "nodes": [
     {
@@ -9,33 +9,66 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [80, 300],
-      "webhookId": "nexo-live-chat-v1",
+      "webhookId": "nexo-live-outbound-v1",
       "parameters": {
         "httpMethod": "POST",
-        "path": "nexo-live-chat",
+        "path": "nexo-live-outbound",
         "responseMode": "responseNode",
         "options": {}
       }
     },
     {
-      "id": "lc-02-respond",
-      "name": "Respond Not Implemented",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
+      "id": "lc-02-format",
+      "name": "Format Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [300, 300],
       "parameters": {
+        "jsCode": "const body = $('Webhook Trigger').first().json.body;\nconst label = (body.visitor_id || '????').slice(0, 4).toUpperCase();\nconst name = body.name || 'visitante';\nconst text = '#' + label + ' \\u00b7 ' + name + '\\n\\n' + body.text;\nreturn [{ json: { text, token: body.telegram_bot_token, chat_id: body.telegram_chat_id } }];"
+      }
+    },
+    {
+      "id": "lc-03-telegram",
+      "name": "Send Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.telegram.org/bot' + $json.token + '/sendMessage' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { chat_id: $json.chat_id, text: $json.text } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "lc-04-respond",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [740, 300],
+      "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { 'status': 'not_implemented', 'phase': 5, 'message': 'Live chat workflow (Phase 5) not built yet' } }}",
-        "options": {
-          "responseCode": 501
-        }
+        "responseBody": "={{ { ok: $json.ok, telegram_msg_id: $json.result ? $json.result.message_id : null } }}",
+        "options": {}
       }
     }
   ],
   "connections": {
     "Webhook Trigger": {
       "main": [
-        [{"node": "Respond Not Implemented", "type": "main", "index": 0}]
+        [{"node": "Format Message", "type": "main", "index": 0}]
+      ]
+    },
+    "Format Message": {
+      "main": [
+        [{"node": "Send Telegram", "type": "main", "index": 0}]
+      ]
+    },
+    "Send Telegram": {
+      "main": [
+        [{"node": "Respond OK", "type": "main", "index": 0}]
       ]
     }
   },

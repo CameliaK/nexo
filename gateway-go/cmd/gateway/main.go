@@ -10,6 +10,7 @@ import (
 	"nexo/gateway/internal/chat"
 	"nexo/gateway/internal/config"
 	"nexo/gateway/internal/health"
+	"nexo/gateway/internal/live"
 	"nexo/gateway/internal/session"
 	"nexo/gateway/internal/ws"
 )
@@ -37,6 +38,10 @@ func main() {
 	mux.HandleFunc("POST /api/v1/chat", chat.NewHandler(tokens, rdb, cfg.AgentURL))
 	mux.HandleFunc("GET /api/v1/session/nodes", session.NewListNodesHandler(tokens.Verify, cfg.AgentURL))
 	mux.HandleFunc("DELETE /api/v1/session/nodes/{id}", session.NewDeleteNodeHandler(tokens.Verify, cfg.AgentURL))
+
+	liveH := live.NewHandler(tokens, rdb, cfg.AgentURL)
+	mux.HandleFunc("POST /api/v1/live/messages", liveH.Post)
+	mux.HandleFunc("GET /api/v1/live/messages", liveH.Get)
 
 	log.Printf("gateway listening on :%s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {

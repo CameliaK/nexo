@@ -1,10 +1,13 @@
 'use strict';
-// Waits for n8n to be ready, logs in as owner, and activates all imported
-// workflows via the REST API. This is the only correct activation path:
-// - n8n import:workflow always imports as inactive AND clears webhook_entity
-// - Setting active=1 in SQLite alone does NOT populate webhook_entity
-// - The REST PATCH /rest/workflows/:id activation populates webhook_entity
-//   and registers webhook handlers in n8n's in-memory state
+// Waits for n8n to be ready, logs in as owner, patches workflow nodes from JSON
+// files (source of truth), then activates all workflows via the REST API.
+//
+// Why PATCH nodes explicitly instead of relying on import:workflow?
+//   - n8n import:workflow always imports as inactive AND clears webhook_entity
+//   - When the DB versionId differs from the file, import silently skips updating node code
+//   - The REST PATCH /rest/workflows/:id with full node list always overwrites node code
+//   - A second PATCH {active:true} then registers webhook handlers in n8n memory
+const fs = require('fs');
 const http = require('http');
 
 function request(options, body) {
@@ -49,6 +52,51 @@ async function main() {
   }
   const cookie = (loginRes.headers['set-cookie'] || []).map(c => c.split(';')[0]).join('; ');
 
+  // 1. Patch node content from JSON files (source of truth)
+  const workflowDir = '/workflows';
+  let jsonFiles = [];
+  try { jsonFiles = fs.readdirSync(workflowDir).filter(f => f.endsWith('.json')); } catch (_) {}
+
+  for (const file of jsonFiles) {
+    const wfJson = JSON.parse(fs.readFileSync(workflowDir + '/' + file, 'utf8'));
+    const wfId = wfJson.id;
+    if (!wfId) continue;
+
+    // Get current workflow to obtain the live versionId
+    const getRes = await request({
+      hostname: 'localhost', port: 5678, path: '/rest/workflows/' + wfId, method: 'GET',
+      headers: { Cookie: cookie },
+    });
+    if (getRes.statusCode !== 200) {
+      process.stdout.write('Workflow ' + wfId + ' not found in DB (import may have failed), skipping patch\n');
+      continue;
+    }
+    const current = JSON.parse(getRes.body);
+    const versionId = (current.data || current).versionId;
+
+    const patchPayload = {
+      name: wfJson.name,
+      versionId,
+      nodes: wfJson.nodes,
+      connections: wfJson.connections,
+      settings: wfJson.settings || { executionOrder: 'v1' },
+      staticData: wfJson.staticData || null,
+      tags: wfJson.tags || [],
+    };
+    const patchBody = JSON.stringify(patchPayload);
+    const patchRes = await request({
+      hostname: 'localhost', port: 5678, path: '/rest/workflows/' + wfId, method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(patchBody), Cookie: cookie },
+    }, patchBody);
+
+    if (patchRes.statusCode === 200) {
+      process.stdout.write('Patched "' + wfJson.name + '" nodes OK\n');
+    } else {
+      process.stderr.write('Patch "' + wfJson.name + '" FAILED (' + patchRes.statusCode + '): ' + patchRes.body.slice(0, 200) + '\n');
+    }
+  }
+
+  // 2. Activate all workflows
   const wfRes = await request({
     hostname: 'localhost', port: 5678, path: '/rest/workflows', method: 'GET',
     headers: { Cookie: cookie },
@@ -56,14 +104,14 @@ async function main() {
   const workflows = JSON.parse(wfRes.body).data || [];
 
   for (const wf of workflows) {
-    const patchBody = JSON.stringify({ active: true });
-    const patchRes = await request({
+    const activateBody = JSON.stringify({ active: true });
+    const activateRes = await request({
       hostname: 'localhost', port: 5678, path: '/rest/workflows/' + wf.id, method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(patchBody), Cookie: cookie },
-    }, patchBody);
-    const result = JSON.parse(patchRes.body);
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(activateBody), Cookie: cookie },
+    }, activateBody);
+    const result = JSON.parse(activateRes.body);
     const ok = result.data && result.data.active === true;
-    process.stdout.write('Activated "' + wf.name + '": ' + (ok ? 'OK' : 'FAILED — ' + patchRes.body) + '\n');
+    process.stdout.write('Activated "' + wf.name + '": ' + (ok ? 'OK' : 'FAILED — ' + activateRes.body.slice(0, 100)) + '\n');
   }
 
   process.stdout.write('Workflow activation complete\n');

@@ -10,6 +10,9 @@ class Config:
     postgres_url: str
     portfolio_path: str
     n8n_webhook_url: str
+    n8n_live_outbound_url: str
+    telegram_bot_token: str
+    telegram_chat_id: str
     route_confidence_threshold: float = 0.7
     rag_similarity_threshold: float = 0.75
 
@@ -26,6 +29,11 @@ def load() -> Config:
         n8n_webhook_url=os.environ.get(
             "N8N_WEBHOOK_URL", "http://n8n:5678/webhook/nexo-deep-route"
         ),
+        n8n_live_outbound_url=os.environ.get(
+            "N8N_LIVE_OUTBOUND_URL", "http://n8n:5678/webhook/nexo-live-outbound"
+        ),
+        telegram_bot_token=os.environ.get("TELEGRAM_BOT_TOKEN", ""),
+        telegram_chat_id=os.environ.get("TELEGRAM_CHAT_ID", ""),
         route_confidence_threshold=float(
             os.environ.get("ROUTE_CONFIDENCE_THRESHOLD", "0.7")
         ),
