@@ -73,3 +73,4 @@
 @keyframes language-reveal{from{opacity:.45}to{opacity:1}}
 @media(max-width:650px){.language-node{left:19px;bottom:13px;width:48px;height:48px}.scene-info{position:fixed;left:22px;bottom:117px;margin-left:0}footer .tools{margin-left:auto}}
 @media(prefers-reduced-motion:reduce){.is-language-changing .node-label,.is-language-changing .orientation,.is-language-changing .language-node span{animation:none}.language-node svg{transition:none}}
+@media(max-width:650px){.node-target.is-generated .node-label{width:76px}.node-target.is-generated .node-name{font-size:10px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.node-target.is-generated .node-meta{font-size:7px}}

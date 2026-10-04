@@ -68,7 +68,7 @@ export function createChessUI() {
   const legal=()=>selected?game.legal(selected):[];
   function applyLayout(){
     const layout=chessLayout({width:innerWidth,height:innerHeight},currentView);
-    camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';
+    camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';dialog.dataset.density=layout.compact?'compact':'normal';
     const {header,close,black,white,help,aside}=layout;
     for(const [prefix,region] of Object.entries({header,close,black,white,help,aside}))for(const [key,value] of Object.entries(region))dialog.style.setProperty('--chess-'+prefix+'-'+key,value+'px');
     placeBoard();

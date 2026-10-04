@@ -84,13 +84,36 @@ test('Chess layout reserves players and game information outside the complete bo
       const view={zoom,pan},before=JSON.stringify(view),layout=chessLayout({width,height},view),bounds=chessBounds(layout.camera);
       assert.equal(JSON.stringify(view),before,'Fitting the board does not mutate the universe camera');assert.ok(layout.camera.scale>0);
       assert.ok(contained([bounds.left,bounds.top],layout.area));assert.ok(contained([bounds.right,bounds.bottom],layout.area));
-      assert.ok(layout.header.top+((height<600)?42:layout.stacked?56:64)<=layout.black.top,'Heading leaves room for the player row');
-      assert.ok(layout.black.top+((height<600)?30:layout.stacked?(height<720?32:40):44)<bounds.top,'Black player stays above even the highest piece');
+      assert.ok(layout.header.top+layout.header.height<=layout.black.top,'Heading leaves room for the player row');
+      assert.ok(layout.black.top+layout.black.height<bounds.top,'Black player stays above even the highest piece');
       assert.ok(layout.white.top>bounds.bottom,'White player stays below the board and file labels');
       if(layout.stacked){assert.ok(layout.aside.top>layout.white.top);assert.ok(layout.aside.top+layout.aside.height<=height)}
       else assert.ok(layout.aside.left>bounds.right,'Status, history and actions have their own side rail');
       for(const mesh of Object.values(pieceSolids))for(const x of [.5,7.5])for(const z of [.5,7.5])for(const vertex of mesh.vertices){
         const p=project3D([vertex[0]+x,vertex[1]*.78+.18,vertex[2]+z],layout.camera).point;assert.ok(contained(p,layout.area),'Every solid, including a raised piece, stays out of the UI');
+      }
+    }
+  }
+});
+
+test('Chess information follows the visible board with comfortable gaps on tall, wide and panned views',()=>{
+  for(const [width,height] of [[1210,1146],[1920,1080],[1440,1600],[900,1000],[390,844],[375,667],[1024,568],[844,390]]){
+    for(const zoom of [.65,1,1.6])for(const pan of [{x:0,y:0},{x:width*.35,y:height*.2},{x:-width*.35,y:-height*.2}]){
+      const layout=chessLayout({width,height},{zoom,pan}),bounds=chessBounds(layout.camera);
+      const blackGap=bounds.top-layout.black.top-layout.black.height,whiteGap=layout.white.top-bounds.bottom;
+      assert.ok(blackGap>=8-1e-7&&blackGap<=12+1e-7,'Host stays close to the tallest piece without covering it');
+      assert.ok(whiteGap>=8-1e-7&&whiteGap<=12+1e-7,'Visitor stays close to the board coordinates');
+      assert.ok(layout.black.top-layout.header.top-layout.header.height<=8+1e-7,'Heading stays with the player row');
+      if(layout.stacked){
+        assert.ok(Math.abs(layout.aside.top-layout.white.top-layout.white.height-10)<1e-7,'Stacked controls follow the player row');
+        const centerOffset=Math.abs((layout.aside.left+layout.aside.width/2)-(bounds.left+bounds.right)/2);
+        assert.ok(centerOffset<=(layout.aside.width-(bounds.right-bounds.left))/2+1e-7,'Stacked information stays with the board, allowing room at viewport edges');
+      }else{
+        assert.ok(Math.abs(layout.aside.left-bounds.right-20)<1e-7,'Side controls follow the actual right edge');
+        assert.ok(Math.abs(layout.aside.top-bounds.top-8)<1e-7,'Side controls start next to the board');
+      }
+      for(const row of [layout.header,layout.black,layout.white]){
+        assert.ok(row.left>=0&&row.left+row.width<=width,'Information stays inside the viewport');
       }
     }
   }

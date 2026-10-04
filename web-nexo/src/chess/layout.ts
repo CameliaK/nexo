@@ -23,13 +23,14 @@ export function chessLayout({width,height}:ChessViewport,view:ChessView={zoom:1,
   const short=height<600,stacked=width<960&&!(width>=700&&height<650);
   const margin=width<650?18:28,footer=short?78:width<650?height<720?86:100:118;
   const headerTop=short?76:stacked?194:142,headerHeight=short?42:stacked?56:64;
-  const playerHeight=short?30:stacked?height<720?32:40:44,helpHeight=short||stacked?0:28;
+  const playerHeight=short?30:stacked?height<720?32:40:44,helpHeight=short||stacked?0:34;
   const asideWidth=short?174:220,asideHeight=height<720?98:156;
   const asideLeft=stacked?margin:width-margin-asideWidth;
   const left=stacked?margin:Math.min(280,width*.22);
   const right=stacked?width-margin:asideLeft-24;
-  const top=headerTop+headerHeight+playerHeight+12;
-  const bottom=height-footer-playerHeight-helpHeight-(stacked?asideHeight+16:0);
+  const playerGap=short?8:12,headingGap=short?4:8;
+  const top=headerTop+headerHeight+playerHeight+playerGap+headingGap;
+  const bottom=height-footer-playerHeight-helpHeight-(stacked?asideHeight+playerGap+10:0);
   // Extremely short viewports still get a finite board and a scrollable control rail.
   const area={left:left+8,right:right-8,top,bottom:Math.max(top+24,bottom)};
   const projection={x:0,y:0,scale:1,tilt:stacked?.62:.72,yaw:stacked?-.045:-.10,distance:22};
@@ -37,6 +38,18 @@ export function chessLayout({width,height}:ChessViewport,view:ChessView={zoom:1,
   const scale=Math.min((area.right-area.left)/(unit.right-unit.left),(area.bottom-area.top)/(unit.bottom-unit.top))*.9;
   const base={...projection,scale,x:(area.left+area.right)/2-(unit.left+unit.right)*scale/2,y:(area.top+area.bottom)/2-(unit.top+unit.bottom)*scale/2};
   const camera=fitChessCamera({...base,x:width/2+(base.x-width/2)*view.zoom+view.pan.x,y:height*.53+(base.y-height*.53)*view.zoom+view.pan.y,scale:base.scale*view.zoom},area);
-  const whiteTop=area.bottom+10,asideTop=stacked?whiteTop+playerHeight+6:top;
-  return {camera,area,stacked,header:{left,top:headerTop,width:right-left-44},close:{left:right,top:headerTop+(short?0:14)},black:{left,top:top-playerHeight-8,width:right-left},white:{left,top:whiteTop,width:right-left},help:{left,top:whiteTop+playerHeight+5,width:right-left},aside:{left:asideLeft,top:asideTop,width:stacked?width-2*margin:asideWidth,height:stacked?asideHeight:Math.max(80,height-footer-asideTop)}};
+  // Anchor information to the fitted silhouette, including its pieces and labels.
+  // The reserved area remains the limit for camera travel, not the UI anchor.
+  const bounds=chessBounds(camera),boardWidth=bounds.right-bounds.left;
+  const contentWidth=Math.max(boardWidth,Math.min(260,right-left));
+  const contentLeft=stacked?Math.max(left,Math.min(right-contentWidth,(bounds.left+bounds.right-contentWidth)/2)):bounds.left;
+  const blackTop=bounds.top-playerHeight-playerGap,headingTop=blackTop-headerHeight-headingGap;
+  const whiteTop=bounds.bottom+playerGap,asideTop=stacked?whiteTop+playerHeight+10:bounds.top+8;
+  return {camera,area,stacked,compact:short,
+    header:{left:contentLeft,top:headingTop,width:contentWidth-44,height:headerHeight},
+    close:{left:contentLeft+contentWidth,top:headingTop+(short?0:14)},
+    black:{left:contentLeft,top:blackTop,width:contentWidth,height:playerHeight},
+    white:{left:contentLeft,top:whiteTop,width:contentWidth,height:playerHeight},
+    help:{left:contentLeft,top:whiteTop+playerHeight+5,width:contentWidth},
+    aside:{left:stacked?contentLeft:bounds.right+20,top:asideTop,width:stacked?contentWidth:asideWidth,height:stacked?asideHeight:Math.max(80,height-footer-asideTop)}};
 }

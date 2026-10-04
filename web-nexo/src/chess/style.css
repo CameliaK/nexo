@@ -1,5 +1,6 @@
 .floating-chess{position:fixed;left:0;top:0;z-index:8;width:72px;height:72px;transform:translate(-50%,-50%);border:0;background:none;touch-action:manipulation;border-radius:50%;padding:0}
 .floating-chess[hidden]{display:none}.floating-chess-caption{position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);white-space:nowrap;text-align:center;display:flex;flex-direction:column;gap:6px;color:#c5dfd4;font-size:11px;letter-spacing:.09em}.floating-chess-caption small{font-size:8px;color:#7f9a91;letter-spacing:.17em}.floating-chess:hover .floating-chess-caption{color:#dcffee}
+@media(max-width:650px){.floating-chess-caption{width:100px;white-space:normal}.floating-chess-caption small{letter-spacing:.08em}}
 .chess-scene{position:fixed;inset:0;z-index:9;color:#c9ded8;pointer-events:none;font-family:inherit;--chess-reveal:0;outline:none}
 .chess-scene[hidden],.chess-scene [hidden]{display:none!important}.chess-shell{position:absolute;inset:0;opacity:var(--chess-reveal);pointer-events:none}
 .chess-scene button{background:rgba(10,22,26,.38);border:1px solid #b6f3dc30;border-radius:2px;font:inherit;color:inherit;transition:background .18s,border-color .18s;pointer-events:none}.chess-scene.is-ready button,.chess-scene.is-ready .chess-aside,.chess-scene.is-ready .chess-board{pointer-events:auto}.chess-scene button:hover{background:#b6f3dc12;border-color:#b6f3dc70}.chess-scene button:focus-visible{outline:1px solid #b6f3dc;outline-offset:3px}
@@ -38,3 +39,5 @@ body.is-chess .node-name{font-size:10px;color:#92b1a5}body.is-chess .node-label{
 @media(max-width:650px){.chess-player strong{font-size:10px}.chess-player>div>span{font-size:8px}.chess-player[data-color=b]>div>span{display:block}.chess-player .chess-captures{max-width:100px}}
 .chess-player>div>span{display:block}
 @media(max-height:720px){.chess-captures{flex-wrap:nowrap;overflow-x:auto;pointer-events:auto;scrollbar-width:thin}.chess-captures span{flex-shrink:0}}
+.chess-scene[data-density=compact] .chess-heading h2{font-size:13px;margin:4px 0}
+.chess-scene[data-density=compact] .chess-local,.chess-scene[data-density=compact] .chess-help{display:none}

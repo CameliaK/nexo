@@ -24,7 +24,7 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
   getBoundingClientRect(){
    if(this.className==='node-label'){
      const match=this.parent?.style.transform?.match(/translate\(([-\d.]+)px,([-\d.]+)px\)/);
-     if(match){const x=Number(match[1]),y=Number(match[2]),r=parseFloat(this.parent.style['--radius']);return{left:x-80,top:y+r+19,width:160,height:35}}
+     if(match){const x=Number(match[1]),y=Number(match[2]),r=parseFloat(this.parent.style['--radius']),mobile=sandbox.innerWidth<650,compact=this.parent.className.includes('is-generated')&&mobile,w=compact?76:mobile?145:160;return{left:x-w/2,top:y+r+(compact?12:19),width:w,height:compact?32:35}}
    }
    return this.rect||{left:1120,top:530,width:258,height:170,right:1378,bottom:700};
   }
@@ -43,7 +43,7 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
  source=source.replace("import { LivePreview, placeSatellite, satelliteFootprint } from './live-satellite.js';",'');
- source=source.replace('return {refreshLanguage,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,dispose(){');
+ source=source.replace('return {refreshLanguage,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,dispose(){');
  source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);Object.assign(sandbox.api,sandbox.universe);
  const frames=(ms=2700)=>{const end=now+ms;while(now<end){now=Math.min(end,now+50);raf(now)}};
  const enter=id=>{el('node-targets').children.find(e=>e.dataset.node===id).click();frames()};
@@ -177,6 +177,55 @@ test('Satellite remains clickable while hovered, then evades new obstacles when 
  api.chatTarget.handlers.pointerenter();const held={x:position.x,y:position.y};control.rect={left:position.x-75,top:position.y-75,width:150,height:150};frames(50);
  assert.equal(api.chatTarget.hidden,false);assert.equal(api.getChatPosition().x,held.x);assert.equal(api.getChatPosition().y,held.y);
  api.chatTarget.handlers.pointerleave();frames(50);position=api.getChatPosition();assertFree(position,1440,900,api.chatObstacles(),satellite.satelliteFootprint(21,position.caption));
+});
+
+test('Approaching companion and speech never displace or hide chat before hover',()=>{
+ const control=fixture(),approached=fixture();control.frames(1000);approached.frames(1000);
+ const {api,frames,el,sandbox}=approached,position=api.getChatPosition();
+ Object.assign(api.companion,{x:position.x,y:position.y,tx:position.x-38,ty:position.y-43,present:true,locked:true});
+ el('companion-target').rect={left:position.x-31,top:position.y-31,width:62,height:62};
+ el('speech-bubble').rect={left:position.x-90,top:position.y-80,width:180,height:160};
+ frames(500);control.frames(500);
+ assert.equal(api.chatTarget.hidden,false);
+ assert.equal(api.getChatPosition().x,control.api.getChatPosition().x);
+ assert.equal(api.getChatPosition().y,control.api.getChatPosition().y);
+ let opens=0;sandbox.bridge.onLiveOpen=()=>opens++;api.chatTarget.click();assert.equal(opens,1);
+ api.companion.locked=false;frames(1000);
+ const chat=translated(satellite.satelliteFootprint(21,api.getChatPosition().caption),api.getChatPosition());
+ const orb={left:api.companion.x-24,right:api.companion.x+24,top:api.companion.y-26,bottom:api.companion.y+26};
+ assert.equal(satellite.intersects(chat,orb),false,'The companion yields to the chat target');
+ assert.equal(api.chatTarget.hidden,false);
+});
+
+test('Root chess and generated satellites leave space around graph bodies and labels',()=>{
+ for(const [w,h,reduced,elapsed=1500] of [[1440,900,true],[1210,1146,true],[390,844,true],[1440,900,false],[390,844,false],[390,844,false,8000]]){
+   const {api,frames,el,sandbox,listeners}=fixture(true,reduced);
+   sandbox.innerWidth=w;sandbox.innerHeight=h;listeners.resize();
+   el('companion-panel').hidden=true;el('content-card').hidden=true;
+   const controls=[{left:0,top:0,width:w,height:w<650?78:104},
+     {left:w<650?24:46,top:w<650?103:139,width:w<650?300:450,height:w<650?100:126},
+     {left:0,top:h-(w<650?108:102),width:w,height:w<650?108:102}].map(rect=>({rect,getBoundingClientRect(){return this.rect}}));
+   sandbox.document.querySelectorAll=()=>controls;sandbox.getComputedStyle=()=>({display:'block',visibility:'visible'});
+   frames(100);
+   api.spawnGenerated({id:'gen_outer',generated:true,label:'Creado para ti',summary:'Resumen',created_at:'2026-10-04T00:00:00Z',sources:[],layout:'text',content:{body:'Texto'}},null,true);frames(elapsed);
+   const canonical=api.getNodes().filter(n=>!n.generated),generated=api.getNodes().find(n=>n.generated),chess=api.chessOrbit();
+   const half=w<650?38:80,gap=w<650?6:20;
+   const generatedRect={left:generated.sx-half,right:generated.sx+half,top:generated.sy-generated.sr*1.65,bottom:generated.sy+generated.sr+(w<650?44:54)};
+   const chessRect={left:chess.sx-(w<650?50:75),right:chess.sx+(w<650?50:75),top:chess.sy-(w<650?40:50),bottom:chess.sy+(w<650?90:86)};
+   for(const rect of [generatedRect,chessRect]){
+     assert.ok(rect.left>=12&&rect.right<=w-12&&rect.top>=12&&rect.bottom<=h-12,`Satellite fits ${w}×${h}`);
+     for(const n of canonical){
+       const reach=n.sr*1.65,body={left:n.sx-reach-gap,right:n.sx+reach+gap,top:n.sy-reach-gap,bottom:n.sy+reach+gap};
+       const b=n.el.querySelector('.node-label').getBoundingClientRect(),label={left:b.left-gap,right:b.left+b.width+gap,top:b.top,bottom:b.top+b.height+gap};
+       assert.equal(satellite.intersects(rect,body),false,`${w}×${h}: satellite clears ${n.id} body`);
+       assert.equal(satellite.intersects(rect,label),false,`${w}×${h}: satellite clears ${n.id} label`);
+     }
+     for(const c of controls){const b=c.rect;assert.equal(satellite.intersects(rect,{left:b.left,right:b.left+b.width,top:b.top,bottom:b.top+b.height}),false,'Satellite clears fixed UI')}
+     const b=api.distantSystemBounds();assert.equal(satellite.intersects(rect,{left:b.left,right:b.left+b.width,top:b.top,bottom:b.top+b.height+20}),false,`Satellite clears the system window ${w}×${h}`);
+   }
+   assert.equal(satellite.intersects(generatedRect,chessRect),false);
+   assert.equal(api.getLevel().edges.length,5);assert.equal(api.records.size,54);
+ }
 });
 
 test('Free-zone search fits a bubble and rejects a drift that would cross an obstacle',()=>{
