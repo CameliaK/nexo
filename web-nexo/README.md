@@ -25,6 +25,8 @@ La compilación publicada usa siempre `RealBackend`, incluso si el entorno indic
 2. Los nodos del sistema aparecen pequeños y lejanos en el fondo del mismo universo, sin abertura ni recuadro. Conservan las mallas, rotaciones, colores y conexiones de la vista ampliada, renderizadas en el Canvas. Al entrar, la cámara se acerca a esos mismos nodos y al volver se aleja hasta su posición original. Sus nueve componentes y quince conexiones provienen de `backend-architecture.json`. «Este portafolio» abre el mismo destino. Al volver se restauran nivel, zoom y desplazamiento anteriores.
 
 3. Chat en vivo desde el nodo de contacto: nombre opcional, historial persistente simulado, estados de envío, reintento e insignia de mensajes nuevos cuando está cerrado. La respuesta del propietario ilumina el sistema sin cambiar la cámara.
+
+El nodo del chat busca zonas libres en cada frame: evita las formas y etiquetas del nivel actual, el centro, la ventana al sistema y los controles, también al navegar, hacer zoom o redimensionar. La burbuja muestra un solo mensaje y desaparece a los 5 segundos; pasar el mouse por el nodo o la burbuja pausa ese tiempo. La insignia de mensajes nuevos permanece hasta abrir el panel. Con movimiento reducido, el texto se retira sin animación. Restaurar el historial no vuelve a mostrar previews antiguos.
 4. Nexo recibe respuestas por fragmentos, muestra el proceso y recorre rutas válidas de forma continua. Dentro del sistema, espera a volver o a pulsar «Ir ahora». Los nodos generados usan cinco layouts de texto plano, muestran fuentes, se guardan y se pueden descartar. El máximo es **12 nodos en total, incluyendo hijos**, con hasta cuatro hijos por nodo y sin nietos. Aparecen sin conexiones y sobreviven a las transiciones.
 
 El reproductor ordena por ejecución y secuencia, descarta duplicados, conserva tramos solapados e interpreta aristas en ambos sentidos. Activo: luz y partícula; completado: brillo fijo; error: rojo. Incluye navegador → Traefik al enviar y Redis → gateway → navegador al recibir. Los eventos de otras pestañas no se animan, salvo `live_in`, que nunca desplaza la cámara. Los estados finales vuelven al reposo después de unos segundos. Movimiento reducido conserva los cambios de estado sin partículas.
@@ -49,11 +51,17 @@ La partida es local para dos personas: Visitante lleva blancas y Kirbith negras.
 
 El estado vive en memoria: cerrar y abrir conserva la partida durante esa visita; recargar la página la reinicia. El módulo no usa almacenamiento, red, bots ni adaptadores del backend. Movimiento reducido omite animaciones. `tests/chess.test.ts` se incluye en `npm test`.
 
+## Imágenes flotantes
+
+El campo opcional `media` añade hasta seis ventanitas a la capa final de cualquier nodo. Buscan zonas libres, evitan los diagramas y sus conexiones y tienen un visor con pies de foto, flechas y cierre con ESC. Astralis y NKare incluyen tres imágenes neutras de prueba. Consulta [Preparar imágenes y reemplazar placeholders](docs/media.md) para añadir tus WebP y gestionar la caché de `/media/`.
+
 ## Organización
 
 - `src/universe.js`: renderizador existente, navegación y cámara.
 - `src/main.ts`: composición de interfaz, adaptador y reconexión progresiva tras una desconexión.
 - `src/chat.ts`: chats, proceso, rutas y colección de nodos generados.
+- `src/live-satellite.js`: búsqueda de zonas libres y temporizador del preview del chat.
+- `src/media.ts` y `media.css`: ventanas de imágenes y visor accesible.
 - `src/backend/events.ts` y `generated.ts`: entrega ordenada y validación de nodos.
 - `src/backend/`: contrato y adaptadores simulado/real.
 - `src/system/traces.ts`: estado y cola de trazas, independientes de la cámara.
@@ -62,4 +70,8 @@ El estado vive en memoria: cerrar y abrir conserva la partida durante esa visita
 - `tests/`: pruebas de tiempos, errores, persistencia simulada, trazas, navegación, cámara y conservación de facetas.
 - `dist/`: compilación estática para publicación privada mediante Sites.
 
-Las fuentes de Google son opcionales. No se realiza ninguna petición al abrir un nodo del portafolio.
+Las fuentes de Google son opcionales. El contenido de texto se importa localmente; las imágenes de `public/media/` se cargan de forma diferida al mostrar sus ventanas.
+
+## Idiomas
+
+El nodo fijo **ES / EN** cambia el idioma conservando cámara, profundidad y paneles abiertos. La preferencia se guarda localmente; el contenido faltante en inglés usa el español. Consulta [Contenido y textos por idioma](docs/i18n.md) para editar los JSON y los catálogos tipados. El chat envía el campo opcional `lang`; MockBackend mantiene sus escenarios.

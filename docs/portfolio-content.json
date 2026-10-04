@@ -204,15 +204,17 @@
       "order": 1,
       "label": "Nombre",
       "type": "facts",
-      "summary": "Kirbith Cubillas.",
+      "summary": "Kirbith Alberto Cubillas Hernández.",
       "keywords": [
-        "nombre"
+        "nombre",
+        "nombre completo",
+        "Kirbith Alberto Cubillas Hernández"
       ],
       "content": {
         "items": [
           {
-            "label": "Nombre",
-            "value": "Kirbith Cubillas"
+            "label": "Nombre completo",
+            "value": "Kirbith Alberto Cubillas Hernández"
           }
         ]
       }
@@ -223,18 +225,24 @@
       "order": 2,
       "label": "Edad",
       "type": "facts",
-      "summary": "22 años.",
+      "summary": "Tengo 23 años; nací el 2 de octubre de 2003.",
       "keywords": [
         "edad",
         "años",
-        "cumpleaños"
+        "cumpleaños",
+        "nacimiento",
+        "2 de octubre de 2003"
       ],
       "content": {
         "items": [
           {
             "label": "Edad",
-            "value": "22 años",
+            "value": "23 años",
             "computed_age_from": "2003-10-02"
+          },
+          {
+            "label": "Nací el",
+            "value": "2 de octubre de 2003"
           }
         ]
       }
@@ -245,13 +253,16 @@
       "order": 3,
       "label": "De dónde soy",
       "type": "facts",
-      "summary": "De Xalapa, Veracruz; vivo en Banderilla.",
+      "summary": "Soy de Xalapa, Veracruz, y vivo en Banderilla, un municipio vecino.",
       "keywords": [
         "xalapa",
         "banderilla",
         "veracruz",
         "origen",
-        "vivo"
+        "vivo",
+        "mapa",
+        "Veracruz",
+        "México"
       ],
       "content": {
         "items": [
@@ -264,6 +275,21 @@
             "value": "Banderilla, Veracruz"
           }
         ]
+      },
+      "visual": {
+        "kind": "illustrated_map",
+        "region": "Veracruz, México",
+        "points": [
+          {
+            "label": "Xalapa",
+            "role": "origen"
+          },
+          {
+            "label": "Banderilla",
+            "role": "residencia"
+          }
+        ],
+        "style_note": "Ilustración del estado de Veracruz con Xalapa y Banderilla marcadas, en el mismo lenguaje visual del universo (wireframe, luz suave)."
       }
     },
     {
@@ -272,11 +298,14 @@
       "order": 4,
       "label": "Idiomas",
       "type": "facts",
-      "summary": "Español nativo, inglés avanzado.",
+      "summary": "Español nativo; inglés técnico de trabajo, aproximadamente B2.",
       "keywords": [
         "idiomas",
         "inglés",
-        "español"
+        "español",
+        "B2",
+        "inglés técnico",
+        "entornos profesionales"
       ],
       "content": {
         "items": [
@@ -286,7 +315,11 @@
           },
           {
             "label": "Inglés",
-            "value": "Avanzado"
+            "value": "Aproximadamente B2"
+          },
+          {
+            "label": "En la práctica",
+            "value": "He trabajado en entornos profesionales en inglés: me comunico, escribo y me desenvuelvo en temas técnicos."
           }
         ]
       }
@@ -332,15 +365,17 @@
       "order": 1,
       "label": "Tenis",
       "type": "text",
-      "summary": "Lo que practico hoy, con miras a torneos.",
+      "summary": "Empecé en la universidad; no ha sido fácil, pero entreno para competir en torneos amateur.",
       "keywords": [
         "tenis",
         "torneos",
-        "entrenamiento"
+        "entrenamiento",
+        "torneos amateur",
+        "universidad"
       ],
       "status": "actual",
       "content": {
-        "body": "Es el deporte que practico actualmente. Entreno de forma más seria y más constante, preparándome para entrar a torneos."
+        "body": "Empecé a practicar tenis en la universidad. A pesar de que no ha sido fácil, he entrenado y mejorado con el objetivo de competir de forma amateur en torneos."
       }
     },
     {
@@ -349,13 +384,13 @@
       "order": 2,
       "label": "Natación",
       "type": "text",
-      "summary": "Lo he practicado.",
+      "summary": "La practiqué en la primaria y así aprendí a nadar.",
       "keywords": [
         "natación"
       ],
       "status": "practicado",
       "content": {
-        "body": "Natación: uno de los deportes que he practicado."
+        "body": "Practiqué natación en la primaria, y de esa forma aprendí a nadar."
       }
     },
     {
@@ -364,13 +399,13 @@
       "order": 3,
       "label": "Básquetbol",
       "type": "text",
-      "summary": "Lo he practicado.",
+      "summary": "Lo practiqué en tercero de secundaria, para crecer más.",
       "keywords": [
         "básquetbol"
       ],
       "status": "practicado",
       "content": {
-        "body": "Básquetbol: uno de los deportes que he practicado."
+        "body": "Practiqué básquetbol en tercero de secundaria, porque me dijeron que de esa forma iba a crecer más."
       }
     },
     {
@@ -379,13 +414,13 @@
       "order": 4,
       "label": "Béisbol",
       "type": "text",
-      "summary": "Lo he practicado.",
+      "summary": "Lo practiqué en la secundaria, en un equipo; es el deporte favorito de mis padres.",
       "keywords": [
         "béisbol"
       ],
       "status": "practicado",
       "content": {
-        "body": "Béisbol: uno de los deportes que he practicado."
+        "body": "Practiqué béisbol en la secundaria, cuando entré a un equipo. Es el deporte que más disfrutan mis padres."
       }
     },
     {
@@ -394,13 +429,13 @@
       "order": 5,
       "label": "Fútbol",
       "type": "text",
-      "summary": "Lo he practicado.",
+      "summary": "Lo practiqué desde el jardín de niños.",
       "keywords": [
         "fútbol"
       ],
       "status": "practicado",
       "content": {
-        "body": "Fútbol: uno de los deportes que he practicado."
+        "body": "Practiqué fútbol cuando iba en el jardín de niños."
       }
     },
     {
@@ -439,13 +474,17 @@
       "order": 1,
       "label": "Dibujo",
       "type": "text",
-      "summary": "Me gusta dibujar.",
+      "summary": "Más que dibujar por gusto, me interesa el dibujo como oficio y sigo aprendiendo.",
       "keywords": [
         "dibujo",
-        "arte"
+        "arte",
+        "carbón",
+        "grafito",
+        "tinta china",
+        "técnicas"
       ],
       "content": {
-        "body": "El dibujo es una de las artes que practico."
+        "body": "No solo me gusta dibujar: me interesa el dibujo en sí. He aprendido técnicas como carbón, grafito y tinta china, entre otras, y sigo aprendiendo."
       }
     },
     {
@@ -454,13 +493,15 @@
       "order": 2,
       "label": "Piano",
       "type": "text",
-      "summary": "Toco el piano.",
+      "summary": "Aprendí a tocar piano a los 18 años y quiero aprender más instrumentos.",
       "keywords": [
         "piano",
-        "música"
+        "música",
+        "a los 18 años",
+        "instrumentos"
       ],
       "content": {
-        "body": "Toco el piano."
+        "body": "Aprendí a tocar piano a los 18 años. Es una actividad que disfruto mucho, y planeo aprender a tocar más instrumentos."
       }
     },
     {
@@ -487,7 +528,7 @@
       "order": 1,
       "label": "Rainbow Six Siege",
       "type": "facts",
-      "summary": "Rango Esmeralda.",
+      "summary": "He alcanzado el rango Esmeralda en Rainbow Six Siege.",
       "keywords": [
         "r6",
         "rainbow six",
@@ -497,7 +538,7 @@
       "content": {
         "items": [
           {
-            "label": "Rango",
+            "label": "Rango alcanzado",
             "value": "Esmeralda"
           }
         ]
@@ -567,14 +608,14 @@
       "order": 5,
       "label": "Minecraft",
       "type": "text",
-      "summary": "Entre mis juegos de supervivencia favoritos.",
+      "summary": "Me gusta jugar Minecraft con mis amigos y con mi pareja.",
       "keywords": [
         "minecraft",
         "supervivencia"
       ],
       "status": "favorito",
       "content": {
-        "body": "Minecraft está entre los juegos de supervivencia que más disfruto."
+        "body": "Me gusta jugar Minecraft con mis amigos y con mi pareja."
       }
     },
     {
@@ -583,14 +624,16 @@
       "order": 6,
       "label": "Stardew Valley",
       "type": "text",
-      "summary": "Entre mis juegos de supervivencia favoritos.",
+      "summary": "Lo disfruto con mi pareja, sobre todo por crear y por la creatividad.",
       "keywords": [
         "stardew valley",
-        "supervivencia"
+        "supervivencia",
+        "creatividad",
+        "crear"
       ],
       "status": "favorito",
       "content": {
-        "body": "Stardew Valley está entre los juegos de supervivencia que más disfruto."
+        "body": "Disfruto jugar Stardew Valley con mi pareja: me gusta crear, y lo que más valoro del juego es la creatividad."
       }
     },
     {

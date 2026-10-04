@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080b10">
-  <meta name="description" content="Un espacio vivo para explorar un sistema distribuido, una constelación a la vez. Portafolio de Kirbith Cubillas.">
-  <title>Nexo — Arquitectura viva</title>
+  <meta name="description" content="" data-i18n-content="app.description">
+  <title>Nexo</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23080b10'/%3E%3Cpath d='M16 4 28 16 16 28 4 16Z M16 4v24M4 16h24' fill='none' stroke='%23b6f3dc' stroke-width='1.5'/%3E%3C/svg%3E">
   
 </head>
@@ -13,44 +13,44 @@
   <canvas id="space" aria-hidden="true"></canvas>
   <div class="vignette" aria-hidden="true"></div>
   <header class="topbar">
-    <a class="brand" href="#" aria-label="Nexo, volver al inicio"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 2 14 14-14 14L2 16Z M16 2v28M2 16h28M7 7l18 18M25 7 7 25"/></svg><span>NEXO</span><span class="brand-divider"></span><span class="brand-sub">ARQUITECTURA VIVA</span></a>
-    <div class="system-status"><span class="live-dot"></span><span id="motion-status">Sistema en movimiento</span><span class="prototype">PROTOTIPO 01</span></div>
+    <a class="brand" href="#" aria-label="" data-i18n-aria-label="nav.homeAria"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 2 14 14-14 14L2 16Z M16 2v28M2 16h28M7 7l18 18M25 7 7 25"/></svg><span>NEXO</span><span class="brand-divider"></span><span class="brand-sub" data-i18n="app.tagline"></span></a>
+    <div class="system-status"><span class="live-dot"></span><span id="motion-status" data-i18n-initial="motion.running"></span><span class="prototype" data-i18n="app.prototype"></span></div>
   </header>
-  <main aria-label="Explorador de constelaciones">
+  <main aria-label="" data-i18n-aria-label="app.explorer">
     <section class="orientation">
-      <nav id="breadcrumbs" aria-label="Ubicación en el sistema"></nav>
-      <h1 id="level-title">Mi universo</h1>
-      <p id="level-description">Cinco formas de conocerme. Un mismo recorrido.</p>
-      <span id="example-badge" hidden>ARQUITECTURA ILUSTRATIVA</span>
-      <div id="scene-facts"></div><div id="scene-highlights"></div><div class="back-wrap"><button id="back" class="back-button" hidden><span aria-hidden="true">↖</span> Volver <kbd>ESC</kbd></button></div>
+      <nav id="breadcrumbs" aria-label="" data-i18n-aria-label="nav.breadcrumbs"></nav>
+      <h1 id="level-title" data-i18n-initial="app.home"></h1>
+      <p id="level-description" data-i18n-initial="app.subtitle"></p>
+      <span id="example-badge" hidden></span>
+      <div id="scene-facts"></div><div id="scene-highlights"></div><div class="back-wrap"><button id="back" class="back-button" hidden><span aria-hidden="true">↖</span> <span data-i18n="common.back"></span> <kbd>ESC</kbd></button></div>
     </section>
-    <div class="level-mark"><span class="eyebrow">PROFUNDIDAD</span><div><span id="depth-number">00</span><span class="depth-line"></span><span id="depth-label">VISTA GENERAL</span></div></div>
-    <div id="node-targets" aria-label="Nodos del nivel actual"></div>
-    <div id="edge-targets" class="sr-only" aria-label="Conexiones con explicación"></div>
+    <div class="level-mark"><span class="eyebrow" data-i18n="nav.depth"></span><div><span id="depth-number">00</span><span class="depth-line"></span><span id="depth-label" data-i18n-initial="nav.overview"></span></div></div>
+    <div id="node-targets" aria-label="" data-i18n-aria-label="nav.nodesAria"></div>
+    <div id="edge-targets" class="sr-only" aria-label="" data-i18n-aria-label="nav.edgesAria"></div>
   </main>
-  <button id="companion-target" aria-label="Abrir ventana de Nexo" aria-controls="companion-panel" aria-expanded="false" title="Habla con Nexo"></button>
+  <button id="companion-target" aria-label="" aria-controls="companion-panel" aria-expanded="false" title="" data-i18n-title="guide.talk"></button>
   <aside id="speech-bubble" class="speech-bubble" aria-live="polite" aria-atomic="true" hidden>
-    <div class="speech-surface"><span class="speech-kicker">NEXO <span aria-hidden="true">/</span> <span id="speech-title">TU GUÍA</span></span><p id="speech-text"></p></div>
+    <div class="speech-surface"><span class="speech-kicker">NEXO <span aria-hidden="true">/</span> <span id="speech-title" data-i18n-initial="guide.title"></span></span><p id="speech-text"></p></div>
   </aside>
   <section id="companion-panel" class="companion-panel" role="dialog" aria-modal="false" aria-labelledby="panel-title" hidden>
     <div class="panel-surface">
-      <header class="panel-header"><button id="panel-handle" class="panel-handle" aria-label="Mover ventana de Nexo. Arrastra o usa las flechas." title="Arrastra para mover · Flechas con el teclado"><span class="eyebrow">TU COMPAÑERO DE EXPLORACIÓN · ⠿</span><span id="panel-title">Nexo</span></button><button id="close-panel" aria-label="Cerrar ventana de Nexo" title="Cerrar">×</button></header>
-      <div class="panel-body"><span id="panel-context" class="panel-context">Mi universo</span><p id="panel-message">Explora los nodos para conocer las conexiones de este recorrido.</p></div>
-      <div class="panel-compose"><label for="nexo-input">Escribe a Nexo</label><div><input id="nexo-input" type="text" maxlength="500" autocomplete="off" placeholder="Tu mensaje…" aria-describedby="compose-hint"><button type="button" disabled aria-label="Enviar mensaje, próximamente">↗</button></div><small id="compose-hint">Conversación disponible próximamente.</small></div><div class="panel-footer"><span class="live-dot" aria-hidden="true"></span> Puedes seguir explorando el mapa.</div>
+      <header class="panel-header"><button id="panel-handle" class="panel-handle" aria-label="" data-i18n-aria-label="guide.move" title="" data-i18n-title="guide.moveHint"><span class="eyebrow" data-i18n="guide.companion"></span><span id="panel-title">Nexo</span></button><button id="close-panel" aria-label="" data-i18n-aria-label="guide.close" title="" data-i18n-title="common.close">×</button></header>
+      <div class="panel-body"><span id="panel-context" class="panel-context" data-i18n-initial="app.home"></span><p id="panel-message" data-i18n-initial="guide.description"></p></div>
+      <div class="panel-compose"><label for="nexo-input" data-i18n="guide.write"></label><div><input id="nexo-input" type="text" maxlength="500" autocomplete="off" placeholder="" data-i18n-placeholder="guide.message" aria-describedby="compose-hint"><button type="button" disabled aria-label="">↗</button></div><small id="compose-hint" data-i18n-initial="guide.future"></small></div><div class="panel-footer"><span class="live-dot" aria-hidden="true"></span> <span data-i18n="guide.keepExploring"></span></div>
     </div>
   </section>
-  <section id="content-card" class="content-card" aria-labelledby="content-title" hidden><div class="panel-surface"><header class="panel-header"><h2 id="content-title"></h2><button id="close-content" aria-label="Cerrar información">×</button></header><div id="content-body" class="panel-body"></div></div></section>
+  <section id="content-card" class="content-card" aria-labelledby="content-title" hidden><div class="panel-surface"><header class="panel-header"><h2 id="content-title"></h2><button id="close-content" aria-label="" data-i18n-aria-label="guide.closeInfo">×</button></header><div id="content-body" class="panel-body"></div></div></section>
   <footer>
-    <div class="scene-info"><span class="scene-cross" aria-hidden="true">+</span><div><span class="eyebrow">CONSTELACIÓN <span id="scene-number">01</span></span><div class="scene-count"><span id="node-count">7 nodos</span><span class="tiny-divider">/</span><span id="edge-count">9 conexiones</span></div></div></div>
-    <p class="instruction"><span class="mouse-icon" aria-hidden="true"></span><span id="instruction-text">Acércate a un nodo. Descubre qué hay dentro.</span></p>
-    <div class="tools" aria-label="Controles de la vista">
-      <button id="pause" title="Pausar movimiento" aria-label="Pausar movimiento" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></button>
+    <div class="scene-info"><span class="scene-cross" aria-hidden="true">+</span><div><span class="eyebrow"><span data-i18n="nav.constellation"></span> <span id="scene-number">01</span></span><div class="scene-count"><span id="node-count"></span><span class="tiny-divider">/</span><span id="edge-count"></span></div></div></div>
+    <p class="instruction"><span class="mouse-icon" aria-hidden="true"></span><span id="instruction-text" data-i18n-initial="nav.instruction"></span></p>
+    <div class="tools" aria-label="" data-i18n-aria-label="motion.controls">
+      <button id="pause" title="" aria-label="" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></button>
       <span class="tool-divider"></span>
-      <button id="zoom-out" title="Alejar" aria-label="Alejar"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+      <button id="zoom-out" title="" data-i18n-title="motion.out" aria-label="" data-i18n-aria-label="motion.out"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
       <span id="zoom-label" class="zoom-label">100%</span>
-      <button id="zoom-in" title="Acercar" aria-label="Acercar"><svg viewBox="0 0 24 24"><path d="M6 12h12M12 6v12"/></svg></button>
+      <button id="zoom-in" title="" data-i18n-title="motion.in" aria-label="" data-i18n-aria-label="motion.in"><svg viewBox="0 0 24 24"><path d="M6 12h12M12 6v12"/></svg></button>
       <span class="tool-divider"></span>
-      <button id="reset" title="Centrar vista" aria-label="Centrar vista"><svg viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2"/></svg></button>
+      <button id="reset" title="" data-i18n-title="motion.center" aria-label="" data-i18n-aria-label="motion.center"><svg viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2"/></svg></button>
     </div>
   </footer>
   <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>

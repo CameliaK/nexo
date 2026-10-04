@@ -1,0 +1,341 @@
+{
+  "meta": {
+    "contract_version": 2,
+    "notes": [
+      "STATIC backend graph. The UI draws it and highlights it with trace.hop events.",
+      "A hop is drawn along the edge connecting from and to, regardless of direction.",
+      "layer suggests a column from left to right (0 to 4). The UI decides the final layout.",
+      "Component IDs are open strings: more can be added (such as chess) without changing the types.",
+      "contribution is optional: the owner can add a contribution per component. When null, it is omitted.",
+      "flows is only for the legend and documentation; the actual animation comes from trace.hop."
+    ]
+  },
+  "components": [
+    {
+      "id": "browser",
+      "label": "Your browser",
+      "tech": "React",
+      "kind": "client",
+      "layer": 0,
+      "what": "Where you are now: the interface you see, ask questions from and use to send messages.",
+      "contribution": null
+    },
+    {
+      "id": "traefik",
+      "label": "Traefik",
+      "tech": "Traefik",
+      "kind": "edge",
+      "layer": 1,
+      "what": "The entrance. Receives all traffic, secures it with HTTPS and routes it to the correct service.",
+      "contribution": null
+    },
+    {
+      "id": "gateway",
+      "label": "Gateway",
+      "tech": "Go",
+      "kind": "api",
+      "layer": 2,
+      "what": "Identifies the visitor, limits usage and pushes everything that happens to your browser in real time.",
+      "contribution": null
+    },
+    {
+      "id": "redis",
+      "label": "Redis",
+      "tech": "Redis",
+      "kind": "bus",
+      "layer": 2,
+      "what": "Instant messaging between services and fast session memory.",
+      "contribution": null
+    },
+    {
+      "id": "agent",
+      "label": "Agent",
+      "tech": "Python + FastAPI",
+      "kind": "service",
+      "layer": 3,
+      "what": "Decides where to take you, finds information and designs new nodes when needed.",
+      "contribution": null
+    },
+    {
+      "id": "n8n",
+      "label": "n8n",
+      "tech": "n8n",
+      "kind": "orchestrator",
+      "layer": 4,
+      "what": "Runs long workflows step by step, such as creating a node or notifying me of your message, while you watch it work.",
+      "contribution": null
+    },
+    {
+      "id": "llm",
+      "label": "Language model",
+      "tech": "LLM provider",
+      "kind": "ml",
+      "layer": 4,
+      "what": "The AI that understands questions and writes answers. It sits behind an interface so it can be replaced.",
+      "contribution": null
+    },
+    {
+      "id": "postgres",
+      "label": "Postgres + pgvector",
+      "tech": "PostgreSQL",
+      "kind": "data",
+      "layer": 4,
+      "what": "Stores generated nodes and chat messages, and enables semantic search using vectors.",
+      "contribution": null
+    },
+    {
+      "id": "owner_channel",
+      "label": "My phone",
+      "tech": "WhatsApp or Telegram",
+      "kind": "external",
+      "layer": 4,
+      "what": "Where live chat messages reach me. I reply from there and my response appears on your screen.",
+      "contribution": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "browser-traefik",
+      "from": "browser",
+      "to": "traefik",
+      "kind": "request",
+      "label": "HTTPS"
+    },
+    {
+      "id": "traefik-gateway",
+      "from": "traefik",
+      "to": "gateway",
+      "kind": "request",
+      "label": "Routes the request"
+    },
+    {
+      "id": "gateway-browser",
+      "from": "gateway",
+      "to": "browser",
+      "kind": "event",
+      "label": "WebSocket: live events"
+    },
+    {
+      "id": "gateway-redis",
+      "from": "gateway",
+      "to": "redis",
+      "kind": "event",
+      "label": "Sessions and events"
+    },
+    {
+      "id": "gateway-agent",
+      "from": "gateway",
+      "to": "agent",
+      "kind": "request",
+      "label": "Sends the question"
+    },
+    {
+      "id": "gateway-postgres",
+      "from": "gateway",
+      "to": "postgres",
+      "kind": "request",
+      "label": "Stores and reads messages"
+    },
+    {
+      "id": "gateway-n8n",
+      "from": "gateway",
+      "to": "n8n",
+      "kind": "request",
+      "label": "Forwards the live chat message"
+    },
+    {
+      "id": "agent-llm",
+      "from": "agent",
+      "to": "llm",
+      "kind": "request",
+      "label": "Understands and writes"
+    },
+    {
+      "id": "agent-postgres",
+      "from": "agent",
+      "to": "postgres",
+      "kind": "request",
+      "label": "Searches and stores"
+    },
+    {
+      "id": "agent-n8n",
+      "from": "agent",
+      "to": "n8n",
+      "kind": "request",
+      "label": "Starts long workflows"
+    },
+    {
+      "id": "agent-redis",
+      "from": "agent",
+      "to": "redis",
+      "kind": "event",
+      "label": "Publishes events"
+    },
+    {
+      "id": "n8n-postgres",
+      "from": "n8n",
+      "to": "postgres",
+      "kind": "request",
+      "label": "Reads and stores"
+    },
+    {
+      "id": "n8n-llm",
+      "from": "n8n",
+      "to": "llm",
+      "kind": "request",
+      "label": "Designs nodes"
+    },
+    {
+      "id": "n8n-redis",
+      "from": "n8n",
+      "to": "redis",
+      "kind": "event",
+      "label": "Publishes events"
+    },
+    {
+      "id": "n8n-owner_channel",
+      "from": "n8n",
+      "to": "owner_channel",
+      "kind": "request",
+      "label": "Sends and receives messages"
+    }
+  ],
+  "flows": [
+    {
+      "id": "chat-rapido",
+      "label": "Question with an existing node",
+      "description": "The agent understands the question and takes you to an existing node. It does not go through n8n.",
+      "hops": [
+        [
+          "browser",
+          "traefik"
+        ],
+        [
+          "traefik",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "agent"
+        ],
+        [
+          "agent",
+          "llm"
+        ],
+        [
+          "agent",
+          "redis"
+        ],
+        [
+          "redis",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "browser"
+        ]
+      ]
+    },
+    {
+      "id": "chat-profundo",
+      "label": "Question requiring a new node",
+      "description": "There is no node: the agent starts an n8n workflow that searches the knowledge base, designs the node and saves it.",
+      "hops": [
+        [
+          "browser",
+          "traefik"
+        ],
+        [
+          "traefik",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "agent"
+        ],
+        [
+          "agent",
+          "llm"
+        ],
+        [
+          "agent",
+          "n8n"
+        ],
+        [
+          "n8n",
+          "postgres"
+        ],
+        [
+          "n8n",
+          "llm"
+        ],
+        [
+          "n8n",
+          "redis"
+        ],
+        [
+          "redis",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "browser"
+        ]
+      ]
+    },
+    {
+      "id": "live-out",
+      "label": "Your message reaches my phone",
+      "description": "The gateway saves your message and n8n forwards it to me.",
+      "hops": [
+        [
+          "browser",
+          "traefik"
+        ],
+        [
+          "traefik",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "postgres"
+        ],
+        [
+          "gateway",
+          "n8n"
+        ],
+        [
+          "n8n",
+          "owner_channel"
+        ]
+      ]
+    },
+    {
+      "id": "live-in",
+      "label": "My reply reaches your screen",
+      "description": "I reply from my phone; n8n saves it and the gateway pushes it to you over the WebSocket.",
+      "hops": [
+        [
+          "owner_channel",
+          "n8n"
+        ],
+        [
+          "n8n",
+          "postgres"
+        ],
+        [
+          "n8n",
+          "redis"
+        ],
+        [
+          "redis",
+          "gateway"
+        ],
+        [
+          "gateway",
+          "browser"
+        ]
+      ]
+    }
+  ]
+}

@@ -293,6 +293,7 @@ export interface GuestTokenResponse {
 
 /** POST /api/v1/chat */
 export interface ChatRequest {
+  lang?: 'es' | 'en';
   message: string;
 }
 export interface ChatAccepted {
@@ -349,7 +350,7 @@ export interface PortfolioBackend {
   disconnect(): void;
 
   /** Envía una pregunta al agente. Los eventos llegan por `onEvent`, no en la respuesta. */
-  sendMessage(message: string): Promise<ChatAccepted>;
+  sendMessage(message: string, lang?: ChatRequest['lang']): Promise<ChatAccepted>;
 
   /** Envía un mensaje al dueño (chat en vivo). Las respuestas llegan por `onEvent` (live.message). */
   sendLiveMessage(text: string, name?: string): Promise<LiveSendAccepted>;

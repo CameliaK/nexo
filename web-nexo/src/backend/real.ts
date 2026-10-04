@@ -1,9 +1,11 @@
+import { t } from '../i18n';
 import { BackendError, isBackendEvent } from './types';
 import type {
   PortfolioBackend,
   BackendEvent,
   ConnectionState,
   ChatAccepted,
+  ChatRequest,
   LiveSendAccepted,
   LiveHistoryResponse,
   GeneratedNode,
@@ -58,8 +60,8 @@ export class RealBackend implements PortfolioBackend {
     return () => { this.connections.delete(handler); };
   }
 
-  async sendMessage(message: string): Promise<ChatAccepted> {
-    return this._request('POST', '/api/v1/chat', { message }) as Promise<ChatAccepted>;
+  async sendMessage(message: string, lang?: ChatRequest['lang']): Promise<ChatAccepted> {
+    return this._request('POST', '/api/v1/chat', { message, ...(lang ? { lang } : {}) }) as Promise<ChatAccepted>;
   }
 
   async sendLiveMessage(text: string, name?: string): Promise<LiveSendAccepted> {
@@ -114,7 +116,7 @@ export class RealBackend implements PortfolioBackend {
       headers: { 'X-Visitor-Id': visitorId },
     });
     if (!res.ok) {
-      throw new BackendError('internal', 'No se pudo autenticar con el servidor.', res.status);
+      throw new BackendError('internal', t('error.auth'), res.status);
     }
     const data = await res.json() as GuestTokenResponse;
     return data.token;
@@ -156,7 +158,7 @@ export class RealBackend implements PortfolioBackend {
 
       ws.onclose = () => {
         this.ws = null;
-        if (!opened) reject(new BackendError('internal', 'No se pudo abrir la conexión.', 503));
+        if (!opened) reject(new BackendError('internal', t('error.connection'), 503));
         if (this.intentionalClose) { this.change('closed'); return; }
         this.scheduleReconnect();
       };
@@ -184,7 +186,7 @@ export class RealBackend implements PortfolioBackend {
     body?: unknown,
     retry = true,
   ): Promise<unknown> {
-    if (!this.token) throw new BackendError('internal', 'Sin conexión al servidor.', 503);
+    if (!this.token) throw new BackendError('internal', t('error.offline'), 503);
 
     const res = await fetch(path, {
       method,
@@ -203,7 +205,7 @@ export class RealBackend implements PortfolioBackend {
 
     if (!res.ok) {
       let code: ErrorCode = 'internal';
-      let message = 'Error inesperado del servidor.';
+      let message = t('error.unexpected');
       let retryAfterSec: number | undefined;
       try {
         const errBody = await res.json() as ApiErrorBody;

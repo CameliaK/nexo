@@ -50,7 +50,7 @@
 .floating-live-chat{position:fixed;left:0;top:0;width:58px;height:58px;z-index:13;border:0;border-radius:50%;padding:0;background:transparent;cursor:pointer;color:#f6dce4;filter:drop-shadow(0 0 10px #e097a455);touch-action:manipulation}
 .floating-live-chat:hover{filter:drop-shadow(0 0 16px #e097a4aa)}.floating-live-chat:focus-visible{outline:1px solid #f4bbc9;outline-offset:4px}
 .floating-live-caption{position:absolute;top:59px;left:50%;transform:translateX(-50%);width:112px;text-align:center;font:8px 'Space Grotesk',sans-serif;letter-spacing:.12em;color:#d8b3bf;white-space:nowrap;text-shadow:0 2px 8px #071018}
-.floating-live-preview{position:absolute;right:calc(100% - 7px);top:-11px;width:190px;padding:10px 12px;text-align:left;background:#1d1825e8;border:1px solid #e097a46b;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);box-shadow:0 8px 24px #0008;pointer-events:none}
+.floating-live-preview{position:absolute;right:calc(100% - 7px);top:-11px;width:190px;padding:10px 12px;text-align:left;background:#1d1825e8;border:1px solid #e097a46b;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);box-shadow:0 8px 24px #0008;pointer-events:auto}
 .floating-live-preview[hidden]{display:none}.floating-live-author{display:block;font:9px 'Space Grotesk',sans-serif;letter-spacing:.11em;text-transform:uppercase;color:#f0b8c8;margin-bottom:5px}.floating-live-message{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font:11px/1.45 'DM Sans',sans-serif;color:#f3e4e8}
 .floating-live-chat.has-unread .floating-live-preview{border-color:#f4bdcd;box-shadow:0 0 22px #e097a455}.floating-live-chat .unread-badge{background:#f4bdcd;color:#281822;top:-1px;right:-1px}
 @media(max-width:650px){.floating-live-chat{width:50px;height:50px}.floating-live-caption{top:51px;font-size:7px;width:100px}.floating-live-preview{width:min(155px,42vw);padding:8px 10px;top:-14px}.floating-live-message{font-size:10px}}
@@ -62,3 +62,14 @@
 .system-aperture .system-caption{position:absolute;left:0;right:0;bottom:-12px;text-align:center;font:8px 'Space Grotesk',sans-serif;letter-spacing:.17em;opacity:.48;transition:opacity .3s}
 .system-aperture .system-enter:hover .system-caption,.system-aperture .system-enter:focus-visible .system-caption{opacity:1}
 @media(max-width:650px){.system-aperture .system-caption{font-size:6.5px;letter-spacing:.12em}}
+
+/* Language lives in screen space, in the same wireframe as the universe. */
+.language-node{position:fixed;left:34px;bottom:26px;width:58px;height:58px;z-index:45;display:grid;place-items:center;isolation:isolate;background:none;border:0;color:var(--mint);cursor:pointer;touch-action:manipulation;font:600 12px 'Space Grotesk',sans-serif;letter-spacing:.06em}
+.language-node svg{position:absolute;inset:0;width:100%;height:100%;fill:#10251c77;stroke:currentColor;stroke-width:.9;opacity:.6;transition:opacity .25s,filter .25s}
+.language-node span{z-index:1}.language-node:hover svg,.language-node:focus-visible svg{opacity:1;filter:drop-shadow(0 0 8px #aef1d233)}
+.language-node:focus-visible{outline:1px solid var(--mint);outline-offset:4px;border-radius:4px}
+.scene-info{margin-left:68px}footer .instruction{margin-left:auto}footer .tools{flex-shrink:0}
+.is-language-changing .node-label,.is-language-changing .orientation,.is-language-changing .language-node span{animation:language-reveal .28s ease-out}
+@keyframes language-reveal{from{opacity:.45}to{opacity:1}}
+@media(max-width:650px){.language-node{left:19px;bottom:13px;width:48px;height:48px}.scene-info{position:fixed;left:22px;bottom:117px;margin-left:0}footer .tools{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){.is-language-changing .node-label,.is-language-changing .orientation,.is-language-changing .language-node span{animation:none}.language-node svg{transition:none}}

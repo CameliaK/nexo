@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import scenariosFile from '../data/mock-scenarios.json';
 import { BackendError, LIMITS, isBackendEvent } from './types';
 import type { PortfolioBackend, BackendEvent, ConnectionState, GeneratedNode, LiveMessage } from './types';
@@ -31,21 +32,21 @@ export class MockBackend implements PortfolioBackend {
   onEvent(handler: (event: BackendEvent) => void) { this.events.add(handler); return () => { this.events.delete(handler); }; }
   onConnectionChange(handler: (state: ConnectionState) => void) { this.connections.add(handler); handler(this.state); return () => { this.connections.delete(handler); }; }
   private later(fn: () => void, delay: number) { const id = this.time.schedule(() => { this.timers.delete(id); fn(); }, delay); this.timers.add(id); }
-  private ensureOpen() { if (this.state !== 'open') throw new BackendError('internal', 'La simulación está desconectada.', 503); }
-  private validate(text: string, limit: number) { if (!text.trim() || text.length > limit) throw new BackendError('invalid_request', `Escribe entre 1 y ${limit} caracteres.`, 400); }
-  async sendMessage(message: string) {
+  private ensureOpen() { if (this.state !== 'open') throw new BackendError('internal', t('error.mockOffline'), 503); }
+  private validate(text: string, limit: number) { if (!text.trim() || text.length > limit) throw new BackendError('invalid_request', t('error.characters',{limit}), 400); }
+  async sendMessage(message: string, _lang?: 'es' | 'en') {
     this.ensureOpen(); this.validate(message, LIMITS.messageMaxChars);
     for (const code of ['429', '409'] as const) if (message.startsWith('/' + code)) {
       const error = scenariosFile.http_errors[code];
       throw new BackendError(error.body.error.code as 'rate_limited' | 'busy', error.body.error.message, error.status, code === '429' ? Number(scenariosFile.http_errors['429'].headers['Retry-After']) : undefined);
     }
-    if (this.chatRun) throw new BackendError('busy', 'Ya hay una consulta en curso.', 409);
+    if (this.chatRun) throw new BackendError('busy', t('error.busy'), 409);
     const selected = scenariosFile.scenarios.find(s => s.trigger === 'chat' && s.match?.some(word => message.toLowerCase().includes(word)))?.id || scenariosFile.default_scenario;
     return { run_id: this.playScenario(selected, message).run_id };
   }
   async sendLiveMessage(text: string, name?: string) {
     this.validate(text, LIMITS.liveMessageMaxChars);
-    if ((name?.length || 0) > LIMITS.liveNameMaxChars) throw new BackendError('invalid_request', 'El nombre admite hasta 30 caracteres.', 400);
+    if ((name?.length || 0) > LIMITS.liveNameMaxChars) throw new BackendError('invalid_request', t('error.name'), 400);
     const accepted = this.playScenario('live-out', text);
     return { run_id: accepted.run_id, message_id: accepted.message_id };
   }
@@ -54,11 +55,11 @@ export class MockBackend implements PortfolioBackend {
   async deleteGeneratedNode(id: string) { this.saved.nodes = this.saved.nodes.filter(n => n.id !== id).map(n=>n.children?{...n,children:n.children.filter(child=>child.id!==id)}:n); this.persist(); }
 
   /** Only the development composition root exposes this, never production UI. */
-  playScenario(id: string, input = 'Mensaje de prueba') {
+  playScenario(id: string, input = t('mock.testMessage')) {
     this.ensureOpen();
     const scenario = scenariosFile.scenarios.find(s => s.id === id);
-    if (!scenario) throw new BackendError('invalid_request', 'Escenario desconocido.', 400);
-    if (scenario.trigger === 'chat' && this.chatRun) throw new BackendError('busy', 'Ya hay una consulta en curso.', 409);
+    if (!scenario) throw new BackendError('invalid_request', t('error.scenario'), 400);
+    if (scenario.trigger === 'chat' && this.chatRun) throw new BackendError('busy', t('error.busy'), 409);
     const run_id = crypto.randomUUID(), message_id = crypto.randomUUID();
     if (scenario.trigger === 'chat') this.chatRun = run_id;
     if (scenario.trigger !== 'chat' && !this.saved.conversation) this.saved.conversation = crypto.randomUUID();

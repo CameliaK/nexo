@@ -1,9 +1,10 @@
+import { t } from '../i18n';
 import { Chess, type Color, type PieceSymbol, type Square, type Move } from 'chess.js';
 
 export type Promotion = 'q' | 'r' | 'b' | 'n';
 export interface PositionPiece { square: Square; type: PieceSymbol; color: Color }
 export interface GameStatus { ended: boolean; title: string; detail: string; claimable: boolean }
-const name = (color: Color) => color === 'w' ? 'Visitante' : 'Kirbith';
+const name = (color: Color) => color === 'w' ? t('common.visitor') : 'Kirbith';
 const positionKey = (fen: string) => fen.split(' ').slice(0, 4).join(' ');
 
 /** In-memory rules only. chess.js validates moves; draw claims are kept separate
@@ -28,15 +29,15 @@ export class ChessGame {
   get status(): GameStatus {
     const repetitions = this.positions.filter(p => p === positionKey(this.fen)).length;
     const halfmoves = Number(this.fen.split(' ')[4]);
-    let title = `Turno de ${name(this.turn)}`, detail = this.turn === 'w' ? 'Blancas · selecciona una pieza' : 'Negras · selecciona una pieza';
+    let title = t('chess.turn',{name:name(this.turn)}), detail = this.turn === 'w' ? t('chess.whiteTurn') : t('chess.blackTurn');
     let ended = true;
-    if (this.engine.isCheckmate()) { title = `Jaque mate · gana ${name(this.turn === 'w' ? 'b' : 'w')}`; detail = 'Una buena partida. ¿Jugamos otra?'; }
-    else if (this.claimed) { title = 'Tablas reclamadas'; detail = 'Partida terminada por repetición o regla de 50 movimientos.'; }
-    else if (this.engine.isStalemate()) { title = 'Tablas · rey ahogado'; detail = 'No hay movimientos legales y el rey no está en jaque.'; }
-    else if (this.engine.isInsufficientMaterial()) { title = 'Tablas · material insuficiente'; detail = 'Estas piezas no pueden producir un jaque mate.'; }
-    else if (repetitions >= 5) { title = 'Tablas · quíntuple repetición'; detail = 'La misma posición apareció cinco veces.'; }
-    else if (halfmoves >= 150) { title = 'Tablas · 75 movimientos'; detail = '75 movimientos de cada bando sin capturas ni movimientos de peón.'; }
-    else { ended = false; if (this.check) detail = 'Jaque · protege tu rey'; }
+    if (this.engine.isCheckmate()) { title = t('chess.mate',{name:name(this.turn === 'w' ? 'b' : 'w')}); detail = t('chess.goodGame'); }
+    else if (this.claimed) { title = t('chess.claimed'); detail = t('chess.claimedDetail'); }
+    else if (this.engine.isStalemate()) { title = t('chess.stalemate'); detail = t('chess.stalemateDetail'); }
+    else if (this.engine.isInsufficientMaterial()) { title = t('chess.insufficient'); detail = t('chess.insufficientDetail'); }
+    else if (repetitions >= 5) { title = t('chess.fivefold'); detail = t('chess.fivefoldDetail'); }
+    else if (halfmoves >= 150) { title = t('chess.seventyFive'); detail = t('chess.seventyFiveDetail'); }
+    else { ended = false; if (this.check) detail = t('chess.check'); }
     return { ended, title, detail, claimable: !ended && (repetitions >= 3 || halfmoves >= 100) };
   }
   move(from: Square, to: Square, promotion: Promotion = 'q'): Move | null {

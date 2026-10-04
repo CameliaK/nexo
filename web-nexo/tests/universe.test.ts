@@ -3,18 +3,33 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import portfolio from '../src/data/portfolio-content.json';
-import architecture from '../src/data/backend-architecture.json';
+import { portfolio, architecture, applyContent, registerTranslations } from '../src/i18n/content';
+import { t, translateText, translateUI, languageStore } from '../src/i18n';
+const english=fs.existsSync('src/data/portfolio-content.en.json')?JSON.parse(fs.readFileSync('src/data/portfolio-content.en.json','utf8')):undefined;
+const englishArchitecture=fs.existsSync('src/data/backend-architecture.en.json')?JSON.parse(fs.readFileSync('src/data/backend-architecture.en.json','utf8')):undefined;
+
 import { TracePlayer } from '../src/system/traces';
 import { systemPositions } from '../src/system/window';
+import { Chats } from '../src/chat';
+import { createMediaUI } from '../src/media';
+const satelliteSource=fs.readFileSync('src/live-satellite.js','utf8').replaceAll('export ', '');
+const satellite=vm.runInNewContext(satelliteSource+';({LivePreview,placeSatellite,satelliteFootprint,intersects})',{performance:{now:()=>0}});
 
-function fixture(withChess=false){
+function fixture(withChess=false,reducedMotion=false,withMedia=false){
  let activeElement,now=0,raf;
  class Element{
   children=[];handlers={};attributes={};style={setProperty(k,v){this[k]=v}};dataset={};hidden=false;textContent='';classes=new Set();offsetWidth=260;offsetHeight=125;
   classList={add:x=>this.classes.add(x),remove:x=>this.classes.delete(x),toggle:(x,v)=>v?this.classes.add(x):this.classes.delete(x),contains:x=>this.classes.has(x)};
-  append(...c){this.children.push(...c)}replaceChildren(){this.children=[]}setAttribute(k,v){this.attributes[k]=v}addEventListener(k,f){this.handlers[k]=f}focus(){activeElement=this;this.handlers.focus?.()}click(){this.handlers.click?.({detail:1,preventDefault(){}})}setPointerCapture(){}
-  getBoundingClientRect(){return{left:1120,top:530,width:258,height:170,right:1378,bottom:700}}
+  append(...c){this.children.push(...c);for(const child of c)if(typeof child==='object')child.parent=this}replaceChildren(){this.children=[]}setAttribute(k,v){this.attributes[k]=v}addEventListener(k,f){this.handlers[k]=f}focus(){activeElement=this;this.handlers.focus?.()}click(){this.handlers.click?.({detail:1,preventDefault(){}})}setPointerCapture(){}
+  getBoundingClientRect(){
+   if(this.className==='node-label'){
+     const match=this.parent?.style.transform?.match(/translate\(([-\d.]+)px,([-\d.]+)px\)/);
+     if(match){const x=Number(match[1]),y=Number(match[2]),r=parseFloat(this.parent.style['--radius']);return{left:x-80,top:y+r+19,width:160,height:35}}
+   }
+   return this.rect||{left:1120,top:530,width:258,height:170,right:1378,bottom:700};
+  }
+  querySelector(selector){return this.children.find(e=>e&&typeof e==='object'&&(selector==='.'+e.className||selector===e.tagName))||this.children.map(e=>e?.querySelector?.(selector)).find(Boolean)}remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this)}blur(){}
+  getAttribute(k){return this.attributes[k]??null}removeAttribute(k){delete this.attributes[k]}set src(value){this.attributes.src=value}get src(){return this.attributes.src}showModal(){this.open=true}close(){this.open=false}
  }
  const elements={},el=id=>elements[id]??=new Element(),gradient={addColorStop(){}};
  const context=new Proxy({createRadialGradient:()=>gradient,createLinearGradient:()=>gradient},{get:(t,k)=>t[k]||((...args)=>{for(const v of args)if(typeof v==='number')assert.ok(Number.isFinite(v),'Canvas coordinates stay finite')})});
@@ -22,13 +37,17 @@ function fixture(withChess=false){
  const listeners={},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
  if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,open:origin=>{assert.equal(origin.faces.length,80);chessOpen=true},setOnClosed:fn=>closeChess=fn};}
- const sandbox={console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:false,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:(k,f)=>listeners[k]=f,document:{getElementById:el,querySelector:el,createElement:tag=>{const item=new Element();if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener(){},body:el('body'),hidden:false,get activeElement(){return activeElement}}};
- let source=fs.readFileSync('src/universe.js','utf8').replace("import portfolio from './data/portfolio-content.json';",'').replace('export default function createUniverse(system) {','(function(system){');
- source=source.replace('return {dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,chatTarget,setLiveOpen:open=>{livePanelOpen=open},getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {dispose(){');
- source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);
+ const sandbox={t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:(k,f)=>listeners[k]=f,document:{getElementById:el,querySelector:el,createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener(){},body:el('body'),hidden:false,get activeElement(){return activeElement}}};
+ let mediaFrame;
+ if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
+ vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
+ let source=fs.readFileSync('src/universe.js','utf8').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
+ source=source.replace("import { LivePreview, placeSatellite, satelliteFootprint } from './live-satellite.js';",'');
+ source=source.replace('return {refreshLanguage,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,dispose(){');
+ source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);Object.assign(sandbox.api,sandbox.universe);
  const frames=(ms=2700)=>{const end=now+ms;while(now<end){now=Math.min(end,now+50);raf(now)}};
  const enter=id=>{el('node-targets').children.find(e=>e.dataset.node===id).click();frames()};
- return {api:sandbox.api,el,frames,enter,traces,sandbox,listeners,closeChess:()=>{chessOpen=false;closeChess()},chessTarget:()=>el('body').children.find(e=>e.id==='floating-chess')};
+ return {api:sandbox.api,el,frames,enter,traces,sandbox,listeners,mediaFrame:()=>mediaFrame,mediaLayer:()=>el('body').children.find(e=>e.className==='media-windows'),mediaViewer:()=>el('body').children.find(e=>e.className==='media-viewer'),closeChess:()=>{chessOpen=false;closeChess()},chessTarget:()=>el('body').children.find(e=>e.id==='floating-chess')};
 }
 test('Chess satellite stays disconnected, freezes the camera, and returns without changing portfolio nodes',()=>{
  const {api,frames,chessTarget,closeChess,enter}=fixture(true);frames(100);
@@ -92,4 +111,137 @@ test('Distant and expanded system share meshes, rotation and node identity',()=>
   }
  }
  api.exitSystem();frames();assert.equal(api.getLevel().id,portfolio.root.id);
+});
+
+test('Live preview fades at five seconds, replaces previous text and pauses while hovered',()=>{
+ const {api,frames}=fixture();frames(100);
+ api.setChatMessage('Primero','visitor');frames(4700);
+ assert.equal(api.chatPreview.hidden,false);assert.equal(api.chatPreview.style.visibility,'visible');assert.ok(Number(api.chatPreview.style.opacity)<1);
+ api.chatTarget.handlers.pointerenter();const opacity=api.chatPreview.style.opacity;frames(7000);
+ assert.equal(api.chatPreview.hidden,false);assert.equal(api.chatPreview.style.opacity,opacity);
+ api.setChatMessage('Segundo','owner');frames(7000);
+ assert.equal(api.chatMessage.textContent,'Segundo');assert.equal(api.chatPreview.hidden,false);assert.equal(api.chatPreview.style.opacity,'1');
+ api.chatTarget.handlers.pointerleave();frames(4950);assert.equal(api.chatPreview.hidden,false);
+ frames(50);assert.equal(api.chatPreview.hidden,true);
+ assert.equal(api.chatTarget.children.filter(e=>e.className==='floating-live-preview').length,1);
+});
+
+test('Unread indicator survives preview expiry and clears only when Chats opens the panel',()=>{
+ const {api,frames,el,sandbox}=fixture();frames(100);
+ const chats=Object.assign(Object.create(Chats.prototype),{universe:api,liveRows:new Map(),unread:new Set(),liveOpen:false,liveTransition:null,livePanel:el('live-panel'),liveHistory:el('live-history'),liveInput:el('live-input')});
+ const originalDocument=globalThis.document;globalThis.document=sandbox.document;
+ try{
+   chats.addLive({id:'owner-1',from:'owner',text:'Hola','ts':new Date().toISOString()});
+   frames(5000);assert.equal(api.chatPreview.hidden,true);assert.equal(api.chatTarget.classList.contains('has-unread'),true);
+   assert.equal(api.chatTarget.querySelector('.unread-badge').textContent,'1');
+   chats.addLive({id:'visitor-1',from:'visitor',text:'Respuesta','ts':new Date().toISOString()});
+   frames(100);assert.equal(api.chatMessage.textContent,'Respuesta');assert.equal(api.chatPreview.hidden,false);
+   frames(5000);assert.equal(api.chatPreview.hidden,true);assert.equal(api.chatTarget.classList.contains('has-unread'),true);
+   api.chatTarget.handlers.pointerenter();chats.openLive();frames(800);assert.equal(api.chatTarget.classList.contains('has-unread'),false);assert.equal(api.chatTarget.querySelector('.unread-badge'),undefined);assert.equal(api.chatPreview.hidden,true);
+   chats.addLive({id:'owner-open',from:'owner',text:'Ya visible en el panel','ts':new Date().toISOString()});assert.equal(api.chatPreview.hidden,true);
+   chats.addLive({id:'visitor-open',from:'visitor',text:'Enviado desde el panel','ts':new Date().toISOString()});
+   chats.closeLive();frames(800);assert.equal(api.chatPreview.hidden,false);
+   frames(5000);assert.equal(api.chatPreview.hidden,true,'Opening the panel releases any stale hover pause');
+   chats.addLive({id:'history-1',from:'owner',text:'Histórico','ts':'2020-01-01T00:00:00Z'},'sent',true);
+   assert.equal(api.chatPreview.hidden,true,'History restoration does not revive expired text');
+ }finally{globalThis.document=originalDocument}
+});
+
+test('Reduced motion keeps preview timing and hover pause without a fade animation',()=>{
+ const {api,frames}=fixture(false,true);frames(100);api.setChatMessage('Mensaje','owner');frames(4950);
+ assert.equal(api.chatPreview.style.opacity,'1');api.chatTarget.handlers.pointerenter();frames(2000);assert.equal(api.chatPreview.hidden,false);
+ api.chatTarget.handlers.pointerleave();frames(50);assert.equal(api.chatPreview.hidden,true);
+});
+
+const translated=(shape,p)=>({left:shape.left+p.x,right:shape.right+p.x,top:shape.top+p.y,bottom:shape.bottom+p.y});
+function assertFree(position,width,height,obstacles,footprint){
+ assert.ok(position,'There is a free zone for the chat node');
+ for(const shape of [footprint,...(position.bubble?[position.bubble]:[])]){
+   const rect=translated(shape,position);assert.ok(rect.left>=12&&rect.right<=width-12&&rect.top>=12&&rect.bottom<=height-12,'Satellite and bubble fit the viewport');
+   for(const obstacle of obstacles)assert.equal(satellite.intersects(rect,obstacle),false,'Satellite and bubble avoid every obstacle');
+ }
+}
+test('Satellite evades nodes, labels, aperture, center and controls as level, zoom and viewport change',()=>{
+ const {api,frames,enter,listeners,sandbox}=fixture();frames(100);
+ for(const [w,h,z,id] of [[1440,900,1,null],[1440,900,1.6,'experiencia'],[390,844,.65,null],[390,844,1.6,'system'],[844,390,1,null]]){
+   if(id==='system'){api.enterSystem();frames()}else if(id)enter(id);
+   sandbox.innerWidth=w;sandbox.innerHeight=h;listeners.resize();api.setCamera({x:40,y:-15},z);frames(500);
+   const position=api.getChatPosition();assertFree(position,w,h,api.chatObstacles(),satellite.satelliteFootprint(w<650?17:21,position?.caption));
+ }
+});
+
+test('Satellite avoids measured controls and moves away when a panel occupies its hovered zone',()=>{
+ const {api,frames,el,sandbox}=fixture();const control=el('zoom-tools');
+ control.rect={left:1000,top:720,width:300,height:100};sandbox.document.querySelectorAll=()=>[control];sandbox.getComputedStyle=()=>({display:'block',visibility:'visible'});
+ frames(1000);let position=api.getChatPosition();assertFree(position,1440,900,api.chatObstacles(),satellite.satelliteFootprint(21,position.caption));
+ api.chatTarget.handlers.pointerenter();control.rect={left:position.x-75,top:position.y-75,width:150,height:150};frames(50);
+ position=api.getChatPosition();assertFree(position,1440,900,api.chatObstacles(),satellite.satelliteFootprint(21,position.caption));
+});
+
+test('Free-zone search fits a bubble and rejects a drift that would cross an obstacle',()=>{
+ const footprint=satellite.satelliteFootprint(21),wall={left:260,right:310,top:100,bottom:500};
+ const previous={x:140,y:250};
+ const placed=satellite.placeSatellite({width:800,height:600,obstacles:[wall],preferred:{x:450,y:250},previous,footprint,ease:.2});
+ assertFree(placed,800,600,[wall],footprint);assert.ok(placed.x<260,'Evasion does not interpolate through the wall');
+ const bubble=satellite.placeSatellite({width:800,height:600,obstacles:[wall],preferred:{x:450,y:250},footprint,preview:{width:190,height:74}});
+ assert.ok(bubble.bubble);assertFree(bubble,800,600,[wall],footprint);
+ const blocked=satellite.placeSatellite({width:200,height:200,obstacles:[{left:0,right:200,top:0,bottom:200}],preferred:previous,footprint});
+ assert.equal(blocked,null,'A fully occupied viewport never forces an overlap');
+});
+
+test('Media opens only in terminal architecture/project views, reserves connections and closes independently of navigation',()=>{
+ const {api,el,frames,enter,mediaLayer,mediaViewer,mediaFrame,listeners,sandbox}=fixture(false,false,true);frames(100);
+ assert.equal(mediaLayer().hidden,true);enter('aprendizaje');enter('aprendizaje.proyectos-academicos');assert.equal(mediaLayer().hidden,true);
+ enter('aprendizaje.proyectos-academicos.astralis');assert.equal(mediaLayer().dataset.node,'aprendizaje.proyectos-academicos.astralis');assert.equal(mediaLayer().hidden,false);
+ assert.equal(mediaLayer().children.length,3);assert.ok(api.getMediaBounds().length>0);
+ for(const rect of api.getMediaBounds())for(const obstacle of mediaFrame().obstacles)assert.equal(satellite.intersects(rect,obstacle),false,'Real scene components, labels, aperture, panels and connection curves remain uncovered');
+ api.setCamera({x:70,y:-20},1.4);frames(100);
+ for(const rect of api.getMediaBounds())for(const obstacle of mediaFrame().obstacles)assert.equal(satellite.intersects(rect,obstacle),false);
+ for(const [width,height,zoom] of [[390,844,.8],[844,390,1.2],[1440,900,1]]){
+   sandbox.innerWidth=width;sandbox.innerHeight=height;listeners.resize();api.setCamera({x:0,y:0},zoom);frames(50);
+   assert.ok(api.getMediaBounds().length>0,'At least one image fits the real final architecture on desktop, portrait and landscape');
+   for(const rect of api.getMediaBounds())for(const obstacle of mediaFrame().obstacles)assert.equal(satellite.intersects(rect,obstacle),false);
+ }
+ const level=api.getLevel().id,camera=JSON.stringify(api.camera());mediaLayer().children.find(button=>!button.hidden).click();
+ assert.equal(mediaViewer().open,true);listeners.keydown({key:'Escape',preventDefault(){assert.fail('Viewer ESC must not propagate into universe navigation')}});
+ assert.equal(api.getLevel().id,level);assert.equal(JSON.stringify(api.camera()),camera);
+ mediaViewer().handlers.keydown({key:'Escape',preventDefault(){},stopPropagation(){}});assert.equal(mediaViewer().open,false);
+ api.goBack();frames();assert.equal(mediaLayer().hidden,true);api.goBack();frames();api.goBack();frames();enter('proyectos-personales');
+ assert.equal(mediaLayer().hidden,true);enter('proyectos-personales.qfb-app');assert.equal(api.getLevel().id,'proyectos-personales');assert.equal(mediaLayer().dataset.node,'proyectos-personales.qfb-app');assert.ok(api.getMediaBounds().length>0);
+ el('close-content').click();frames(100);assert.equal(mediaLayer().hidden,true);
+ api.dispose();assert.equal(el('body').children.some(child=>child.className==='media-windows'),false);
+});
+
+
+test('Language switch preserves camera, scene objects, depth, focused node and open content/companion panels',()=>{
+ registerTranslations(english,englishArchitecture);languageStore.set('es');applyContent('es');
+ const {api,el,frames,enter}=fixture();frames(100);enter('personal');enter('personal.contacto');
+ const email=api.getNodes().find(n=>n.id==='personal.contacto.correo');api.activate(email);api.openAgent();
+ api.setCamera({x:47,y:-23},1.25);frames(100);el('nexo-input').value='Borrador sin enviar';email.el.focus();
+ const camera=JSON.stringify(api.camera()),nodes=api.getNodes(),level=api.getLevel(),button=email.el,depth=el('depth-number').textContent;
+ try{
+  languageStore.set('en');applyContent('en');api.refreshLanguage();
+  assert.equal(JSON.stringify(api.camera()),camera);assert.equal(api.getNodes(),nodes);assert.equal(api.getLevel(),level);assert.equal(el('depth-number').textContent,depth);
+  assert.equal(api.panelOpen(),true);assert.equal(el('content-card').hidden,false);assert.equal(el('content-title').textContent,'Email');assert.equal(el('nexo-input').value,'Borrador sin enviar');assert.equal(api.getNodes().find(n=>n.id===email.id).el,button);assert.equal(email.name,'Email');assert.match(button.getAttribute('aria-label'),/Email/);
+  languageStore.set('es');applyContent('es');api.refreshLanguage();assert.equal(email.name,'Correo');assert.equal(JSON.stringify(api.camera()),camera);
+ }finally{api.dispose();languageStore.set('es');applyContent('es')}
+});
+
+test('Switching language in a terminal architecture keeps media viewer, active image and window positions',()=>{
+ registerTranslations(english,englishArchitecture);languageStore.set('es');applyContent('es');
+ const {api,frames,enter,mediaLayer,mediaViewer}=fixture(false,true,true);frames(100);enter('aprendizaje');enter('aprendizaje.proyectos-academicos');enter('aprendizaje.proyectos-academicos.astralis');frames(100);
+ const layer=mediaLayer(),viewer=mediaViewer(),tiles=[...layer.children],positions=tiles.map(tile=>tile.style.transform);
+ tiles[1].click();const image=viewer.children[0].children[1].children[0],src=image.src,camera=JSON.stringify(api.camera());
+ try{
+  languageStore.set('en');applyContent('en');api.refreshLanguage();
+  assert.equal(viewer.open,true);assert.equal(image.src,src);assert.equal(image.alt,english.nodes.find(node=>node.id==='aprendizaje.proyectos-academicos.astralis').media[1].alt);
+  assert.deepEqual(layer.children,tiles);assert.deepEqual(layer.children.map(tile=>tile.style.transform),positions);assert.equal(JSON.stringify(api.camera()),camera);
+ }finally{api.dispose();languageStore.set('es');applyContent('es')}
+});
+
+test('Locale toggled during camera travel also relabels its destination without interrupting the transition',()=>{
+ registerTranslations(english,englishArchitecture);languageStore.set('es');applyContent('es');const {api,frames}=fixture();frames(100);
+ api.activate(api.getNodes().find(node=>node.id==='experiencia'));frames(400);const transition=api.getTravel();
+ try{languageStore.set('en');applyContent('en');api.refreshLanguage();assert.equal(api.getTravel(),transition);frames(2700);assert.equal(api.getLevel().id,'experiencia');assert.equal(api.getLevel().title,'Experience');assert.equal(api.getNodes().find(node=>node.id==='experiencia.infosys').name,'Infosys')}
+ finally{api.dispose();languageStore.set('es');applyContent('es')}
 });

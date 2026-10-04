@@ -1,0 +1,1714 @@
+{
+  "meta": {
+    "schema_version": 1,
+    "owner": "Kirbith Cubillas",
+    "language": "en",
+    "generated": "2026-09-28",
+    "content_version": 3,
+    "status": "Borrador v3. Los nodos con needs_review=true tienen datos por confirmar con el dueño."
+  },
+  "root": {
+    "id": "root",
+    "title": "My universe",
+    "subtitle": "Five ways to get to know me. One shared journey."
+  },
+  "nodes": [
+    {
+      "id": "personal",
+      "parent": "root",
+      "order": 1,
+      "label": "Personal information",
+      "type": "group",
+      "tagline": "WHO I AM",
+      "summary": "Who I am: basic facts and ways to contact me.",
+      "keywords": [
+        "nombre",
+        "edad",
+        "hometown",
+        "contacto",
+        "idiomas",
+        "sobre mí"
+      ]
+    },
+    {
+      "id": "hobbies",
+      "parent": "root",
+      "order": 2,
+      "label": "Hobbies",
+      "type": "group",
+      "tagline": "WHAT DRIVES ME",
+      "summary": "Sports, art and video games.",
+      "keywords": [
+        "deportes",
+        "arte",
+        "videojuegos",
+        "tiempo libre"
+      ]
+    },
+    {
+      "id": "aprendizaje",
+      "parent": "root",
+      "order": 3,
+      "label": "Learning",
+      "type": "group",
+      "tagline": "WHAT I DISCOVER",
+      "summary": "University, additional training and academic projects.",
+      "keywords": [
+        "universidad",
+        "estudios",
+        "cursos",
+        "proyectos académicos",
+        "capacitación"
+      ]
+    },
+    {
+      "id": "proyectos-personales",
+      "parent": "root",
+      "order": 4,
+      "label": "Personal projects",
+      "type": "group",
+      "tagline": "WHAT I BUILD",
+      "summary": "What I am building on my own.",
+      "keywords": [
+        "proyectos propios",
+        "en construcción"
+      ]
+    },
+    {
+      "id": "experiencia",
+      "parent": "root",
+      "order": 5,
+      "label": "Experience",
+      "type": "group",
+      "tagline": "WHERE I HAVE CONTRIBUTED",
+      "summary": "Where I have worked and the projects I have contributed to.",
+      "keywords": [
+        "trabajo",
+        "empleo",
+        "prácticas",
+        "experiencia profesional"
+      ]
+    },
+    {
+      "id": "personal.contacto",
+      "parent": "personal",
+      "order": 1,
+      "label": "Contact",
+      "type": "group",
+      "tagline": "LET’S TALK",
+      "summary": "LinkedIn, email and phone.",
+      "keywords": [
+        "contacto",
+        "linkedin",
+        "correo",
+        "celular",
+        "whatsapp"
+      ]
+    },
+    {
+      "id": "personal.contacto.linkedin",
+      "parent": "personal.contacto",
+      "order": 1,
+      "label": "LinkedIn",
+      "type": "contact",
+      "summary": "My professional profile.",
+      "keywords": [
+        "linkedin",
+        "perfil"
+      ],
+      "content": {
+        "kind": "linkedin",
+        "display": "linkedin.com/in/kirbithcubillas",
+        "href": "https://www.linkedin.com/in/kirbithcubillas/",
+        "action": "open_new_tab"
+      }
+    },
+    {
+      "id": "personal.contacto.correo",
+      "parent": "personal.contacto",
+      "order": 2,
+      "label": "Email",
+      "type": "contact",
+      "summary": "Send me an email.",
+      "keywords": [
+        "correo",
+        "email"
+      ],
+      "content": {
+        "kind": "email",
+        "display": "kirbithalberto@gmail.com",
+        "value": "kirbithalberto@gmail.com",
+        "action": "copy"
+      }
+    },
+    {
+      "id": "personal.contacto.celular",
+      "parent": "personal.contacto",
+      "order": 3,
+      "label": "Phone",
+      "type": "contact",
+      "summary": "My phone number.",
+      "keywords": [
+        "celular",
+        "teléfono",
+        "whatsapp"
+      ],
+      "content": {
+        "kind": "phone",
+        "display": "+52 228 304 5497",
+        "value": "+522283045497",
+        "action": "copy"
+      }
+    },
+    {
+      "id": "personal.contacto.chat",
+      "parent": "personal.contacto",
+      "order": 4,
+      "label": "Live chat",
+      "type": "live_chat",
+      "summary": "Write to me here and it goes straight to my phone.",
+      "keywords": [
+        "chat",
+        "mensaje",
+        "escribirme",
+        "contacto",
+        "whatsapp",
+        "telegram"
+      ],
+      "content": {
+        "intro": "Write to me here: your message reaches my phone and my reply appears on this same screen.",
+        "name_label": "What is your name? (optional)",
+        "placeholder": "Write your message…",
+        "note": "I reply when I can. If you close the page, your conversation is saved and you will see it when you return.",
+        "max_chars": 500
+      }
+    },
+    {
+      "id": "personal.datos",
+      "parent": "personal",
+      "order": 2,
+      "label": "About me",
+      "type": "group",
+      "tagline": "THE BASICS",
+      "summary": "Name, age, hometown, languages and how I describe myself.",
+      "keywords": [
+        "nombre",
+        "edad",
+        "hometown",
+        "idiomas"
+      ]
+    },
+    {
+      "id": "personal.datos.nombre",
+      "parent": "personal.datos",
+      "order": 1,
+      "label": "Name",
+      "type": "facts",
+      "summary": "Kirbith Alberto Cubillas Hernández.",
+      "keywords": [
+        "nombre",
+        "nombre completo",
+        "Kirbith Alberto Cubillas Hernández"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Full name",
+            "value": "Kirbith Alberto Cubillas Hernández"
+          }
+        ]
+      }
+    },
+    {
+      "id": "personal.datos.edad",
+      "parent": "personal.datos",
+      "order": 2,
+      "label": "Age",
+      "type": "facts",
+      "summary": "I am 23 years old; I was born on October 2, 2003.",
+      "keywords": [
+        "edad",
+        "años",
+        "cumpleaños",
+        "nacimiento",
+        "October 2, 2003"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Age",
+            "value": "23 years old",
+            "computed_age_from": "2003-10-02"
+          },
+          {
+            "label": "Born on",
+            "value": "October 2, 2003"
+          }
+        ]
+      }
+    },
+    {
+      "id": "personal.datos.origen",
+      "parent": "personal.datos",
+      "order": 3,
+      "label": "Where I am from",
+      "type": "facts",
+      "summary": "I am from Xalapa, Veracruz, and I live in Banderilla, a neighboring town.",
+      "keywords": [
+        "xalapa",
+        "banderilla",
+        "veracruz",
+        "hometown",
+        "vivo",
+        "mapa",
+        "Veracruz",
+        "México"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Originally from",
+            "value": "Xalapa, Veracruz"
+          },
+          {
+            "label": "I live in",
+            "value": "Banderilla, Veracruz"
+          }
+        ]
+      },
+      "visual": {
+        "kind": "illustrated_map",
+        "region": "Veracruz, Mexico",
+        "points": [
+          {
+            "label": "Xalapa",
+            "role": "hometown"
+          },
+          {
+            "label": "Banderilla",
+            "role": "home"
+          }
+        ],
+        "style_note": "Illustration of Veracruz with Xalapa and Banderilla marked, using the visual language of the universe (wireframe, soft light)."
+      }
+    },
+    {
+      "id": "personal.datos.idiomas",
+      "parent": "personal.datos",
+      "order": 4,
+      "label": "Languages",
+      "type": "facts",
+      "summary": "Native Spanish; working technical English, approximately B2.",
+      "keywords": [
+        "idiomas",
+        "inglés",
+        "español",
+        "B2",
+        "inglés técnico",
+        "entornos profesionales"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Spanish",
+            "value": "Native"
+          },
+          {
+            "label": "English",
+            "value": "Approximately B2"
+          },
+          {
+            "label": "In practice",
+            "value": "I have worked in English-speaking professional environments: I communicate, write and work on technical topics in English."
+          }
+        ]
+      }
+    },
+    {
+      "id": "personal.datos.sobre-mi",
+      "parent": "personal.datos",
+      "order": 5,
+      "label": "About me",
+      "type": "text",
+      "summary": "I enjoy learning, creating and having fun.",
+      "keywords": [
+        "personalidad",
+        "competitivo",
+        "arte",
+        "aprender"
+      ],
+      "content": {
+        "body": "I enjoy learning new things, creating and having fun. I am passionate about art and try to improve myself, even when it is difficult. I am also very competitive."
+      }
+    },
+    {
+      "id": "hobbies.deportes",
+      "parent": "hobbies",
+      "order": 1,
+      "label": "Sports",
+      "type": "group",
+      "tagline": "IN MOTION",
+      "summary": "Swimming, basketball, baseball, soccer, volleyball and, these days, serious tennis.",
+      "keywords": [
+        "deportes",
+        "tenis",
+        "natación",
+        "basquetbol",
+        "beisbol",
+        "futbol",
+        "voleibol"
+      ]
+    },
+    {
+      "id": "hobbies.deportes.tenis",
+      "parent": "hobbies.deportes",
+      "order": 1,
+      "label": "Tennis",
+      "type": "text",
+      "summary": "I started at university; it has not been easy, but I train to compete in amateur tournaments.",
+      "keywords": [
+        "tenis",
+        "torneos",
+        "entrenamiento",
+        "torneos amateur",
+        "universidad"
+      ],
+      "status": "actual",
+      "content": {
+        "body": "I started playing tennis at university. Despite the challenges, I have trained and improved with the goal of competing in amateur tournaments."
+      }
+    },
+    {
+      "id": "hobbies.deportes.natacion",
+      "parent": "hobbies.deportes",
+      "order": 2,
+      "label": "Swimming",
+      "type": "text",
+      "summary": "I practiced it in elementary school, which is how I learned to swim.",
+      "keywords": [
+        "natación"
+      ],
+      "status": "practicado",
+      "content": {
+        "body": "I practiced swimming in elementary school, which is how I learned to swim."
+      }
+    },
+    {
+      "id": "hobbies.deportes.basketball",
+      "parent": "hobbies.deportes",
+      "order": 3,
+      "label": "Basketball",
+      "type": "text",
+      "summary": "I played in my final year of middle school, hoping to grow taller.",
+      "keywords": [
+        "básquetbol"
+      ],
+      "status": "practicado",
+      "content": {
+        "body": "I played basketball in my final year of middle school because I was told it would help me grow taller."
+      }
+    },
+    {
+      "id": "hobbies.deportes.beisbol",
+      "parent": "hobbies.deportes",
+      "order": 4,
+      "label": "Baseball",
+      "type": "text",
+      "summary": "I played on a team in middle school; it is my parents’ favorite sport.",
+      "keywords": [
+        "béisbol"
+      ],
+      "status": "practicado",
+      "content": {
+        "body": "I played baseball in middle school when I joined a team. It is the sport my parents enjoy most."
+      }
+    },
+    {
+      "id": "hobbies.deportes.futbol",
+      "parent": "hobbies.deportes",
+      "order": 5,
+      "label": "Soccer",
+      "type": "text",
+      "summary": "I played it starting in kindergarten.",
+      "keywords": [
+        "fútbol"
+      ],
+      "status": "practicado",
+      "content": {
+        "body": "I played soccer when I was in kindergarten."
+      }
+    },
+    {
+      "id": "hobbies.deportes.voleibol",
+      "parent": "hobbies.deportes",
+      "order": 6,
+      "label": "Volleyball",
+      "type": "text",
+      "summary": "I have played it.",
+      "keywords": [
+        "voleibol"
+      ],
+      "status": "practicado",
+      "content": {
+        "body": "Volleyball: one of the sports I have played."
+      }
+    },
+    {
+      "id": "hobbies.artes",
+      "parent": "hobbies",
+      "order": 2,
+      "label": "Arts",
+      "type": "group",
+      "tagline": "CREATE",
+      "summary": "Drawing and piano.",
+      "keywords": [
+        "arte",
+        "dibujo",
+        "piano",
+        "música"
+      ]
+    },
+    {
+      "id": "hobbies.artes.dibujo",
+      "parent": "hobbies.artes",
+      "order": 1,
+      "label": "Drawing",
+      "type": "text",
+      "summary": "Beyond drawing for fun, I am interested in the craft and keep learning.",
+      "keywords": [
+        "dibujo",
+        "arte",
+        "carbón",
+        "grafito",
+        "tinta china",
+        "técnicas"
+      ],
+      "content": {
+        "body": "I do not just enjoy drawing: I am interested in the craft itself. I have learned techniques such as charcoal, graphite and India ink, among others, and I keep learning."
+      }
+    },
+    {
+      "id": "hobbies.artes.piano",
+      "parent": "hobbies.artes",
+      "order": 2,
+      "label": "Piano",
+      "type": "text",
+      "summary": "I learned piano at 18 and want to learn more instruments.",
+      "keywords": [
+        "piano",
+        "música",
+        "a los 18 años",
+        "instrumentos"
+      ],
+      "content": {
+        "body": "I learned to play piano at 18. It is something I really enjoy, and I plan to learn more instruments."
+      }
+    },
+    {
+      "id": "hobbies.videojuegos",
+      "parent": "hobbies",
+      "order": 3,
+      "label": "Video games",
+      "type": "group",
+      "tagline": "PLAY",
+      "summary": "Competitive and survival games.",
+      "keywords": [
+        "videojuegos",
+        "rainbow six",
+        "rocket league",
+        "smite",
+        "ark",
+        "minecraft",
+        "stardew valley"
+      ]
+    },
+    {
+      "id": "hobbies.videojuegos.r6",
+      "parent": "hobbies.videojuegos",
+      "order": 1,
+      "label": "Rainbow Six Siege",
+      "type": "facts",
+      "summary": "I have reached Emerald rank in Rainbow Six Siege.",
+      "keywords": [
+        "r6",
+        "rainbow six",
+        "esmeralda",
+        "competitivo"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Highest rank",
+            "value": "Emerald"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hobbies.videojuegos.rocket-league",
+      "parent": "hobbies.videojuegos",
+      "order": 2,
+      "label": "Rocket League",
+      "type": "facts",
+      "summary": "Champion rank.",
+      "keywords": [
+        "rocket league",
+        "champion",
+        "competitivo"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Rank",
+            "value": "Champion"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hobbies.videojuegos.smite",
+      "parent": "hobbies.videojuegos",
+      "order": 3,
+      "label": "SMITE",
+      "type": "facts",
+      "summary": "Master rank.",
+      "keywords": [
+        "smite",
+        "master",
+        "competitivo"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Rank",
+            "value": "Master"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hobbies.videojuegos.ark",
+      "parent": "hobbies.videojuegos",
+      "order": 4,
+      "label": "ARK",
+      "type": "text",
+      "summary": "One of my favorite survival games.",
+      "keywords": [
+        "ark",
+        "supervivencia"
+      ],
+      "status": "favorito",
+      "content": {
+        "body": "ARK is one of the survival games I enjoy most."
+      }
+    },
+    {
+      "id": "hobbies.videojuegos.minecraft",
+      "parent": "hobbies.videojuegos",
+      "order": 5,
+      "label": "Minecraft",
+      "type": "text",
+      "summary": "I enjoy playing Minecraft with my friends and my partner.",
+      "keywords": [
+        "minecraft",
+        "supervivencia"
+      ],
+      "status": "favorito",
+      "content": {
+        "body": "I enjoy playing Minecraft with my friends and my partner."
+      }
+    },
+    {
+      "id": "hobbies.videojuegos.stardew-valley",
+      "parent": "hobbies.videojuegos",
+      "order": 6,
+      "label": "Stardew Valley",
+      "type": "text",
+      "summary": "I enjoy it with my partner, especially the building and creativity.",
+      "keywords": [
+        "stardew valley",
+        "supervivencia",
+        "creatividad",
+        "crear"
+      ],
+      "status": "favorito",
+      "content": {
+        "body": "I enjoy playing Stardew Valley with my partner: I like building things, and creativity is what I value most about the game."
+      }
+    },
+    {
+      "id": "aprendizaje.universidad",
+      "parent": "aprendizaje",
+      "order": 1,
+      "label": "University",
+      "type": "group",
+      "tagline": "WHERE I STUDIED",
+      "summary": "Universidad Veracruzana, Software Engineering.",
+      "keywords": [
+        "universidad veracruzana",
+        "uv",
+        "ingeniería de software",
+        "egel",
+        "carrera"
+      ]
+    },
+    {
+      "id": "aprendizaje.universidad.carrera",
+      "parent": "aprendizaje.universidad",
+      "order": 1,
+      "label": "Where and what I studied",
+      "type": "facts",
+      "summary": "Software Engineering at UV; graduated with an Outstanding EGEL-IS result.",
+      "keywords": [
+        "uv",
+        "egresado",
+        "egel",
+        "sobresaliente",
+        "ingeniería de software"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Institution",
+            "value": "Universidad Veracruzana (Xalapa, Ver.)"
+          },
+          {
+            "label": "Degree",
+            "value": "B.S. in Software Engineering"
+          },
+          {
+            "label": "Period",
+            "value": "August 2021 – February 2026"
+          },
+          {
+            "label": "Status",
+            "value": "Graduate"
+          },
+          {
+            "label": "EGEL-IS",
+            "value": "Outstanding"
+          }
+        ]
+      }
+    },
+    {
+      "id": "aprendizaje.universidad.fundamentos",
+      "parent": "aprendizaje.universidad",
+      "order": 2,
+      "label": "Programming foundations",
+      "type": "text",
+      "summary": "C++ and Java: solid foundations in OOP.",
+      "keywords": [
+        "c++",
+        "java",
+        "poo",
+        "programación orientada a objetos"
+      ],
+      "content": {
+        "body": "I learned to program in C++ and Java, which gave me solid foundations in object-oriented programming."
+      }
+    },
+    {
+      "id": "aprendizaje.universidad.diseno",
+      "parent": "aprendizaje.universidad",
+      "order": 3,
+      "label": "Software design",
+      "type": "text",
+      "summary": "Architectures, patterns, antipatterns, methodologies and end-to-end projects.",
+      "keywords": [
+        "arquitectura",
+        "patrones de diseño",
+        "antipatrones",
+        "metodologías",
+        "cliente",
+        "end to end"
+      ],
+      "content": {
+        "body": "My degree placed a strong emphasis on software design: architectures, design patterns, antipatterns and development methodologies. We also practiced client communication and end-to-end project development."
+      }
+    },
+    {
+      "id": "aprendizaje.extras",
+      "parent": "aprendizaje",
+      "order": 2,
+      "label": "Additional training",
+      "type": "group",
+      "tagline": "BEYOND THE CLASSROOM",
+      "summary": "Training beyond the classroom.",
+      "keywords": [
+        "capacitación",
+        "internship",
+        "infosys",
+        "india",
+        "ia",
+        "ml",
+        "aws"
+      ]
+    },
+    {
+      "id": "aprendizaje.extras.infosys-ia",
+      "parent": "aprendizaje.extras",
+      "order": 1,
+      "label": "AI and ML at Infosys",
+      "type": "text",
+      "summary": "Training in agentic AI, ML, LLMs and RAG during my internship in India.",
+      "keywords": [
+        "ia",
+        "ml",
+        "agentic ai",
+        "llm",
+        "rag",
+        "langchain",
+        "scikit-learn",
+        "infosys",
+        "mysore"
+      ],
+      "content": {
+        "body": "During my internship in India, I received training at the Infosys campus in Mysore on agentic AI, machine learning, LLMs and RAG. I developed a RAG system with LangChain and trained several ML models with scikit-learn in Python."
+      },
+      "links": [
+        "experiencia.infosys"
+      ]
+    },
+    {
+      "id": "aprendizaje.extras.infosys-aws",
+      "parent": "aprendizaje.extras",
+      "order": 2,
+      "label": "AWS at Infosys",
+      "type": "text",
+      "summary": "Technical training in AWS services.",
+      "keywords": [
+        "aws",
+        "ec2",
+        "s3",
+        "lambda",
+        "bedrock",
+        "sagemaker",
+        "infosys"
+      ],
+      "content": {
+        "body": "I received technical training in AWS services: EC2, S3, Lambda, Bedrock and SageMaker."
+      },
+      "links": [
+        "experiencia.infosys"
+      ]
+    },
+    {
+      "id": "aprendizaje.proyectos-academicos",
+      "parent": "aprendizaje",
+      "order": 3,
+      "label": "Academic projects",
+      "type": "group",
+      "tagline": "LEARNING BY BUILDING",
+      "summary": "Three projects where I learned by building.",
+      "keywords": [
+        "proyectos académicos",
+        "astralis",
+        "sistema financiero",
+        "fitness app"
+      ]
+    },
+    {
+      "id": "aprendizaje.proyectos-academicos.astralis",
+      "media": [
+        {
+          "id": "geometria",
+          "src": "/media/_placeholder/geometria.webp",
+          "alt": "Wireframe cube composition on a dark grid.",
+          "caption": "Neutral sample image · Replace with an image of the project.",
+          "placeholder": true
+        },
+        {
+          "id": "capas",
+          "src": "/media/_placeholder/capas.webp",
+          "alt": "Four geometric planes layered in perspective.",
+          "caption": "Neutral sample image · Replace with an image of the project.",
+          "placeholder": true
+        },
+        {
+          "id": "trama",
+          "src": "/media/_placeholder/trama.webp",
+          "alt": "Three octagonal rings connected by a radial mesh.",
+          "caption": "Neutral sample image · Replace with an image of the project.",
+          "placeholder": true
+        }
+      ],
+      "parent": "aprendizaje.proyectos-academicos",
+      "order": 1,
+      "label": "Astralis",
+      "type": "architecture",
+      "summary": "Online turn-based card game, 1v1 or 2v2, built in C#.",
+      "keywords": [
+        "astralis",
+        "videojuego",
+        "juego de cartas",
+        "1v1",
+        "2v2",
+        "por turnos",
+        "mazo",
+        "online",
+        "c#",
+        "wpf",
+        "wcf",
+        "xunit",
+        "entity framework",
+        "singleton",
+        "concurrencia"
+      ],
+      "architecture": {
+        "topology_confidence": "medium",
+        "contribution": "I contributed to every part of the project.",
+        "components": [
+          {
+            "id": "wpf",
+            "label": "WPF client",
+            "tech": "WPF",
+            "kind": "client",
+            "what": "Microsoft framework for building desktop interfaces in .NET.",
+            "contribution": null
+          },
+          {
+            "id": "wcf",
+            "label": "WCF services",
+            "tech": "WCF",
+            "kind": "service",
+            "what": "Client–server communication through service contracts.",
+            "contribution": null
+          },
+          {
+            "id": "ef",
+            "label": "Persistence",
+            "tech": "Entity Framework",
+            "kind": "data",
+            "what": ".NET ORM that maps domain objects to the database and provides persistence for the system.",
+            "contribution": null
+          },
+          {
+            "id": "db",
+            "label": "Player accounts",
+            "tech": "Database",
+            "kind": "data",
+            "what": "Stores player accounts.",
+            "contribution": null
+          },
+          {
+            "id": "xunit",
+            "label": "Testing",
+            "tech": "xUnit",
+            "kind": "tool",
+            "what": "Unit testing framework for .NET.",
+            "contribution": null
+          },
+          {
+            "id": "concurrencia",
+            "label": "Concurrency management",
+            "tech": "C#",
+            "kind": "concern",
+            "what": "Controls simultaneous access among players and matches.",
+            "contribution": null
+          },
+          {
+            "id": "patrones",
+            "label": "Design patterns",
+            "tech": "Singleton and others",
+            "kind": "concern",
+            "what": "Reusable design solutions, such as Singleton, that organize the code structure.",
+            "contribution": null
+          }
+        ],
+        "connections": [
+          {
+            "from": "wpf",
+            "to": "wcf",
+            "label": "consumes contracts"
+          },
+          {
+            "from": "wcf",
+            "to": "ef",
+            "label": "persists data"
+          },
+          {
+            "from": "ef",
+            "to": "db",
+            "label": "stores accounts"
+          },
+          {
+            "from": "xunit",
+            "to": "wcf",
+            "label": "verifies"
+          }
+        ]
+      },
+      "content": {
+        "body": "Online turn-based card game for 1v1 or 2v2 matches. Each player builds a deck and battles others; player accounts are stored in a database."
+      }
+    },
+    {
+      "id": "aprendizaje.proyectos-academicos.sistema-financiero",
+      "parent": "aprendizaje.proyectos-academicos",
+      "order": 2,
+      "label": "Financial Management System",
+      "type": "architecture",
+      "summary": "System for managing the credit lifecycle: application, analysis and decision.",
+      "keywords": [
+        "créditos",
+        "financiero",
+        ".net",
+        "c#",
+        "avalonia",
+        "spring boot",
+        "java",
+        "mysql",
+        "jwt",
+        "2fa",
+        "uml",
+        "iconix"
+      ],
+      "architecture": {
+        "topology_confidence": "high",
+        "contribution": "I contributed to every part of the project.",
+        "components": [
+          {
+            "id": "cliente",
+            "label": "Frontend",
+            "tech": "C# / .NET + Avalonia UI",
+            "kind": "client",
+            "what": "Interface built in C# on .NET with Avalonia UI, a cross-platform user interface framework.",
+            "contribution": null
+          },
+          {
+            "id": "servidor",
+            "label": "Backend",
+            "tech": "Spring Boot (Java)",
+            "kind": "api",
+            "what": "Java framework for building backend services.",
+            "contribution": null
+          },
+          {
+            "id": "mysql",
+            "label": "Database",
+            "tech": "MySQL",
+            "kind": "data",
+            "what": "Relational database that stores application and credit information.",
+            "contribution": null
+          },
+          {
+            "id": "auth",
+            "label": "Authentication",
+            "tech": "JWT + 2FA",
+            "kind": "service",
+            "what": "Protected access with JWT tokens and two-factor authentication.",
+            "contribution": "I implemented authentication with JWT and two-factor authentication (2FA)."
+          },
+          {
+            "id": "uml",
+            "label": "System design",
+            "tech": "UML + ICONIX",
+            "kind": "concern",
+            "what": "System modeling with UML using the ICONIX methodology.",
+            "contribution": "I led the UML-based system design using the ICONIX methodology."
+          }
+        ],
+        "connections": [
+          {
+            "from": "cliente",
+            "to": "servidor",
+            "label": "client–server requests"
+          },
+          {
+            "from": "servidor",
+            "to": "mysql",
+            "label": "persistence"
+          },
+          {
+            "from": "auth",
+            "to": "servidor",
+            "label": "protects access"
+          }
+        ]
+      }
+    },
+    {
+      "id": "aprendizaje.proyectos-academicos.fitness-app",
+      "parent": "aprendizaje.proyectos-academicos",
+      "order": 3,
+      "label": "Fitness App",
+      "type": "architecture",
+      "summary": "Cross-platform social fitness app: workouts, instructional videos and real-time interaction.",
+      "keywords": [
+        "fitness",
+        "flutter",
+        "java",
+        "c#",
+        "grpc",
+        "rest",
+        "ci/cd",
+        "uml",
+        "app móvil"
+      ],
+      "architecture": {
+        "topology_confidence": "low",
+        "contribution": "I contributed to every part of the project.",
+        "components": [
+          {
+            "id": "flutter",
+            "label": "Cross-platform app",
+            "tech": "Flutter",
+            "kind": "client",
+            "what": "Framework for building one app that runs on Android and iOS.",
+            "contribution": null
+          },
+          {
+            "id": "rest",
+            "label": "RESTful APIs",
+            "tech": "REST",
+            "kind": "api",
+            "what": "HTTP interface through which the app queries and modifies data.",
+            "contribution": "I designed the RESTful APIs."
+          },
+          {
+            "id": "java",
+            "label": "Java services",
+            "tech": "Java",
+            "kind": "service",
+            "what": "Part of the backend implemented in Java.",
+            "contribution": null,
+            "needs_review": true
+          },
+          {
+            "id": "grpc",
+            "label": "gRPC communication",
+            "tech": "gRPC",
+            "kind": "service",
+            "what": "High-performance remote procedure call protocol between services.",
+            "contribution": null,
+            "needs_review": true
+          },
+          {
+            "id": "csharp",
+            "label": "C# services",
+            "tech": "C#",
+            "kind": "service",
+            "what": "Part of the backend implemented in C#.",
+            "contribution": null,
+            "needs_review": true
+          },
+          {
+            "id": "cicd",
+            "label": "CI/CD deployment",
+            "tech": "CI/CD",
+            "kind": "infra",
+            "what": "Build and deployment automation.",
+            "contribution": "I designed the deployment pipelines (CI/CD)."
+          },
+          {
+            "id": "uml",
+            "label": "Architecture",
+            "tech": "UML",
+            "kind": "concern",
+            "what": "Architecture design modeled with UML using agile practices.",
+            "contribution": "I designed the UML-based architecture."
+          }
+        ],
+        "connections": [
+          {
+            "from": "flutter",
+            "to": "rest",
+            "label": "consumes"
+          },
+          {
+            "from": "rest",
+            "to": "java",
+            "label": "exposes"
+          },
+          {
+            "from": "java",
+            "to": "grpc",
+            "label": "communicates"
+          },
+          {
+            "from": "grpc",
+            "to": "csharp",
+            "label": "communicates"
+          },
+          {
+            "from": "cicd",
+            "to": "rest",
+            "label": "deploys"
+          }
+        ]
+      },
+      "needs_review": true,
+      "review_note": "Confirm which part of the backend used Java and which used C#, and where gRPC was used."
+    },
+    {
+      "id": "proyectos-personales.qfb-app",
+      "media": [
+        {
+          "id": "geometria",
+          "src": "/media/_placeholder/geometria.webp",
+          "alt": "Wireframe cube composition on a dark grid.",
+          "caption": "Neutral sample image · Replace with an image of the project.",
+          "placeholder": true
+        },
+        {
+          "id": "capas",
+          "src": "/media/_placeholder/capas.webp",
+          "alt": "Four geometric planes layered in perspective.",
+          "caption": "Neutral sample image · Replace with an image of the project.",
+          "placeholder": true
+        },
+        {
+          "id": "trama",
+          "src": "/media/_placeholder/trama.webp",
+          "alt": "Three octagonal rings connected by a radial mesh.",
+          "caption": "Neutral sample image · Replace with an image of the project.",
+          "placeholder": true
+        }
+      ],
+      "parent": "proyectos-personales",
+      "order": 1,
+      "label": "NKare",
+      "type": "project",
+      "summary": "Personal project under construction.",
+      "keywords": [
+        "nkare",
+        "proyecto personal",
+        "en construcción"
+      ],
+      "status": "en_construccion",
+      "content": {
+        "body": "Personal project currently under construction."
+      },
+      "needs_review": true,
+      "review_note": "Assumed: NKare = pharmacotherapy monitoring app. Confirm the name mapping."
+    },
+    {
+      "id": "proyectos-personales.negocios-ia",
+      "parent": "proyectos-personales",
+      "order": 2,
+      "label": "FleetFix",
+      "type": "project",
+      "summary": "Personal project under construction.",
+      "keywords": [
+        "fleetfix",
+        "proyecto personal",
+        "en construcción"
+      ],
+      "status": "en_construccion",
+      "content": {
+        "body": "Personal project currently under construction."
+      },
+      "needs_review": true,
+      "review_note": "Assumed: FleetFix = AI business management platform. Confirm the name mapping."
+    },
+    {
+      "id": "proyectos-personales.este-portafolio",
+      "parent": "proyectos-personales",
+      "order": 3,
+      "label": "This portfolio",
+      "type": "system",
+      "status": "en_construccion",
+      "summary": "The real architecture of this site, live: whenever you use the chat, it lights up here.",
+      "keywords": [
+        "arquitectura",
+        "backend",
+        "go",
+        "fastapi",
+        "n8n",
+        "redis",
+        "postgres",
+        "pgvector",
+        "traefik",
+        "agente",
+        "rag",
+        "este portafolio"
+      ],
+      "content": {
+        "source": "backend-architecture.json"
+      },
+      "needs_review": true,
+      "review_note": "Confirm that this node belongs in Personal projects and define my contribution."
+    },
+    {
+      "id": "experiencia.infosys",
+      "parent": "experiencia",
+      "order": 1,
+      "label": "Infosys",
+      "type": "group",
+      "tagline": "BANGALORE, INDIA",
+      "summary": "Software Engineer Intern in Bangalore, India (Feb – Aug 2025).",
+      "keywords": [
+        "infosys",
+        "india",
+        "intern",
+        "ia",
+        "rag",
+        "digital twin",
+        "buscador industrial"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Role",
+            "value": "Software Engineer Intern"
+          },
+          {
+            "label": "Period",
+            "value": "February 2025 – August 2025"
+          },
+          {
+            "label": "Location",
+            "value": "Bangalore, India"
+          }
+        ]
+      },
+      "links": [
+        "aprendizaje.extras"
+      ]
+    },
+    {
+      "id": "experiencia.infosys.buscador",
+      "parent": "experiencia.infosys",
+      "order": 1,
+      "label": "Industrial tool search engine",
+      "type": "architecture",
+      "summary": "AI platform for searching industrial tools with semantic retrieval and recommendations.",
+      "keywords": [
+        "buscador",
+        "industrial",
+        "rag",
+        "faiss",
+        "langchain",
+        "fastapi",
+        "react",
+        "web scraping",
+        "llm"
+      ],
+      "architecture": {
+        "topology_confidence": "high",
+        "contribution": "I developed the entire search engine, end to end.",
+        "components": [
+          {
+            "id": "react",
+            "label": "Frontend",
+            "tech": "React",
+            "kind": "client",
+            "what": "JavaScript library for building user interfaces.",
+            "contribution": null
+          },
+          {
+            "id": "fastapi",
+            "label": "API",
+            "tech": "FastAPI",
+            "kind": "api",
+            "what": "Python web framework for building fast REST APIs with automatic validation.",
+            "contribution": null
+          },
+          {
+            "id": "rag",
+            "label": "Semantic search (RAG)",
+            "tech": "LangChain + FAISS",
+            "kind": "service",
+            "what": "FAISS indexes the vectors, and LangChain orchestrates retrieval of the most relevant passages.",
+            "contribution": null
+          },
+          {
+            "id": "scraping",
+            "label": "Web scraping (fallback)",
+            "tech": "Web scraping",
+            "kind": "tool",
+            "what": "When RAG does not find enough information, the system searches the web.",
+            "contribution": null
+          },
+          {
+            "id": "llm",
+            "label": "Language model",
+            "tech": "LLM",
+            "kind": "ml",
+            "what": "Model that writes answers and recommendations based on the retrieved context.",
+            "contribution": null,
+            "needs_review": true
+          }
+        ],
+        "connections": [
+          {
+            "from": "react",
+            "to": "fastapi",
+            "label": "queries"
+          },
+          {
+            "from": "fastapi",
+            "to": "rag",
+            "label": "semantic search"
+          },
+          {
+            "from": "rag",
+            "to": "scraping",
+            "label": "if no results are found"
+          },
+          {
+            "from": "rag",
+            "to": "llm",
+            "label": "retrieved context"
+          },
+          {
+            "from": "scraping",
+            "to": "llm",
+            "label": "web context"
+          }
+        ]
+      }
+    },
+    {
+      "id": "experiencia.infosys.digital-twin",
+      "parent": "experiencia.infosys",
+      "order": 2,
+      "label": "Predictive maintenance (Digital Twin)",
+      "type": "architecture",
+      "summary": "Predictive maintenance system based on a digital twin and time-series analysis.",
+      "keywords": [
+        "digital twin",
+        "mantenimiento predictivo",
+        "ml",
+        "isolation forest",
+        "gradient boosting",
+        "fastapi",
+        "react",
+        "postgres",
+        "aws",
+        "elevadores",
+        "scrum"
+      ],
+      "content": {
+        "highlights": [
+          "85% accuracy in predicting failures",
+          "35% reduction in maintenance costs"
+        ]
+      },
+      "architecture": {
+        "topology_confidence": "medium",
+        "contribution": "I mapped and created the database and contributed to frontend development and design, backend integration, API endpoints and model orchestration. I worked in a microservices-based SCRUM environment.",
+        "components": [
+          {
+            "id": "react",
+            "label": "Frontend",
+            "tech": "React",
+            "kind": "client",
+            "what": "JavaScript library for building user interfaces.",
+            "contribution": "I contributed to frontend development and design."
+          },
+          {
+            "id": "fastapi",
+            "label": "API",
+            "tech": "FastAPI",
+            "kind": "api",
+            "what": "Python web framework for building fast REST APIs.",
+            "contribution": "I contributed to backend integration and API endpoints."
+          },
+          {
+            "id": "postgres",
+            "label": "Database",
+            "tech": "PostgreSQL",
+            "kind": "data",
+            "what": "The system’s relational database.",
+            "contribution": "I mapped and created the database."
+          },
+          {
+            "id": "iforest",
+            "label": "Anomaly detection",
+            "tech": "Isolation Forest",
+            "kind": "ml",
+            "what": "Unsupervised ML model that detects anomalous behavior.",
+            "contribution": "I contributed to model orchestration. I did not train the models, but I understand how they work from being involved in the project."
+          },
+          {
+            "id": "gboost",
+            "label": "Failure prediction",
+            "tech": "Gradient Boosting",
+            "kind": "ml",
+            "what": "ML model that combines decision trees to predict failures; trained on historical elevator data.",
+            "contribution": "I contributed to model orchestration. I did not train the models, but I understand how they work from being involved in the project."
+          },
+          {
+            "id": "aws",
+            "label": "Deployment",
+            "tech": "AWS",
+            "kind": "infra",
+            "what": "Cloud where the system was deployed.",
+            "contribution": null
+          }
+        ],
+        "connections": [
+          {
+            "from": "react",
+            "to": "fastapi",
+            "label": "queries"
+          },
+          {
+            "from": "fastapi",
+            "to": "postgres",
+            "label": "reads and writes data"
+          },
+          {
+            "from": "fastapi",
+            "to": "iforest",
+            "label": "detects anomalies"
+          },
+          {
+            "from": "fastapi",
+            "to": "gboost",
+            "label": "predicts failures"
+          },
+          {
+            "from": "aws",
+            "to": "fastapi",
+            "label": "hosts"
+          }
+        ]
+      }
+    },
+    {
+      "id": "experiencia.dgti",
+      "parent": "experiencia",
+      "order": 2,
+      "label": "DGTI UV",
+      "type": "group",
+      "tagline": "XALAPA, VER.",
+      "summary": "Backend Software Engineer in Xalapa (Aug 2024 – Jan 2025).",
+      "keywords": [
+        "dgti",
+        "uv",
+        "hermes",
+        "backend",
+        "c#",
+        ".net",
+        "mysql"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Role",
+            "value": "Backend – Software Engineer"
+          },
+          {
+            "label": "Period",
+            "value": "August 2024 – January 2025"
+          },
+          {
+            "label": "Location",
+            "value": "Xalapa, Veracruz"
+          }
+        ]
+      }
+    },
+    {
+      "id": "experiencia.dgti.hermes",
+      "parent": "experiencia.dgti",
+      "order": 1,
+      "label": "HERMES: correspondence system",
+      "type": "architecture",
+      "summary": "Modules and optimization for the HERMES correspondence system.",
+      "keywords": [
+        "hermes",
+        "correspondencia",
+        "c#",
+        ".net",
+        "razor",
+        "javascript",
+        "gateway",
+        "mysql",
+        "procedimientos almacenados",
+        "optimización"
+      ],
+      "content": {
+        "highlights": [
+          "From over 1M to 100K rows per query",
+          "Response times reduced from minutes to seconds",
+          "No request failures"
+        ]
+      },
+      "architecture": {
+        "topology_confidence": "medium",
+        "contribution": "I developed new features end to end (backend and frontend) and improved query performance with stored procedures.",
+        "components": [
+          {
+            "id": "razor",
+            "label": "Razor views",
+            "tech": "Razor (CSHTML)",
+            "kind": "client",
+            "what": "ASP.NET template engine that generates HTML on the server.",
+            "contribution": null
+          },
+          {
+            "id": "backend",
+            "label": "Backend",
+            "tech": "C# / .NET",
+            "kind": "api",
+            "what": "The system’s business logic, written in C# on .NET.",
+            "contribution": null
+          },
+          {
+            "id": "jsgw",
+            "label": "JavaScript layer",
+            "tech": "JavaScript",
+            "kind": "service",
+            "what": "JavaScript service that acted as a gateway between the C# backend and the database.",
+            "contribution": null,
+            "needs_review": true
+          },
+          {
+            "id": "mysql",
+            "label": "Database",
+            "tech": "MySQL Server",
+            "kind": "data",
+            "what": "The system’s relational database.",
+            "contribution": "I implemented stored procedures: reduced results from over 1M to 100K rows and response times from minutes to seconds, eliminating request failures."
+          },
+          {
+            "id": "server",
+            "label": "On-premises server",
+            "tech": "On-premise",
+            "kind": "infra",
+            "what": "The application ran on a server owned by the organization.",
+            "contribution": null
+          }
+        ],
+        "connections": [
+          {
+            "from": "razor",
+            "to": "backend",
+            "label": "requests"
+          },
+          {
+            "from": "backend",
+            "to": "jsgw",
+            "label": "requests data"
+          },
+          {
+            "from": "jsgw",
+            "to": "mysql",
+            "label": "queries and stored procedures"
+          },
+          {
+            "from": "server",
+            "to": "backend",
+            "label": "hosts"
+          }
+        ]
+      },
+      "needs_review": true,
+      "review_note": "Confirm the exact role of the JavaScript layer (gateway to MySQL) and whether the backend was being migrated to JavaScript."
+    },
+    {
+      "id": "experiencia.dest",
+      "parent": "experiencia",
+      "order": 3,
+      "label": "DEST UV",
+      "type": "group",
+      "tagline": "XALAPA, VER.",
+      "summary": "Full Stack Software Engineer in Xalapa (Aug 2025 – Feb 2026).",
+      "keywords": [
+        "dest",
+        "uv",
+        "accesibilidad",
+        "rag",
+        "jaws",
+        "full stack",
+        "html",
+        "javascript"
+      ],
+      "content": {
+        "items": [
+          {
+            "label": "Role",
+            "value": "Full Stack – Software Engineer"
+          },
+          {
+            "label": "Period",
+            "value": "August 2025 – February 2026"
+          },
+          {
+            "label": "Location",
+            "value": "Xalapa, Veracruz"
+          }
+        ]
+      }
+    },
+    {
+      "id": "experiencia.dest.plataforma",
+      "parent": "experiencia.dest",
+      "order": 1,
+      "label": "Accessible AI educational platforms",
+      "type": "architecture",
+      "summary": "Educational platforms with accessibility modules and RAG-based learning support.",
+      "keywords": [
+        "accesibilidad",
+        "jaws",
+        "lector de pantalla",
+        "rag",
+        "faiss",
+        "python",
+        "html",
+        "css",
+        "javascript",
+        "educación"
+      ],
+      "architecture": {
+        "topology_confidence": "medium",
+        "contribution": "I built a complete accessibility module and a RAG pipeline.",
+        "components": [
+          {
+            "id": "front",
+            "label": "Frontend",
+            "tech": "HTML + CSS + JavaScript",
+            "kind": "client",
+            "what": "Web platform built entirely with native browser technologies.",
+            "contribution": null
+          },
+          {
+            "id": "accesibilidad",
+            "label": "Accessibility module",
+            "tech": "JavaScript",
+            "kind": "service",
+            "what": "Custom modules that meet accessibility standards and work with screen readers such as JAWS.",
+            "contribution": "I built it entirely."
+          },
+          {
+            "id": "rag",
+            "label": "RAG pipeline",
+            "tech": "Python + FAISS",
+            "kind": "service",
+            "what": "Semantic retrieval of digital course content with support from LLMs.",
+            "contribution": "I built the RAG pipeline."
+          },
+          {
+            "id": "server",
+            "label": "On-premises server",
+            "tech": "On-premise",
+            "kind": "infra",
+            "what": "The application ran on a server owned by the organization.",
+            "contribution": null
+          }
+        ],
+        "connections": [
+          {
+            "from": "accesibilidad",
+            "to": "front",
+            "label": "adapts the interface"
+          },
+          {
+            "from": "front",
+            "to": "rag",
+            "label": "semantic retrieval"
+          },
+          {
+            "from": "server",
+            "to": "front",
+            "label": "hosts"
+          }
+        ]
+      }
+    }
+  ]
+}

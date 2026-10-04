@@ -1,3 +1,4 @@
+import { t, translateText } from '../i18n';
 import { isBackendEvent } from '../backend/types';
 import type { BackendArchitecture, BackendEvent, TraceHopEvent } from '../backend/types';
 export type LightState = 'idle' | 'active' | 'done' | 'error';
@@ -10,21 +11,21 @@ export class TracePlayer {
   private hops = new Map<string, Hop>();
   private componentIds: Set<string>;
   private serial = 0;
-  latest = 'Sistema en reposo';
+  latest = t('trace.idle');
   processed = 0;
   constructor(private architecture: BackendArchitecture, private now = () => performance.now()) { this.componentIds = new Set(architecture.components.map(n => n.id)); }
   private edgeExists(from: string, to: string) { return this.architecture.edges.some(e => e.from === from && e.to === to || e.from === to && e.to === from); }
   register(run: string, outgoing = true) {
     this.known.add(run);
-    if (outgoing) this.pulse(run, 'browser', 'traefik', 'Enviando la petición');
+    if (outgoing) this.pulse(run, 'browser', 'traefik', t('trace.sending'));
     // Late-approval: flush preauth buffer if events arrived before register() was called.
     const existing = this.runs.get(run);
     if (existing && !existing.allowed) {
       existing.allowed = true;
       for (const event of existing.preauth) {
         existing.queue.push(event);
-        this.pulse(run, 'redis', 'gateway', 'Evento recibido');
-        this.pulse(run, 'gateway', 'browser', 'Evento recibido', 180);
+        this.pulse(run, 'redis', 'gateway', t('trace.received'));
+        this.pulse(run, 'gateway', 'browser', t('trace.received'), 180);
       }
       existing.preauth = [];
     }
@@ -47,8 +48,8 @@ export class TracePlayer {
       if (!run.allowed) { run.preauth.push(current); continue; }
       run.queue.push(current);
       // These pulses belong to transport reception, not to a service-emitted hop.
-      this.pulse(current.run_id, 'redis', 'gateway', 'Evento recibido');
-      this.pulse(current.run_id, 'gateway', 'browser', 'Evento recibido', 180);
+      this.pulse(current.run_id, 'redis', 'gateway', t('trace.received'));
+      this.pulse(current.run_id, 'gateway', 'browser', t('trace.received'), 180);
     }
   }
   private pulse(run: string, from: string, to: string, label: string, delay = 0) {
@@ -65,11 +66,11 @@ export class TracePlayer {
         phase: data.phase === 'start' ? 'active' : data.phase === 'end' ? 'done' : 'error',
         label: data.label || old?.label || '', detail: data.detail || '', duration: data.duration_ms,
         started: old?.started ?? time, expires: data.phase === 'start' ? Infinity : time + 4200 });
-      this.latest = data.detail || data.label || old?.label || 'Tramo completado';
-    } else if (event.type === 'run.start') this.latest = event.data.kind === 'live_in' ? 'Llega una respuesta del dueño' : 'Nueva ejecución';
+      this.latest = data.detail || data.label || old?.label || t('trace.hopDone');
+    } else if (event.type === 'run.start') this.latest = event.data.kind === 'live_in' ? t('trace.liveIn') : t('trace.start');
     else if (event.type === 'run.done' || event.type === 'run.error') {
       for (const hop of this.hops.values()) if (hop.run === event.run_id && hop.expires === Infinity) { hop.phase = 'done'; hop.expires = time + 4200; }
-      this.latest = event.type === 'run.error' ? event.data.message : 'Recorrido completado';
+      this.latest = event.type === 'run.error' ? event.data.message : t('trace.done');
     }
   }
   tick() {
@@ -94,5 +95,6 @@ export class TracePlayer {
     const hop = visible[0];
     return { state: hop?.phase || 'idle' as LightState, label: hop?.label || '', detail: hop?.detail || '', duration: hop?.duration, from: hop?.from, progress: hop ? ((time - hop.started) % 900) / 900 : 0 };
   }
-  disconnect() { for (const hop of this.hops.values()) if (hop.expires === Infinity) { hop.phase = 'error'; hop.detail = 'Conexión perdida'; hop.expires = this.now() + 4200; } this.runs.clear(); this.known.clear(); this.latest = 'Conexión perdida. Puedes reintentar.'; }
+  refreshLanguage(){this.latest=translateText(this.latest);for(const hop of this.hops.values()){hop.label=translateText(hop.label);hop.detail=translateText(hop.detail)}}
+  disconnect() { for (const hop of this.hops.values()) if (hop.expires === Infinity) { hop.phase = 'error'; hop.detail = t('trace.lost'); hop.expires = this.now() + 4200; } this.runs.clear(); this.known.clear(); this.latest = t('trace.retry'); }
 }
