@@ -135,9 +135,11 @@ const chatPreview=document.createElement('span');chatPreview.className='floating
 const chatAuthor=document.createElement('span');chatAuthor.className='floating-live-author';
 const chatMessage=document.createElement('span');chatMessage.className='floating-live-message';chatPreview.append(chatAuthor,chatMessage);chatTarget.append(chatCaption,chatPreview);
 chatTarget.addEventListener('click',()=>{if(system.chess?.isOpen()){system.chess.closeForNavigation?.(()=>system.onLiveOpen?.());return}system.onLiveOpen?.()});document.body.append(chatTarget);
-const previewTimer=new LivePreview();let chatHovered=false,chatPosition=null,chatFrameTime=0;
-chatTarget.addEventListener('pointerenter',()=>{chatHovered=true;previewTimer.hover(true)});
-chatTarget.addEventListener('pointerleave',()=>{chatHovered=false;previewTimer.hover(false)});
+const previewTimer=new LivePreview();let chatHovered=false,chatFocused=false,chatPosition=null,chatFrameTime=0,chatViewport='';
+chatTarget.addEventListener('pointerenter',()=>{chatHovered=true;companion.locked=true;previewTimer.hover(true)});
+chatTarget.addEventListener('pointerleave',()=>{chatHovered=false;previewTimer.hover(false);if(!chatFocused&&!panelOpen&&!companion.keyboard)companion.locked=false});
+chatTarget.addEventListener('focus',()=>{chatFocused=true;companion.locked=true});
+chatTarget.addEventListener('blur',()=>{chatFocused=false;if(!chatHovered&&!panelOpen&&!companion.keyboard)companion.locked=false});
 function setChatMessage(text,from){
   chatAuthor.textContent=from==='owner'?'Kirbith':t('common.you');chatMessage.textContent=text;
   if(text&&(!livePanelOpen||from==='visitor'))previewTimer.show();else previewTimer.clear();
@@ -197,6 +199,11 @@ function positionChat(now){
   const preferred=chatHovered&&chatPosition?chatPosition:{x:width*(width<650?.80:.82)+Math.sin(clock*.46+.7)*27*drift,y:height*(width<650?.69:.71)+Math.cos(clock*.37+.9)*31*drift};
   const opacity=previewTimer.opacity(reduced.matches);chatPreview.hidden=!previewTimer.visible;chatPreview.style.opacity=String(opacity);
   const step=Math.min(Math.max(now-chatFrameTime,0),50);chatFrameTime=now;
+  const viewport=width+'x'+height;
+  // Once the visitor aims at the node, keep its hit target under their pointer.
+  // Reflow after a viewport change, and resume evasion when interaction ends.
+  if((chatHovered||chatFocused)&&chatPosition&&chatViewport===viewport)return chatPosition;
+  chatViewport=viewport;
   const preview=previewTimer.visible?{width:chatPreview.offsetWidth||190,height:chatPreview.offsetHeight||74}:null;
   const options={width,height,obstacles:chatObstacles(),preferred,previous:chatPosition,preview,ease:reduced.matches?1:1-Math.exp(-step/260)};
   let caption=!(width<650&&system.chess?.isOpen());
@@ -736,7 +743,7 @@ function changeZoom(amount){if(travel||systemTravel)return;targetZoom=clamp(targ
 $('pause').addEventListener('click',()=>setPaused(!paused));$('back').addEventListener('click',goBack);$('zoom-in').addEventListener('click',()=>changeZoom(.1));$('zoom-out').addEventListener('click',()=>changeZoom(-.1));
 $('reset').addEventListener('click',()=>{if(travel||systemTravel)return;pan={x:0,y:0};if(panelOpen){panelWorld.x=(width<650?24:width-366)-width/2;panelWorld.y=Math.max(100,height*.32)-height*.53}targetZoom=1;changeZoom(0)});
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();if(travel||systemTravel)return;if(level.system){exitSystem();return}if(stack.length)goBackTo(0);else{pan={x:0,y:0};targetZoom=1;changeZoom(0)}});
-function trackPointer(e){if(system.chess?.isOpen())return;if(e.target?.closest?.('.media-window, .media-viewer')){companion.locked=true;return}pointer={x:(e.clientX/width-.5)*2,y:(e.clientY/height-.5)*2};companion.tx=e.clientX;companion.ty=e.clientY;companion.present=true;companion.touch=e.pointerType==='touch';const d=Math.hypot(e.clientX-companion.x,e.clientY-companion.y),r=width<650?18:24;companion.keyboard=false;if(!panelOpen){if(d<r+15)companion.locked=true;else if(d>r+52)companion.locked=false}}
+function trackPointer(e){if(system.chess?.isOpen())return;if(e.target?.closest?.('.floating-live-chat, .media-window, .media-viewer')){companion.locked=true;return}pointer={x:(e.clientX/width-.5)*2,y:(e.clientY/height-.5)*2};companion.tx=e.clientX;companion.ty=e.clientY;companion.present=true;companion.touch=e.pointerType==='touch';const d=Math.hypot(e.clientX-companion.x,e.clientY-companion.y),r=width<650?18:24;companion.keyboard=false;if(!panelOpen){if(d<r+15)companion.locked=true;else if(d>r+52)companion.locked=false}}
 addEventListener('pointermove',e=>{trackPointer(e);if(drag&&!travel&&!systemTravel){pan.x=clamp(drag.px+e.clientX-drag.x,-width*.5,width*.5);pan.y=clamp(drag.py+e.clientY-drag.y,-height*.4,height*.4)}else if(e.target===canvas&&!travel)setEdgeHover(hitEdge(e.clientX,e.clientY));else if(!travel)setEdgeHover(null)});
 addEventListener('pointerdown',trackPointer);
 canvas.addEventListener('pointerdown',e=>{if(travel||systemTravel)return;const edge=hitEdge(e.clientX,e.clientY);if(edge!==null){setEdgeHover(edge);const note=level.edges[edge][2];if(note?.text)say(note.label,note.text,'edge:'+level.title+':'+edge,10000);return}drag={x:e.clientX,y:e.clientY,px:pan.x,py:pan.y};canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';setHover(null);setEdgeHover(null)});
@@ -859,5 +866,5 @@ function refreshLanguage(){
 
 $('companion-target').setAttribute('aria-label',t('guide.open'));
 $('level-title').setAttribute('tabindex','-1');resize();nodes=instantiate(root);bindNodes();updateUI();setPaused(paused);say(t('guide.journey'),root.intro,'welcome',12000);requestAnimationFrame(render);
-return {refreshLanguage,dispose(){disposed=true;previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
+return {refreshLanguage,dispose(){disposed=true;previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
 }

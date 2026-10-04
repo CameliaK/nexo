@@ -170,12 +170,13 @@ test('Satellite evades nodes, labels, aperture, center and controls as level, zo
  }
 });
 
-test('Satellite avoids measured controls and moves away when a panel occupies its hovered zone',()=>{
+test('Satellite remains clickable while hovered, then evades new obstacles when the pointer leaves',()=>{
  const {api,frames,el,sandbox}=fixture();const control=el('zoom-tools');
  control.rect={left:1000,top:720,width:300,height:100};sandbox.document.querySelectorAll=()=>[control];sandbox.getComputedStyle=()=>({display:'block',visibility:'visible'});
  frames(1000);let position=api.getChatPosition();assertFree(position,1440,900,api.chatObstacles(),satellite.satelliteFootprint(21,position.caption));
- api.chatTarget.handlers.pointerenter();control.rect={left:position.x-75,top:position.y-75,width:150,height:150};frames(50);
- position=api.getChatPosition();assertFree(position,1440,900,api.chatObstacles(),satellite.satelliteFootprint(21,position.caption));
+ api.chatTarget.handlers.pointerenter();const held={x:position.x,y:position.y};control.rect={left:position.x-75,top:position.y-75,width:150,height:150};frames(50);
+ assert.equal(api.chatTarget.hidden,false);assert.equal(api.getChatPosition().x,held.x);assert.equal(api.getChatPosition().y,held.y);
+ api.chatTarget.handlers.pointerleave();frames(50);position=api.getChatPosition();assertFree(position,1440,900,api.chatObstacles(),satellite.satelliteFootprint(21,position.caption));
 });
 
 test('Free-zone search fits a bubble and rejects a drift that would cross an obstacle',()=>{
@@ -244,4 +245,21 @@ test('Locale toggled during camera travel also relabels its destination without 
  api.activate(api.getNodes().find(node=>node.id==='experiencia'));frames(400);const transition=api.getTravel();
  try{languageStore.set('en');applyContent('en');api.refreshLanguage();assert.equal(api.getTravel(),transition);frames(2700);assert.equal(api.getLevel().id,'experiencia');assert.equal(api.getLevel().title,'Experience');assert.equal(api.getNodes().find(node=>node.id==='experiencia.infosys').name,'Infosys')}
  finally{api.dispose();languageStore.set('es');applyContent('es')}
+});
+
+
+test('Approaching the message node stops companion pursuit and keeps the same visible target through pointerdown and click',()=>{
+ const {api,frames,listeners,sandbox}=fixture();frames(600);const held={x:api.getChatPosition().x,y:api.getChatPosition().y};let opened=0;sandbox.bridge.onLiveOpen=()=>opened++;
+ api.chatTarget.handlers.pointerenter();
+ const target={closest:selector=>selector.includes('.floating-live-chat')?api.chatTarget:null};
+ for(let i=0;i<5;i++){listeners.pointermove({clientX:held.x+i,clientY:held.y,pointerType:'mouse',target});frames(300);assert.equal(api.chatTarget.hidden,false);assert.equal(api.getChatPosition().x,held.x);assert.equal(api.getChatPosition().y,held.y)}
+ listeners.pointerdown({clientX:held.x,clientY:held.y,pointerType:'mouse',target});frames(150);api.chatTarget.click();assert.equal(opened,1);api.dispose();
+});
+
+test('Message node keeps its position on keyboard focus and recalculates safely after a viewport resize',()=>{
+ const {api,frames,sandbox,listeners}=fixture();frames(600);const held={x:api.getChatPosition().x,y:api.getChatPosition().y};api.chatTarget.focus();frames(1400);
+ assert.equal(api.chatTarget.hidden,false);assert.equal(api.getChatPosition().x,held.x);assert.equal(api.getChatPosition().y,held.y);
+ sandbox.innerWidth=390;sandbox.innerHeight=844;listeners.resize();frames(50);
+ const resized=api.getChatPosition();assert.equal(api.chatTarget.hidden,false);assert.ok(resized.x>12&&resized.x<378&&resized.y>12&&resized.y<832);
+ api.chatTarget.handlers.blur();api.dispose();
 });

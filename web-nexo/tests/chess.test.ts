@@ -74,3 +74,32 @@ test('Perspective picking recovers every square after camera pan, zoom and rotat
     }
   }
 });
+
+import { chessLayout, chessBounds, fitChessCamera } from '../src/chess/layout';
+const contained=(point:number[],rect:{left:number;right:number;top:number;bottom:number})=>point[0]>=rect.left-1e-7&&point[0]<=rect.right+1e-7&&point[1]>=rect.top-1e-7&&point[1]<=rect.bottom+1e-7;
+
+test('Chess layout reserves players and game information outside the complete board at every zoom and viewport',()=>{
+  for(const [width,height] of [[1210,1146],[1440,900],[1920,1080],[960,720],[900,1000],[390,844],[375,667],[320,568],[844,390],[740,430]]){
+    for(const zoom of [.65,1,1.6])for(const pan of [{x:0,y:0},{x:width*.5,y:-height*.4},{x:-width*.5,y:height*.4}]){
+      const view={zoom,pan},before=JSON.stringify(view),layout=chessLayout({width,height},view),bounds=chessBounds(layout.camera);
+      assert.equal(JSON.stringify(view),before,'Fitting the board does not mutate the universe camera');assert.ok(layout.camera.scale>0);
+      assert.ok(contained([bounds.left,bounds.top],layout.area));assert.ok(contained([bounds.right,bounds.bottom],layout.area));
+      assert.ok(layout.header.top+((height<600)?42:layout.stacked?56:64)<=layout.black.top,'Heading leaves room for the player row');
+      assert.ok(layout.black.top+((height<600)?30:layout.stacked?(height<720?32:40):44)<bounds.top,'Black player stays above even the highest piece');
+      assert.ok(layout.white.top>bounds.bottom,'White player stays below the board and file labels');
+      if(layout.stacked){assert.ok(layout.aside.top>layout.white.top);assert.ok(layout.aside.top+layout.aside.height<=height)}
+      else assert.ok(layout.aside.left>bounds.right,'Status, history and actions have their own side rail');
+      for(const mesh of Object.values(pieceSolids))for(const x of [.5,7.5])for(const z of [.5,7.5])for(const vertex of mesh.vertices){
+        const p=project3D([vertex[0]+x,vertex[1]*.78+.18,vertex[2]+z],layout.camera).point;assert.ok(contained(p,layout.area),'Every solid, including a raised piece, stays out of the UI');
+      }
+    }
+  }
+});
+
+test('Camera fitting keeps board picking correct and preserves the same perspective',()=>{
+  const area={left:250,right:940,top:280,bottom:920},original={x:1400,y:-100,scale:220,tilt:.72,yaw:-.10,distance:22};
+  const fitted=fitChessCamera(original,area);assert.equal(fitted.tilt,original.tilt);assert.equal(fitted.yaw,original.yaw);assert.equal(original.scale,220);
+  for(let row=0;row<8;row++)for(let col=0;col<8;col++){
+    const point=project3D([col+.5,0,row+.5],fitted).point;const [x,z]=unprojectBoard(point,fitted);assert.ok(Math.abs(x-col-.5)<1e-9&&Math.abs(z-row-.5)<1e-9);
+  }
+});

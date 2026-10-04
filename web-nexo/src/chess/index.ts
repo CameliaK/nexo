@@ -3,6 +3,7 @@ import type { Move, Square, Color, PieceSymbol } from 'chess.js';
 import { ChessGame, type Promotion, type PositionPiece } from './game';
 import { squareAt, squareCoords, subdivideSource, type Triangle, type Point } from './geometry';
 import { pieceSolids, box, normal, project3D, unprojectBoard, cellPolygon, insideTriangle, type Camera, type Mesh, type Vec3, type Tri3 } from './spatial';
+import { chessLayout, chessBounds, type ChessView } from './layout';
 import './style.css';
 
 export const CHESS_NODE_VISIBLE = true;
@@ -59,18 +60,20 @@ export function createChessUI() {
   let focusSquare:Square='e2',returnFocus:HTMLElement|null=null,popoverReturn:HTMLElement|null=null;
   let viewPieces=game.pieces,viewHistory=game.history,viewCheck=game.check,destinations=new Set<Square>();
   let camera:Camera={x:0,y:0,scale:1,tilt:.72,yaw:-.10,distance:22};
-  let baseCamera={...camera},cachedFaces:Face[]|null=null;
+  let currentView:ChessView={zoom:1,pan:{x:0,y:0}},cachedFaces:Face[]|null=null;
   let picking:Face[]=[],queuedExit:(()=>void)|null=null;
   const buttons=new Map<Square,HTMLButtonElement>();
   const busy=()=>!!morph||!!animation||!backdrop.hidden;
   const announce=(text:string)=>{$('.chess-announcement').textContent=text};
   const legal=()=>selected?game.legal(selected):[];
-  const resize=()=>{
-    const mobile=innerWidth<650,short=innerHeight<550;
-    camera={x:innerWidth*(mobile?.50:.47),y:innerHeight*(short?.57:mobile?.49:.53),scale:mobile?Math.min(innerWidth/11.2,(innerHeight-280)/7.4):Math.min((innerWidth-360)/10.7,Math.max(22,(innerHeight-305)/9.2)),tilt:mobile?.62:.72,yaw:mobile?-.045:-.10,distance:22};
-    baseCamera={...camera};
+  function applyLayout(){
+    const layout=chessLayout({width:innerWidth,height:innerHeight},currentView);
+    camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';
+    const {header,close,black,white,help,aside}=layout;
+    for(const [prefix,region] of Object.entries({header,close,black,white,help,aside}))for(const [key,value] of Object.entries(region))dialog.style.setProperty('--chess-'+prefix+'-'+key,value+'px');
     placeBoard();
-  };
+  }
+  const resize=()=>applyLayout();
   const at=(square:Square):Point=>{const [col,row]=squareCoords(square,flipped);return[col+.5,row+.5]};
   const hit=(x:number,y:number,ignorePiece?:Square):Square|null=>{
     for(let i=picking.length-1;i>=0;i--)if(picking[i].square&&picking[i].square!==ignorePiece&&insideTriangle([x,y],picking[i].points))return picking[i].square!;
@@ -79,8 +82,7 @@ export function createChessUI() {
   };
   function placeBoard(){
     cachedFaces=null;picking=[];
-    const corners=[[0,0,0],[8,0,0],[8,0,8],[0,0,8]].map(p=>project3D(p as Vec3,camera).point);
-    const left=Math.min(...corners.map(p=>p[0])),right=Math.max(...corners.map(p=>p[0])),top=Math.min(...corners.map(p=>p[1]))-camera.scale*.8,bottom=Math.max(...corners.map(p=>p[1]));
+    const {left,right,top,bottom}=chessBounds(camera);
     for(const [key,value] of Object.entries({left,right,top,bottom,cx:camera.x,cy:camera.y}))dialog.style.setProperty(`--board-${key}`,value+'px');
     Object.assign(board.style,{left:left+'px',top:top+'px',width:(right-left)+'px',height:(bottom-top)+'px'});
     buttons.forEach((b,square)=>{
@@ -315,8 +317,8 @@ export function createChessUI() {
   function render(context:CanvasRenderingContext2D,now:number,view?:{zoom:number;pan:{x:number;y:number}}){
     if(!active||disposed)return;
     if(view){
-      const x=innerWidth/2+(baseCamera.x-innerWidth/2)*view.zoom+view.pan.x,y=innerHeight*.53+(baseCamera.y-innerHeight*.53)*view.zoom+view.pan.y,scale=baseCamera.scale*view.zoom;
-      if(Math.abs(camera.x-x)+Math.abs(camera.y-y)+Math.abs(camera.scale-scale)>.01){camera={...baseCamera,x,y,scale};placeBoard()}
+      const changed=Math.abs(view.zoom-currentView.zoom)+Math.abs(view.pan.x-currentView.pan.x)+Math.abs(view.pan.y-currentView.pan.y)>.001;
+      if(changed){currentView={zoom:view.zoom,pan:{...view.pan}};applyLayout()}
     }
     ctx=context;ctx.save();
     if(morph){
