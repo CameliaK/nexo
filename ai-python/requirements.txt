@@ -7,3 +7,4 @@ uvicorn==0.39.0
 asyncpg==0.31.0
 pgvector==0.5.0
 sentence-transformers==6.1.0
+chess==1.11.2

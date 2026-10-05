@@ -11,6 +11,7 @@ import (
 	"nexo/gateway/internal/accounts"
 	"nexo/gateway/internal/auth"
 	"nexo/gateway/internal/chat"
+	"nexo/gateway/internal/chess"
 	"nexo/gateway/internal/clientip"
 	"nexo/gateway/internal/config"
 	"nexo/gateway/internal/db"
@@ -123,8 +124,20 @@ func main() {
 	// Owner
 	mux.HandleFunc("GET /api/v1/owner/ping", tokens.RequireOwner(owner.Ping))
 
+	// Hidden chess: rules in the agent, auth and limits here.
+	chessH := &chess.Handler{Redis: rdb, Limiter: limiter, AgentURL: cfg.AgentURL, MovesPerHour: cfg.ChessMovesPerHour}
+	mux.HandleFunc("GET /api/v1/chess/game", tokens.RequireUser(chessH.GetGame))
+	mux.HandleFunc("POST /api/v1/chess/game", tokens.RequireUser(chessH.NewGame))
+	mux.HandleFunc("POST /api/v1/chess/game/move", tokens.RequireUser(chessH.Move))
+	mux.HandleFunc("POST /api/v1/chess/game/resign", tokens.RequireUser(chessH.Resign))
+	mux.HandleFunc("GET /api/v1/owner/chess/games", tokens.RequireOwner(chessH.OwnerGames))
+	mux.HandleFunc("GET /api/v1/owner/chess/games/{id}", tokens.RequireOwner(chessH.OwnerGame))
+	mux.HandleFunc("POST /api/v1/owner/chess/games/{id}/move", tokens.RequireOwner(chessH.OwnerMove))
+	mux.HandleFunc("POST /api/v1/owner/chess/games/{id}/resign", tokens.RequireOwner(chessH.OwnerResign))
+
 	log.Printf("limits: chat %d/h per visitor, %d/h per IP, active TTL %s; guest %d/h per IP; trusted proxies %q",
 		cfg.ChatRatePerHour, cfg.ChatRatePerIPHour, cfg.ChatActiveTTL, cfg.AuthGuestPerIPHour, cfg.TrustedProxies)
+	log.Printf("limits: chess %d moves/h per account", cfg.ChessMovesPerHour)
 	log.Printf("gateway listening on :%s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
 		log.Fatalf("server: %v", err)

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import uuid
@@ -15,6 +16,8 @@ from .config import load
 from . import db as db_mod
 from . import rag as rag_mod
 from . import node_builder
+from . import chess_api
+from . import chess_game
 from .events import EventPublisher
 from .llm.budget import BudgetedLLM, LLMBudgetExceeded
 from .llm.deepseek import DeepSeekProvider
@@ -64,7 +67,19 @@ async def lifespan(app: FastAPI):
     else:
         log.info("rag_fragments has %d fragments", fragment_count)
 
+    chess_api.init(
+        _rdb,
+        _db_pool,
+        max_active=cfg.chess_max_active,
+        expiry=chess_game.Expiry(idle_days=cfg.chess_expire_days, empty_hours=cfg.chess_empty_expire_hours),
+    )
+    chess_sweeper = asyncio.create_task(chess_api.expiry_loop())
+    log.info("chess ready (max %d active, expire %dd idle / %dh without moves)",
+             cfg.chess_max_active, cfg.chess_expire_days, cfg.chess_empty_expire_hours)
+
     yield
+
+    chess_sweeper.cancel()
 
     if _rdb:
         await _rdb.aclose()
@@ -73,6 +88,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(chess_api.router)
 
 
 @app.get("/health")

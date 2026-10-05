@@ -16,6 +16,11 @@ class Config:
     route_confidence_threshold: float = 0.7
     rag_similarity_threshold: float = 0.75
     llm_daily_calls: int = 1500
+    public_base_url: str = "http://localhost"
+    chess_max_active: int = 5
+    chess_expire_days: int = 30
+    chess_empty_expire_hours: int = 48
+    chess_notify_minutes: int = 10
 
 
 def load() -> Config:
@@ -42,4 +47,9 @@ def load() -> Config:
             os.environ.get("RAG_SIMILARITY_THRESHOLD", "0.75")
         ),
         llm_daily_calls=int(os.environ.get("LLM_DAILY_CALLS", "1500")),
+        public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://localhost").rstrip("/"),
+        chess_max_active=int(os.environ.get("CHESS_MAX_ACTIVE", "5")),
+        chess_expire_days=int(os.environ.get("CHESS_EXPIRE_DAYS", "30")),
+        chess_empty_expire_hours=int(os.environ.get("CHESS_EMPTY_EXPIRE_HOURS", "48")),
+        chess_notify_minutes=int(os.environ.get("CHESS_NOTIFY_MINUTES", "10")),
     )
