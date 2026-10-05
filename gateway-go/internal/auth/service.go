@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"net/mail"
@@ -18,9 +17,11 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"nexo/gateway/internal/accounts"
+	"nexo/gateway/internal/clientip"
 	"nexo/gateway/internal/httpx"
 	nexomail "nexo/gateway/internal/mail"
 	"nexo/gateway/internal/mask"
+	"nexo/gateway/internal/ratelimit"
 	"nexo/gateway/internal/session"
 )
 
@@ -39,6 +40,8 @@ type Service struct {
 	Sessions *session.Store
 	Mailer   nexomail.Mailer // nil → email login unavailable (503)
 	Google   *Google         // nil → Google login unavailable (503)
+	Limiter  *ratelimit.Limiter
+	IPs      *clientip.Resolver
 
 	PublicBaseURL      string
 	OwnerEmail         string
@@ -83,18 +86,17 @@ func (s *Service) EmailRequest(w http.ResponseWriter, r *http.Request) {
 		key   string
 		limit int
 	}{
-		{"rl:auth-email:ip:" + httpx.ClientIP(r), s.AuthEmailPerIPHour},
+		{"rl:auth-email:ip:" + s.IPs.Key(r), s.AuthEmailPerIPHour},
 		{"rl:auth-email:addr:" + hashHex(email), s.AuthEmailPerHour},
 	} {
-		ok, retryAfter, err := hit(ctx, s.Redis, lim.key, lim.limit, time.Hour)
+		res, err := s.Limiter.Hit(ctx, lim.key, lim.limit, time.Hour)
 		if err != nil {
 			log.Printf("auth/email: rate limit: %v", err)
 			httpx.WriteErr(w, http.StatusInternalServerError, "internal", "unexpected error")
 			return
 		}
-		if !ok {
-			w.Header().Set("Retry-After", fmt.Sprint(retryAfter))
-			httpx.WriteErr(w, http.StatusTooManyRequests, "rate_limited", "too many sign-in emails, try again later")
+		if !res.Allowed {
+			ratelimit.Reject(w, res, "too many sign-in emails, try again later")
 			return
 		}
 	}
@@ -313,27 +315,3 @@ func hashHex(s string) string {
 // Secrets are stored only as hashes: a Redis dump never yields a usable link.
 func emailLinkKey(token string) string { return "auth:email-link:" + hashHex(token) }
 func loginCodeKey(code string) string  { return "auth:login-code:" + hashHex(code) }
-
-// hit counts one attempt in a fixed window. EXPIRE NX sets the window only on
-// the first hit, in the same transaction, so a key never lives forever.
-func hit(ctx context.Context, rdb *redis.Client, key string, limit int, window time.Duration) (ok bool, retryAfter int, err error) {
-	var incr *redis.IntCmd
-	var ttl *redis.DurationCmd
-	_, err = rdb.TxPipelined(ctx, func(p redis.Pipeliner) error {
-		incr = p.Incr(ctx, key)
-		p.ExpireNX(ctx, key, window)
-		ttl = p.TTL(ctx, key)
-		return nil
-	})
-	if err != nil {
-		return false, 0, err
-	}
-	if incr.Val() <= int64(limit) {
-		return true, 0, nil
-	}
-	secs := int(ttl.Val().Seconds())
-	if secs < 1 {
-		secs = 1
-	}
-	return false, secs, nil
-}

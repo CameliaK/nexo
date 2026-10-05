@@ -13,20 +13,49 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"nexo/gateway/internal/auth"
+	"nexo/gateway/internal/clientip"
 	"nexo/gateway/internal/mask"
+	"nexo/gateway/internal/ratelimit"
 )
 
 var agentClient = &http.Client{Timeout: 10 * time.Second}
+
+// Limits of contract §12: questions per visitor and per IP per hour, and one
+// active query per visitor.
+type Limits struct {
+	Limiter   *ratelimit.Limiter
+	IPs       *clientip.Resolver
+	PerHour   int
+	PerIPHour int
+	ActiveTTL time.Duration // safety net if the agent never releases the mark
+}
 
 type handler struct {
 	tokens   *auth.TokenService
 	rdb      *redis.Client
 	agentURL string
+	limits   Limits
 }
 
-func NewHandler(tokens *auth.TokenService, rdb *redis.Client, agentURL string) http.HandlerFunc {
-	h := &handler{tokens: tokens, rdb: rdb, agentURL: agentURL}
+func NewHandler(tokens *auth.TokenService, rdb *redis.Client, agentURL string, limits Limits) http.HandlerFunc {
+	h := &handler{tokens: tokens, rdb: rdb, agentURL: agentURL, limits: limits}
 	return h.serveHTTP
+}
+
+// ActiveKey marks the visitor's query in flight; its value is the run_id.
+// The agent deletes it (compare-and-delete) on run.done / run.error.
+func ActiveKey(visitorID string) string { return "chat:active:" + visitorID }
+
+// releaseScript deletes the mark only if it still belongs to runID, so a late
+// release can never free a newer query's mark.
+var releaseScript = redis.NewScript(`if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) end return 0`)
+
+func (h *handler) release(visitorID, runID string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := releaseScript.Run(ctx, h.rdb, []string{ActiveKey(visitorID)}, runID).Err(); err != nil {
+		log.Printf("chat: release active visitor=%s run=%s: %v", mask.ID(visitorID), runID, err)
+	}
 }
 
 func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +79,7 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
 		return
 	}
+	body.Message = strings.TrimSpace(body.Message)
 	if body.Message == "" {
 		writeErr(w, http.StatusBadRequest, "invalid_request", "message is required")
 		return
@@ -64,12 +94,46 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	seq := 1
 	t0 := time.Now()
 
+	// One active query per visitor. Taken before the hourly counters, so a
+	// rejected duplicate (409) does not spend quota.
+	active, err := h.rdb.SetNX(ctx, ActiveKey(visitorID), runID, h.limits.ActiveTTL).Result()
+	if err != nil {
+		log.Printf("chat: active mark visitor=%s: %v", mask.ID(visitorID), err)
+		writeErr(w, http.StatusInternalServerError, "internal", "unexpected error")
+		return
+	}
+	if !active {
+		writeErr(w, http.StatusConflict, "busy", "a question is already in progress")
+		return
+	}
+	for _, lim := range []struct {
+		key string
+		max int
+	}{
+		{"rl:chat:visitor:" + visitorID, h.limits.PerHour},
+		{"rl:chat:ip:" + h.limits.IPs.Key(r), h.limits.PerIPHour},
+	} {
+		res, err := h.limits.Limiter.Hit(ctx, lim.key, lim.max, time.Hour)
+		if err != nil {
+			h.release(visitorID, runID)
+			log.Printf("chat: rate limit visitor=%s: %v", mask.ID(visitorID), err)
+			writeErr(w, http.StatusInternalServerError, "internal", "unexpected error")
+			return
+		}
+		if !res.Allowed {
+			h.release(visitorID, runID)
+			ratelimit.Reject(w, res, "too many questions, try again later")
+			return
+		}
+	}
+
 	// Publish run.start
 	if err := h.pub(ctx, visitorID, "run.start", runID, &seq, map[string]any{
 		"kind":            "chat",
 		"input":           body.Message,
 		"content_version": 3,
 	}); err != nil {
+		h.release(visitorID, runID)
 		log.Printf("chat: publish run.start visitor=%s: %v", mask.ID(visitorID), err)
 		writeErr(w, http.StatusInternalServerError, "internal", "failed to publish event")
 		return
@@ -107,7 +171,8 @@ func (h *handler) callAgent(visitorID, runID, message string, seqStart int) {
 
 	resp, err := agentClient.Post(h.agentURL+"/internal/chat", "application/json", bytes.NewReader(payload))
 	if err != nil {
-		log.Printf("chat: agent call failed visitor=%s run=%s: %v", mask.ID(visitorID), runID, err)
+		log.Printf("chat: agent call failed visitor=%s run=%s: %v", mask.ID(visitorID), runID, mask.URLErr(err))
+		h.release(visitorID, runID)
 		seq := seqStart
 		_ = h.pub(ctx, visitorID, "trace.hop", runID, &seq, map[string]any{
 			"hop_id": "h2", "from": "gateway", "to": "agent",
@@ -122,6 +187,7 @@ func (h *handler) callAgent(visitorID, runID, message string, seqStart int) {
 
 	if resp.StatusCode != http.StatusAccepted {
 		log.Printf("chat: agent returned %d visitor=%s run=%s", resp.StatusCode, mask.ID(visitorID), runID)
+		h.release(visitorID, runID)
 		seq := seqStart
 		_ = h.pub(ctx, visitorID, "trace.hop", runID, &seq, map[string]any{
 			"hop_id": "h2", "from": "gateway", "to": "agent",

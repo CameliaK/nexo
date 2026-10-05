@@ -15,6 +15,7 @@ class Config:
     telegram_chat_id: str
     route_confidence_threshold: float = 0.7
     rag_similarity_threshold: float = 0.75
+    llm_daily_calls: int = 1500
 
 
 def load() -> Config:
@@ -40,4 +41,5 @@ def load() -> Config:
         rag_similarity_threshold=float(
             os.environ.get("RAG_SIMILARITY_THRESHOLD", "0.75")
         ),
+        llm_daily_calls=int(os.environ.get("LLM_DAILY_CALLS", "1500")),
     )

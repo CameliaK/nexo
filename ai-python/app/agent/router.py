@@ -12,6 +12,7 @@ from .. import node_builder
 from .. import rag as rag_mod
 from ..events import EventPublisher
 from ..llm.base import LLMProvider
+from ..llm.budget import BudgetedLLM, LLMBudgetExceeded
 from ..rag import EmbeddingModel
 
 log = logging.getLogger(__name__)
@@ -22,6 +23,34 @@ CONFIDENCE_THRESHOLD = 0.7
 class _LLMError(Exception):
     def __init__(self, h2_start: float) -> None:
         self.h2_start = h2_start
+
+
+class _BudgetError(Exception):
+    """The daily LLM budget is spent; no further provider call is made."""
+    def __init__(self, h2_start: float) -> None:
+        self.h2_start = h2_start
+
+
+# Same key and compare-and-delete as the gateway (internal/chat): the mark
+# holds the run_id, so releasing never frees a newer query's mark.
+_RELEASE_ACTIVE = (
+    'if redis.call("GET", KEYS[1]) == ARGV[1] then '
+    'return redis.call("DEL", KEYS[1]) end return 0'
+)
+
+
+async def _release_active(rdb: aioredis.Redis, visitor_id: str, run_id: str) -> None:
+    try:
+        await rdb.eval(_RELEASE_ACTIVE, 1, f"chat:active:{visitor_id}", run_id)
+    except Exception:
+        log.exception("release active query failed run=%s", run_id)
+
+
+async def _budget_spent(llm: LLMProvider) -> bool:
+    try:
+        return isinstance(llm, BudgetedLLM) and await llm.exhausted()
+    except Exception:
+        return False
 
 
 class _N8NError(Exception):
@@ -66,6 +95,10 @@ async def run(
             "phase": "start", "label": "Envía la pregunta al agente",
         })
 
+        # Daily budget already spent: answer without calling the provider.
+        if await _budget_spent(llm):
+            raise _BudgetError(h2_start)
+
         h3_start = time.monotonic()
         await pub.publish("trace.hop", {
             "hop_id": "h3", "from": "agent", "to": "llm",
@@ -74,6 +107,13 @@ async def run(
 
         try:
             result = await _understand(llm, input_text, portfolio)
+        except LLMBudgetExceeded as exc:
+            h3_ms = int((time.monotonic() - h3_start) * 1000)
+            await pub.publish("trace.hop", {
+                "hop_id": "h3", "from": "agent", "to": "llm",
+                "phase": "error", "detail": "Límite diario del modelo alcanzado", "duration_ms": h3_ms,
+            })
+            raise _BudgetError(h2_start) from exc
         except Exception as exc:
             log.exception("LLM understand failed run=%s visitor=%s", run_id, visitor_id)
             h3_ms = int((time.monotonic() - h3_start) * 1000)
@@ -137,6 +177,13 @@ async def run(
         try:
             async for chunk in llm.stream(system=answer_system, user=input_text):
                 await pub.publish("answer.chunk", {"text": chunk})
+        except LLMBudgetExceeded as exc:
+            h_ans_ms = int((time.monotonic() - h_ans_start) * 1000)
+            await pub.publish("trace.hop", {
+                "hop_id": answer_hop_id, "from": "agent", "to": "llm",
+                "phase": "error", "detail": "Límite diario del modelo alcanzado", "duration_ms": h_ans_ms,
+            })
+            raise _BudgetError(h2_start) from exc
         except Exception as exc:
             log.exception("LLM stream failed run=%s visitor=%s", run_id, visitor_id)
             h_ans_ms = int((time.monotonic() - h_ans_start) * 1000)
@@ -162,7 +209,14 @@ async def run(
         run_ms = int((time.monotonic() - run_start) * 1000)
         await pub.publish("run.done", {"outcome": final_outcome, "duration_ms": run_ms})
 
+    except _BudgetError as exc:
+        await _publish_budget_error(pub, exc.h2_start)
+
     except _N8NError as exc:
+        # design_node answers 503 to n8n when the budget runs out mid-flow.
+        if await _budget_spent(llm):
+            await _publish_budget_error(pub, exc.h2_start)
+            return
         h2_ms = int((time.monotonic() - exc.h2_start) * 1000)
         await pub.publish("trace.hop", {
             "hop_id": "h2", "from": "gateway", "to": "agent",
@@ -202,6 +256,25 @@ async def run(
             "message": "Error interno del agente.",
             "retryable": False,
         })
+
+    finally:
+        # run.done / run.error has been published (or the run died): free the
+        # visitor's "one active query" mark taken by the gateway.
+        await _release_active(rdb, visitor_id, run_id)
+
+
+async def _publish_budget_error(pub: EventPublisher, h2_start: float) -> None:
+    log.warning("daily LLM budget spent; run answered without calling the provider")
+    h2_ms = int((time.monotonic() - h2_start) * 1000)
+    await pub.publish("trace.hop", {
+        "hop_id": "h2", "from": "gateway", "to": "agent",
+        "phase": "error", "detail": "Límite diario del modelo alcanzado", "duration_ms": h2_ms,
+    })
+    await pub.publish("run.error", {
+        "code": "llm_unavailable",
+        "message": "Por hoy alcancé mi límite de consultas al modelo. Vuelve mañana o escríbeme por el chat en vivo.",
+        "retryable": False,
+    })
 
 
 async def _n8n_deep_route(

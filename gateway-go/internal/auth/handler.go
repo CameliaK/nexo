@@ -5,20 +5,29 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"time"
 
+	"nexo/gateway/internal/clientip"
 	"nexo/gateway/internal/mask"
+	"nexo/gateway/internal/ratelimit"
 	"nexo/gateway/internal/session"
 )
 
 var uuidRE = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 
 type guestHandler struct {
-	tokens   *TokenService
-	sessions *session.Store
+	tokens    *TokenService
+	sessions  *session.Store
+	limiter   *ratelimit.Limiter
+	ips       *clientip.Resolver
+	perIPHour int
 }
 
-func NewHandler(t *TokenService, s *session.Store) http.HandlerFunc {
-	h := &guestHandler{tokens: t, sessions: s}
+// NewHandler serves GET /auth/guest. The visitor id is chosen by the client,
+// so the per-visitor limits can be dodged by inventing ids; every guest
+// session also occupies Redis. Hence a per-IP cap (AUTH_GUEST_PER_IP_HOUR).
+func NewHandler(t *TokenService, s *session.Store, l *ratelimit.Limiter, ips *clientip.Resolver, perIPHour int) http.HandlerFunc {
+	h := &guestHandler{tokens: t, sessions: s, limiter: l, ips: ips, perIPHour: perIPHour}
 	return h.serveHTTP
 }
 
@@ -26,6 +35,17 @@ func (h *guestHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	visitorID := r.Header.Get("X-Visitor-Id")
 	if !uuidRE.MatchString(visitorID) {
 		writeErr(w, http.StatusBadRequest, "invalid_request", "X-Visitor-Id must be a valid UUID")
+		return
+	}
+
+	res, err := h.limiter.Hit(r.Context(), "rl:guest:ip:"+h.ips.Key(r), h.perIPHour, time.Hour)
+	if err != nil {
+		log.Printf("auth/guest: rate limit: %v", err)
+		writeErr(w, http.StatusInternalServerError, "internal", "unexpected error")
+		return
+	}
+	if !res.Allowed {
+		ratelimit.Reject(w, res, "too many sessions from this network, try again later")
 		return
 	}
 

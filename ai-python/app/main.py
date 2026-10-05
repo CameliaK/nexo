@@ -16,6 +16,7 @@ from . import db as db_mod
 from . import rag as rag_mod
 from . import node_builder
 from .events import EventPublisher
+from .llm.budget import BudgetedLLM, LLMBudgetExceeded
 from .llm.deepseek import DeepSeekProvider
 
 log = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ log = logging.getLogger(__name__)
 cfg = load()
 
 _portfolio: dict = {}
-_llm: DeepSeekProvider | None = None
+_llm: BudgetedLLM | None = None
 _rdb: aioredis.Redis | None = None
 _db_pool: asyncpg.Pool | None = None
 _rag_model: rag_mod.EmbeddingModel | None = None
@@ -41,11 +42,15 @@ async def lifespan(app: FastAPI):
     _portfolio = load_portfolio(cfg.portfolio_path)
     log.info("portfolio loaded (%d nodes)", len(_portfolio))
 
-    _llm = DeepSeekProvider(api_key=cfg.deepseek_api_key, model=cfg.deepseek_model)
-    log.info("llm ready")
-
     _rdb = aioredis.Redis.from_url(cfg.redis_url, decode_responses=True)
     log.info("redis connected")
+
+    _llm = BudgetedLLM(
+        DeepSeekProvider(api_key=cfg.deepseek_api_key, model=cfg.deepseek_model),
+        _rdb,
+        cfg.llm_daily_calls,
+    )
+    log.info("llm ready (daily budget %d calls)", cfg.llm_daily_calls)
 
     _db_pool = await db_mod.create_pool(cfg.postgres_url)
 
@@ -236,7 +241,11 @@ async def internal_design_node(body: _DesignNodeRequest):
         for h in body.hits
     ]
 
-    node = await node_builder.design_node(body.question, rag_hits, _llm)
+    try:
+        node = await node_builder.design_node(body.question, rag_hits, _llm)
+    except LLMBudgetExceeded:
+        # n8n's flow fails on this; the agent then reports the spent budget.
+        raise HTTPException(status_code=503, detail="llm daily budget spent")
     return {"node": node}
 
 

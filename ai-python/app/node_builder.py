@@ -7,6 +7,7 @@ from uuid import uuid4
 import asyncpg
 
 from .llm.base import LLMProvider
+from .llm.budget import LLMBudgetExceeded
 from .rag import RagHit
 
 log = logging.getLogger(__name__)
@@ -81,6 +82,8 @@ async def design_node(
 
     try:
         raw = await llm.complete(system=system, user=question)
+    except LLMBudgetExceeded:
+        raise
     except Exception:
         log.exception("LLM design_node call failed")
         return None
@@ -96,6 +99,8 @@ async def design_node(
     )
     try:
         raw2 = await llm.complete(system=retry_system, user=question)
+    except LLMBudgetExceeded:
+        raise
     except Exception:
         log.exception("LLM design_node retry failed")
         return None

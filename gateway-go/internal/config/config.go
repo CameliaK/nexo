@@ -25,6 +25,13 @@ type Config struct {
 	OwnerProviders     []string // providers allowed to grant owner mode
 	AuthEmailPerHour   int
 	AuthEmailPerIPHour int
+	AuthGuestPerIPHour int
+
+	// Agent chat limits (contract §12)
+	ChatRatePerHour   int           // questions per visitor per hour
+	ChatRatePerIPHour int           // questions per IP per hour
+	ChatActiveTTL     time.Duration // safety TTL of the "one active query" mark
+	TrustedProxies    string        // hosts/CIDRs whose X-Forwarded-For is trusted
 
 	// Mail
 	SMTPHost string
@@ -57,6 +64,12 @@ func Load() *Config {
 		OwnerProviders:     list(getenv("OWNER_PROVIDERS", "google")),
 		AuthEmailPerHour:   integer("AUTH_EMAIL_PER_HOUR", 5),
 		AuthEmailPerIPHour: integer("AUTH_EMAIL_PER_IP_HOUR", 20),
+		AuthGuestPerIPHour: integer("AUTH_GUEST_PER_IP_HOUR", 60),
+
+		ChatRatePerHour:   integer("CHAT_RATE_PER_HOUR", 20),
+		ChatRatePerIPHour: integer("CHAT_RATE_PER_IP_HOUR", 60),
+		ChatActiveTTL:     duration("CHAT_ACTIVE_TTL", 120*time.Second),
+		TrustedProxies:    getenv("TRUSTED_PROXIES", "traefik"),
 
 		SMTPHost: os.Getenv("SMTP_HOST"),
 		SMTPPort: integer("SMTP_PORT", 587),

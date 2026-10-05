@@ -1,11 +1,10 @@
 // Package httpx holds the small HTTP helpers shared by the auth, account and
 // owner handlers: the contract's error body, JSON responses and request
-// metadata (bearer token, client IP).
+// metadata (bearer token). The client IP lives in package clientip.
 package httpx
 
 import (
 	"encoding/json"
-	"net"
 	"net/http"
 	"strings"
 )
@@ -37,20 +36,4 @@ func BearerToken(r *http.Request) string {
 		return ""
 	}
 	return strings.TrimSpace(h[7:])
-}
-
-// ClientIP returns the last X-Forwarded-For entry — the one Traefik appends,
-// so earlier entries forged by the client are ignored — or the peer address.
-func ClientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		parts := strings.Split(xff, ",")
-		if ip := strings.TrimSpace(parts[len(parts)-1]); ip != "" {
-			return ip
-		}
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
 }

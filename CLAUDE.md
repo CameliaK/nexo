@@ -146,6 +146,18 @@ No des una fase por terminada solo porque compiló. El estándar es:
 - `SMTP_TLS` falla cerrado (`starttls` obligatorio o `ssl`); solo el override de dev lo pone en
   `none` para mailpit (UI en `localhost:8025`, nunca en producción).
 
+## Límites de uso
+
+- Gateway: `internal/ratelimit` (ventana fija en Redis, reutilizable) y `internal/clientip`
+  (IP real solo si la petición viene de `TRUSTED_PROXIES`; IPv6 por /64). Chat: 20/h por
+  visitante, 60/h por IP, una consulta activa (`chat:active:{visitor_id}` = run_id, TTL 120 s,
+  la libera el agente al cerrar la ejecución). `/auth/guest`: 60/h por IP.
+- Agente: `BudgetedLLM` cuenta cada llamada al proveedor en `llm:calls:{día UTC}`
+  (`LLM_DAILY_CALLS`, 1500); agotado → `run.error llm_unavailable` sin llamar al proveedor.
+- **En desarrollo con Docker Desktop todas las peticiones llegan con la misma IP**: el límite
+  por IP es compartido entre pestañas, navegadores y Playwright. En producción Traefik debe ver la
+  IP real (Cloudflare solo DNS, o sus rangos en `forwardedHeaders.trustedIPs` y `TRUSTED_PROXIES`).
+
 ## Decisiones aceptadas
 
 - **El `visitor_id` canónico actúa como credencial del modo invitado.** Quien lo conozca puede

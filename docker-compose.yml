@@ -61,6 +61,13 @@ services:
       - OWNER_PROVIDERS=google
       - AUTH_EMAIL_PER_HOUR=5
       - AUTH_EMAIL_PER_IP_HOUR=20
+      - AUTH_GUEST_PER_IP_HOUR=${AUTH_GUEST_PER_IP_HOUR:-60}
+      # Límites del chat con el agente (contrato §12)
+      - CHAT_RATE_PER_HOUR=${CHAT_RATE_PER_HOUR:-20}
+      - CHAT_RATE_PER_IP_HOUR=${CHAT_RATE_PER_IP_HOUR:-60}
+      - CHAT_ACTIVE_TTL=${CHAT_ACTIVE_TTL:-120s}
+      # Solo se confía en X-Forwarded-For si la petición viene de estos (nombres o CIDR)
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-traefik}
       # Correo. SMTP_TLS falla cerrado: starttls (obligatorio) o ssl.
       # Solo docker-compose.override.yml (dev, mailpit) lo pone en none.
       - SMTP_HOST=${SMTP_HOST:-}
@@ -102,6 +109,8 @@ services:
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       - RAG_SIMILARITY_THRESHOLD=${RAG_SIMILARITY_THRESHOLD:-0.75}
       - ROUTE_CONFIDENCE_THRESHOLD=${ROUTE_CONFIDENCE_THRESHOLD:-0.7}
+      # Tope diario global de llamadas al LLM (se reinicia a las 00:00 UTC)
+      - LLM_DAILY_CALLS=${LLM_DAILY_CALLS:-1500}
     volumes:
       - ./docs:/docs:ro
     depends_on:
