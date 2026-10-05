@@ -1,6 +1,8 @@
 import { t, translateUI, languageStore } from './i18n';
 import './style.css';
 import './media.css';
+import './welcome.css';
+import { createWelcome } from './welcome';
 import { architecture, applyContent, registerTranslations } from './i18n/content';
 import { initializeLanguage } from './i18n';
 import { createLanguageNode } from './i18n/node';
@@ -19,6 +21,7 @@ async function start() {
   const stopPersistence=initializeLanguage();applyContent(languageStore.language);
   const stopContent=languageStore.subscribe(applyContent);
   const languageNode=createLanguageNode();
+  const welcome=createWelcome();
   const setup = await createBackend(), backend = setup.backend;
 
   const traces = new TracePlayer(architecture);
@@ -32,6 +35,7 @@ async function start() {
   const universe = createUniverse({ architecture, simulated: setup.simulated, traces, portal, positions: systemPositions(architecture), connection: () => connection,
     chess, chessNodeVisible: CHESS_NODE_VISIBLE, media,
     onLiveOpen:()=>chats.openLive(),onSceneChanged:()=>chats?.sceneChanged(),onDiscard:(id:string)=>void chats.discard(id),onEscape:()=>chats.escape() });
+  welcome.attachUniverse(()=>universe.firstRootNode());
   chats=new Chats(backend,universe,traces,setup.simulated);
   let transitionTimer:ReturnType<typeof setTimeout>;
   const stopLanguage=languageStore.subscribe(()=>{
@@ -64,6 +68,6 @@ async function start() {
     panel.append(summary,help,buttons,status);document.body.append(panel);
   }
   try { await backend.connect(); } catch { portal.connection('closed'); }
-  addEventListener('pagehide', event => { if(event.persisted)return;stopped=true;clearTimeout(transitionTimer);stopLanguage();stopContent();stopPersistence();languageNode.dispose();clearTimeout(reconnectTimer);stopEvents(); stopConnection(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
+  addEventListener('pagehide', event => { if(event.persisted)return;stopped=true;clearTimeout(transitionTimer);stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();clearTimeout(reconnectTimer);stopEvents(); stopConnection(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
 }
 start().catch(error => { console.error(error);document.getElementById('announcement')!.textContent=t('app.startFailed'); });

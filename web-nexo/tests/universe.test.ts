@@ -56,6 +56,14 @@ test('Chess satellite stays disconnected, freezes the camera, and returns withou
  closeChess();frames(100);assert.equal(chessTarget().hidden,false);assert.equal(api.getNodes().length,5);assert.equal(api.getLevel().edges.length,5);
  enter('experiencia');assert.equal(chessTarget().hidden,true);api.goBack();frames();assert.equal(chessTarget().hidden,false);
 });
+
+test('Welcome hints use the first existing root node and never a deeper scene or open chess board',()=>{
+ const {api,frames,enter,chessTarget,closeChess}=fixture(true);frames(100);
+ const first=api.getNodes()[0];assert.equal(api.firstRootNode(),first.el);assert.equal(first.id,portfolio.nodes.find(n=>n.parent===portfolio.root.id)?.id);
+ enter('experiencia');assert.equal(api.firstRootNode(),null);api.goBack();frames();assert.equal(api.firstRootNode(),api.getNodes()[0].el);
+ chessTarget().click();assert.equal(api.firstRootNode(),null);closeChess();frames(100);assert.equal(api.firstRootNode(),api.getNodes()[0].el);
+ assert.equal(api.records.size,54);
+});
 test('Live chat fragments into its panel and reassembles as a node',()=>{
  const {api,el,frames}=fixture();frames(100);
  const panel=el('live-panel');panel.hidden=false;let opened=0,closed=0;
