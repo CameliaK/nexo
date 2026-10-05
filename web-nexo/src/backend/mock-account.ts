@@ -1,8 +1,7 @@
 import { Chess } from 'chess.js';
-import { BackendError, type AuthMe, type BackendEvent, type ChessGame, type OwnerChessGame, type Notifications } from './types';
+import { BackendError, type AuthMe, type AuthToken, type BackendEvent, type ChessGame, type OwnerChessGame, type Notifications } from './types';
 import type { Clock } from './mock';
 import { t } from '../i18n';
-import { canonicalVisitorId } from './identity';
 
 type Saved = { me: AuthMe; settings: Notifications; game: ChessGame | null; games: OwnerChessGame[]; link: string | null; code: string | null; email: string; id: string; previousMe?: AuthMe };
 export class MockAccount {
@@ -31,11 +30,11 @@ export class MockAccount {
     this.requestedAt = this.time.now(); this.saved.email = email; this.saved.link = crypto.randomUUID(); this.persist();
   }
   simulatedLink() { return this.saved.link ? '#/login/confirm?t=' + encodeURIComponent(this.saved.link) : null; }
-  private login() {
+  private login(): AuthToken {
     this.saved.me = { mode: 'user', email_hint: (this.saved.email[0] || 'k') + '***@' + (this.saved.email.split('@')[1] || 'gmail.com') };
-    this.persist(); const token = 'mock.' + btoa(JSON.stringify({ sub: this.saved.id })) + '.mock';
-    try { this.storage?.setItem('nexo.visitor_id', canonicalVisitorId(token)!); } catch { /* Memory fallback. */ }
-    return { token };
+    this.persist(); const token = 'mock.session.' + this.saved.id;
+    try { this.storage?.setItem('nexo.visitor_id', this.saved.id); } catch { /* Memory fallback. */ }
+    return { token, visitor_id: this.saved.id };
   }
   async verifyEmailLogin(token: string) {
     if (!token || token !== this.saved.link) throw new BackendError('unauthorized', t('auth.invalidLink'), 401);

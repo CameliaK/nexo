@@ -12,9 +12,11 @@ admiten tanto `ChessGame` como `{ game: ChessGame }`; GET sin partida debe devol
 `null`, `{ game: null }` o 204. Un 404/503 significa que la función todavía no está
 disponible y presenta «Disponible pronto».
 
-Las respuestas de verify/exchange pueden incluir `visitor_id` junto con `token`,
-o la cabecera `X-Visitor-Id`. Ese ID reemplaza `nexo.visitor_id` inmediatamente.
-No es necesario descifrar un token PASETO local. Las capacidades se determinan
+Las respuestas de verify/exchange traen `{ token, visitor_id }`; ese `visitor_id`
+(solo del cuerpo) reemplaza `nexo.visitor_id` inmediatamente. El token PASETO local
+es opaco y nunca se decodifica. Antes de verify/exchange se pide un token de invitado
+fresco y se envía como `Authorization: Bearer`, para que los datos anónimos sigan a
+la cuenta en el primer inicio de sesión. Las capacidades se determinan
 con `authMe`, nunca con un campo leído del token. La sesión se conserva con
 localStorage; si está bloqueado, funciona durante la sesión actual.
 

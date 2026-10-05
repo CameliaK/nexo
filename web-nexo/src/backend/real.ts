@@ -1,4 +1,4 @@
-import { canonicalVisitorId, AUTH_TOKEN_KEY } from './identity';
+import { AUTH_TOKEN_KEY } from './identity';
 import type { AuthMe, AuthToken, Notifications, ChessGame, OwnerChessGame } from './types';
 import { t } from '../i18n';
 import { BackendError, isBackendEvent } from './types';
@@ -42,9 +42,9 @@ export class RealBackend implements PortfolioBackend {
     catch(error){if(error instanceof BackendError&&error.status===401){await this.clearIdentity();return {mode:'guest'}}throw error}
   }
   async requestEmailLogin(email: string, lang: 'es' | 'en') { await this._request('POST', '/auth/email/request', { email, lang }, false, true); }
-  async verifyEmailLogin(token: string) { return this.adopt(await this._request('POST', '/auth/email/verify', { token }, false, true) as AuthToken); }
+  async verifyEmailLogin(token: string) { return this.signIn('/auth/email/verify', { token }); }
   async startGoogleLogin() { location.assign('/auth/google/login'); }
-  async exchangeCode(code: string) { return this.adopt(await this._request('POST', '/auth/exchange', { code }, false, true) as AuthToken); }
+  async exchangeCode(code: string) { return this.signIn('/auth/exchange', { code }); }
   async unsubscribe(token: string) { await this._request('POST', '/auth/unsubscribe', { token }, false, true); }
   async logout() { await this._request('POST', '/auth/logout'); await this.clearIdentity(); }
   async deleteAccount() { await this._request('DELETE', '/api/v1/account'); await this.clearIdentity(); }
@@ -61,9 +61,22 @@ export class RealBackend implements PortfolioBackend {
   async ownerChessGames() { return (await this._request('GET', '/api/v1/owner/chess/games') as { games: OwnerChessGame[] }).games; }
   async ownerChessMove(id: string, uci: string) { return (await this.gameRequest('POST', `/api/v1/owner/chess/games/${encodeURIComponent(id)}/move`, { uci })) as OwnerChessGame; }
   async ownerChessResign(id: string) { return (await this.gameRequest('POST', `/api/v1/owner/chess/games/${encodeURIComponent(id)}/resign`)) as OwnerChessGame; }
+  /**
+   * verify/exchange carry the current guest token as Bearer: it is the only way the gateway
+   * learns which anonymous id becomes canonical on a first sign-in (its data then follows the
+   * account). The guest token lives only in memory, so after the Google redirect or in a new
+   * tab it is gone; a fresh one is requested for the stored visitor id. A signed-in browser
+   * sends none. If /auth/guest fails, sign-in still proceeds without it.
+   */
+  private async signIn(path: string, body: unknown) {
+    let guest: string | null = null;
+    if (!this.authenticatedToken) { try { guest = await this.fetchToken(); } catch { /* Sign-in without anonymous data. */ } }
+    return this.adopt(await this._request('POST', path, body, false, true, guest) as AuthToken);
+  }
+  /** The token is opaque (PASETO v4.local): the canonical id comes only from the body. */
   private async adopt(result: AuthToken) {
     this.disconnect(); this.token = result.token; this.authenticatedToken = true;
-    const id = result.visitor_id || canonicalVisitorId(result.token);
+    const id = result.visitor_id;
     if (id) this.visitorId = id;
     try { localStorage.setItem(AUTH_TOKEN_KEY, result.token); if (id) localStorage.setItem(VISITOR_ID_KEY, id); } catch { /* Ephemeral identity. */ }
     // HTTP login succeeded even if realtime is temporarily unavailable.
@@ -238,6 +251,7 @@ export class RealBackend implements PortfolioBackend {
     body?: unknown,
     retry = true,
     publicRequest = false,
+    guestBearer: string | null = null,
   ): Promise<unknown> {
     if (!this.token && !publicRequest) throw new BackendError('internal', t('error.offline'), 503);
 
@@ -247,6 +261,7 @@ export class RealBackend implements PortfolioBackend {
       headers: {
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         ...(!publicRequest && this.token ? { 'Authorization': `Bearer ${this.token}` } : {}),
+        ...(publicRequest && guestBearer ? { 'Authorization': `Bearer ${guestBearer}` } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
@@ -272,10 +287,6 @@ export class RealBackend implements PortfolioBackend {
     }
 
     if (res.status === 204 || res.status === 202) return undefined;
-    const data = await res.json();
-    if (publicRequest && data && typeof data.token === 'string') {
-      const canonical = res.headers.get('X-Visitor-Id'); if (canonical) data.visitor_id = canonical;
-    }
-    return data;
+    return res.json();
   }
 }

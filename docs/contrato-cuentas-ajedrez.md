@@ -34,6 +34,15 @@ cuenta. El navegador lo guarda como su id actual (el que manda en `X-Visitor-Id`
 Nunca va en una URL, no se muestra en pantalla y en los logs solo se registran sus
 primeros 8 caracteres.
 
+**Primer inicio de sesión:** `/auth/email/verify` y `/auth/exchange` aceptan, opcional,
+`Authorization: Bearer <token de invitado>`. Es la única forma en que el gateway sabe cuál es
+el id anónimo actual: si la cuenta es nueva, ese id pasa a ser el canónico y sus datos (nodos
+generados, chat en vivo) lo siguen. Si ese id ya es canónico de otra cuenta, o no hay Bearer,
+la cuenta nace con un id nuevo. Si la cuenta ya existía, se devuelve su id canónico y el id
+anónimo queda intacto (nunca se mezclan datos de dos ids). Un Bearer de user/owner o inválido
+se ignora. Como el token de invitado solo vive en memoria, el navegador pide uno nuevo a
+`/auth/guest` justo antes de verify/exchange.
+
 ## Cuenta (Bearer, mode user|owner)
 
 ```

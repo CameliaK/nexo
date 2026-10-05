@@ -5,7 +5,7 @@ import { RealBackend } from '../src/backend/real';
 import { BackendError, isBackendEvent, type BackendEvent } from '../src/backend/types';
 import { AccountChess, errorText } from '../src/auth/session';
 import { AccessState, accessRoute } from '../src/auth/access';
-import { canonicalVisitorId, AUTH_TOKEN_KEY } from '../src/backend/identity';
+import { AUTH_TOKEN_KEY } from '../src/backend/identity';
 import { languageStore, t } from '../src/i18n';
 import { Chess } from 'chess.js';
 
@@ -61,10 +61,6 @@ test('Chess events accept the new WS envelope independently of chat runs and rej
 test('Language changes update lock and error text without replacing the resumed game',async()=>{
  const session=new AccountChess(new MockBackend());languageStore.set('es');assert.equal(session.nodeLabel,'Inicia sesión para jugar');languageStore.set('en');assert.equal(session.nodeLabel,'Sign in to play');assert.match(errorText(new BackendError('illegal_move','',422)),/server rejected/);session.dispose();languageStore.set('es');
 });
-test('Canonical identity supports JWT and signed PASETO, leaving encrypted tokens opaque',()=>{
- assert.equal(canonicalVisitorId('jwt.'+btoa(JSON.stringify({visitor_id:'canonical',sub:'other'}))+'.sig'),'canonical');
- const bytes=Buffer.concat([Buffer.from(JSON.stringify({sub:'public-id'})),Buffer.alloc(64)]);assert.equal(canonicalVisitorId('v4.public.'+bytes.toString('base64url')),'public-id');assert.equal(canonicalVisitorId('v4.local.encrypted'),null);assert.equal(canonicalVisitorId('invalid'),null);
-});
 test('Real endpoints serialize bodies and Bearer tokens; 401 login_required never retries as a guest',async()=>{
  const fetchOriginal=globalThis.fetch,storageOriginal=Object.getOwnPropertyDescriptor(globalThis,'localStorage');const storage=memory();storage.setItem(AUTH_TOKEN_KEY,'signed-session');Object.defineProperty(globalThis,'localStorage',{value:storage,configurable:true});const requests:{path:string;options:RequestInit|undefined}[]=[];
  const initial=new Chess().fen(),game={id:'game/id',fen:initial,color:'w',moves:[],turn:'player',status:'active',updated_at:'now'};
@@ -73,16 +69,54 @@ test('Real endpoints serialize bodies and Bearer tokens; 401 login_required neve
  finally{globalThis.fetch=fetchOriginal;if(storageOriginal)Object.defineProperty(globalThis,'localStorage',storageOriginal);else Reflect.deleteProperty(globalThis,'localStorage');}
 });
 
-test('Real sign-in adopts canonical visitor_id or X-Visitor-Id and preserves the authenticated socket on reconnect',async()=>{
+// Shared fake browser for RealBackend sign-in tests: storage, location, WebSocket and a fetch
+// that records every request with its headers.
+async function withFakeBrowser(fn:(env:{storage:ReturnType<typeof memory>;requests:{path:string;headers:Record<string,string>}[];route:(handler:(path:string,headers:Record<string,string>)=>Response)=>void})=>Promise<void>){
  const descriptors=['fetch','localStorage','WebSocket','location'].map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)] as const);
  class Socket {onopen:()=>void=()=>{};onclose:()=>void=()=>{};onmessage:((e:any)=>void)|undefined;onerror:(()=>void)|undefined;constructor(public url:string){queueMicrotask(()=>this.onopen())}close(){queueMicrotask(()=>this.onclose())}}
- try {
-  for(const fromHeader of [false,true]){
-   const storage=memory(),requests:string[]=[],token='v4.local.opaque';Object.defineProperty(globalThis,'localStorage',{value:storage,configurable:true});Object.defineProperty(globalThis,'location',{value:{protocol:'https:',host:'portfolio.test'},configurable:true});Object.defineProperty(globalThis,'WebSocket',{value:Socket,configurable:true});
-   globalThis.fetch=async path=>{requests.push(String(path));return Response.json(fromHeader?{token}:{token,visitor_id:'canonical-body'},{headers:fromHeader?{'X-Visitor-Id':'canonical-header'}:undefined})};
-   const real=new RealBackend();await real.verifyEmailLogin('one-use-link');await new Promise(resolve=>setImmediate(resolve));assert.equal(storage.getItem('nexo.visitor_id'),fromHeader?'canonical-header':'canonical-body');assert.equal(storage.getItem(AUTH_TOKEN_KEY),token);real.disconnect();await real.connect();assert.equal(requests.includes('/auth/guest'),false);real.disconnect();
-  }
- } finally {for(const [key,descriptor] of descriptors)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else Reflect.deleteProperty(globalThis,key);}
+ const storage=memory(),requests:{path:string;headers:Record<string,string>}[]=[];let handler:(path:string,headers:Record<string,string>)=>Response=()=>new Response(null,{status:500});
+ Object.defineProperty(globalThis,'localStorage',{value:storage,configurable:true});Object.defineProperty(globalThis,'location',{value:{protocol:'https:',host:'portfolio.test'},configurable:true});Object.defineProperty(globalThis,'WebSocket',{value:Socket,configurable:true});
+ globalThis.fetch=async(path,options)=>{const headers={...(options?.headers as Record<string,string>|undefined)};requests.push({path:String(path),headers});return handler(String(path),headers)};
+ try{await fn({storage,requests,route:h=>{handler=h}})}
+ finally{for(const [key,descriptor] of descriptors)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else Reflect.deleteProperty(globalThis,key);}
+}
+
+test('Sign-in adopts visitor_id from the body; the opaque token is never decoded and response headers are ignored',async()=>{
+ for(const signIn of ['verify','exchange'] as const)await withFakeBrowser(async({storage,requests,route})=>{
+  storage.setItem('nexo.visitor_id','anon-id');const token='v4.local.opaque';
+  route(path=>path==='/auth/guest'?Response.json({token:'guest-token'}):Response.json({token,visitor_id:'canonical-body'},{headers:{'X-Visitor-Id':'header-is-not-the-contract'}}));
+  const real=new RealBackend();const result=signIn==='verify'?await real.verifyEmailLogin('one-use-link'):await real.exchangeCode('one-use-code');
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(result.visitor_id,'canonical-body');assert.equal(storage.getItem('nexo.visitor_id'),'canonical-body');assert.equal(storage.getItem(AUTH_TOKEN_KEY),token);
+  // The adopted session reconnects with its own token, never as a guest again.
+  const guestCalls=requests.filter(r=>r.path==='/auth/guest').length;real.disconnect();await real.connect();assert.equal(requests.filter(r=>r.path==='/auth/guest').length,guestCalls);real.disconnect();
+ });
+});
+
+test('verify and exchange send the current guest token as Bearer so anonymous data follows the account',async()=>{
+ for(const signIn of ['verify','exchange'] as const)await withFakeBrowser(async({storage,requests,route})=>{
+  storage.setItem('nexo.visitor_id','anon-id');
+  route((path,headers)=>path==='/auth/guest'?(headers['X-Visitor-Id']==='anon-id'?Response.json({token:'guest-token'}):new Response(null,{status:400})):Response.json({token:'v4.local.user',visitor_id:'anon-id'}));
+  // A fresh page (Google redirect, link opened in a new tab) has no guest token in memory yet.
+  const real=new RealBackend();if(signIn==='verify')await real.verifyEmailLogin('link');else await real.exchangeCode('code');
+  const path=signIn==='verify'?'/auth/email/verify':'/auth/exchange';const call=requests.find(r=>r.path===path)!;
+  assert.equal(call.headers.Authorization,'Bearer guest-token');
+  assert.ok(requests.findIndex(r=>r.path==='/auth/guest')<requests.indexOf(call),'guest token is obtained before signing in');
+  assert.equal(storage.getItem('nexo.visitor_id'),'anon-id');real.disconnect();
+ });
+});
+
+test('A signed-in browser signs in again without a guest Bearer, and a failing /auth/guest does not block sign-in',async()=>{
+ await withFakeBrowser(async({storage,requests,route})=>{
+  storage.setItem(AUTH_TOKEN_KEY,'v4.local.current-user');route(()=>Response.json({token:'v4.local.other',visitor_id:'other-id'}));
+  const real=new RealBackend();await real.verifyEmailLogin('link');
+  assert.equal(requests.some(r=>r.path==='/auth/guest'),false);assert.equal(requests.find(r=>r.path==='/auth/email/verify')!.headers.Authorization,undefined);real.disconnect();
+ });
+ await withFakeBrowser(async({storage,requests,route})=>{
+  storage.setItem('nexo.visitor_id','anon-id');route(path=>path==='/auth/guest'?new Response(null,{status:503}):Response.json({token:'v4.local.user',visitor_id:'fresh-id'}));
+  const real=new RealBackend();const result=await real.exchangeCode('code');
+  assert.equal(result.visitor_id,'fresh-id');assert.equal(requests.find(r=>r.path==='/auth/exchange')!.headers.Authorization,undefined);assert.equal(storage.getItem('nexo.visitor_id'),'fresh-id');real.disconnect();
+ });
 });
 
 test('Account removal clears player data and pending mock access links; notifications and owner switching stay usable',async()=>{
