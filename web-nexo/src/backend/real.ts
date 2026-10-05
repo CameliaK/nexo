@@ -286,7 +286,9 @@ export class RealBackend implements PortfolioBackend {
       throw new BackendError(code, message, res.status, retryAfterSec);
     }
 
-    if (res.status === 204 || res.status === 202) return undefined;
-    return res.json();
+    // 202 can carry a body (chat and live: { run_id, ... }) or none (/auth/email/request).
+    if (res.status === 204) return undefined;
+    const text = await res.text();
+    return text ? JSON.parse(text) : undefined;
   }
 }

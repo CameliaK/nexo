@@ -1,4 +1,4 @@
-import { AccountChess, errorText } from './auth/session';
+import { AccountChess, errorText, chessGate, chessNode } from './auth/session';
 import { createAccessPanel } from './auth/panel';
 import { t, translateUI, languageStore } from './i18n';
 import './style.css';
@@ -38,8 +38,8 @@ async function start() {
   const media = createMediaUI();
   const universe = createUniverse({ architecture, simulated: setup.simulated, traces, portal, positions: systemPositions(architecture), connection: () => connection,
     chess,
-    chessAccess:()=>({locked:account.me.mode==='guest'&&account.available,unread:account.unread,label:account.nodeLabel}),
-    onChessAccess:()=>{if(!account.available||account.me.mode==='guest'){access.open();return false}account.selectPlayer();return true},
+    chessAccess:()=>chessNode(account),
+    onChessAccess:()=>{if(chessGate(account)==='login'){access.open();return false}if(!account.available||account.error)void account.refresh();account.selectPlayer();return true},
     onOwnerGame:(id:string,origin:any,provider:any)=>{if(account.selectOwner(id))chess.open(origin,provider)},
     chessNodeVisible: CHESS_NODE_VISIBLE, media,
     onLiveOpen:()=>chats.openLive(),onSceneChanged:()=>chats?.sceneChanged(),onDiscard:(id:string)=>void chats.discard(id),onEscape:()=>chats.escape() });

@@ -10,6 +10,17 @@ export function errorText(error: unknown) {
   }
   return t('auth.error');
 }
+/**
+ * What a click on the chess node does. Only a guest whose backend answers is asked to sign in;
+ * with a session (user/owner) a failing or missing chess API opens the board in its
+ * "Coming soon" / retry state, never the access panel.
+ */
+export function chessGate(account: Pick<AccountChess, 'me' | 'available'>): 'login' | 'open' {
+  return account.me.mode === 'guest' && account.available ? 'login' : 'open';
+}
+export function chessNode(account: Pick<AccountChess, 'me' | 'available' | 'unread' | 'nodeLabel'>) {
+  return { locked: chessGate(account) === 'login', unread: account.unread, label: account.nodeLabel };
+}
 /** The server owns the game; a speculative board is discarded on rejection. */
 export class AccountChess {
   me: AuthMe = { mode: 'guest' };

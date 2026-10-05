@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { MockBackend } from '../src/backend/mock';
 import { RealBackend } from '../src/backend/real';
 import { BackendError, isBackendEvent, type BackendEvent } from '../src/backend/types';
-import { AccountChess, errorText } from '../src/auth/session';
+import { AccountChess, errorText, chessGate, chessNode } from '../src/auth/session';
 import { AccessState, accessRoute } from '../src/auth/access';
 import { AUTH_TOKEN_KEY } from '../src/backend/identity';
 import { languageStore, t } from '../src/i18n';
@@ -71,12 +71,12 @@ test('Real endpoints serialize bodies and Bearer tokens; 401 login_required neve
 
 // Shared fake browser for RealBackend sign-in tests: storage, location, WebSocket and a fetch
 // that records every request with its headers.
-async function withFakeBrowser(fn:(env:{storage:ReturnType<typeof memory>;requests:{path:string;headers:Record<string,string>}[];route:(handler:(path:string,headers:Record<string,string>)=>Response)=>void})=>Promise<void>){
+async function withFakeBrowser(fn:(env:{storage:ReturnType<typeof memory>;requests:{path:string;headers:Record<string,string>}[];route:(handler:(path:string,headers:Record<string,string>,method:string)=>Response)=>void})=>Promise<void>){
  const descriptors=['fetch','localStorage','WebSocket','location'].map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)] as const);
  class Socket {onopen:()=>void=()=>{};onclose:()=>void=()=>{};onmessage:((e:any)=>void)|undefined;onerror:(()=>void)|undefined;constructor(public url:string){queueMicrotask(()=>this.onopen())}close(){queueMicrotask(()=>this.onclose())}}
- const storage=memory(),requests:{path:string;headers:Record<string,string>}[]=[];let handler:(path:string,headers:Record<string,string>)=>Response=()=>new Response(null,{status:500});
+ const storage=memory(),requests:{path:string;headers:Record<string,string>}[]=[];let handler:(path:string,headers:Record<string,string>,method:string)=>Response=()=>new Response(null,{status:500});
  Object.defineProperty(globalThis,'localStorage',{value:storage,configurable:true});Object.defineProperty(globalThis,'location',{value:{protocol:'https:',host:'portfolio.test'},configurable:true});Object.defineProperty(globalThis,'WebSocket',{value:Socket,configurable:true});
- globalThis.fetch=async(path,options)=>{const headers={...(options?.headers as Record<string,string>|undefined)};requests.push({path:String(path),headers});return handler(String(path),headers)};
+ globalThis.fetch=async(path,options)=>{const headers={...(options?.headers as Record<string,string>|undefined)};requests.push({path:String(path),headers});return handler(String(path),headers,options?.method||'GET')};
  try{await fn({storage,requests,route:h=>{handler=h}})}
  finally{for(const [key,descriptor] of descriptors)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else Reflect.deleteProperty(globalThis,key);}
 }
@@ -116,6 +116,62 @@ test('A signed-in browser signs in again without a guest Bearer, and a failing /
   storage.setItem('nexo.visitor_id','anon-id');route(path=>path==='/auth/guest'?new Response(null,{status:503}):Response.json({token:'v4.local.user',visitor_id:'fresh-id'}));
   const real=new RealBackend();const result=await real.exchangeCode('code');
   assert.equal(result.visitor_id,'fresh-id');assert.equal(requests.find(r=>r.path==='/auth/exchange')!.headers.Authorization,undefined);assert.equal(storage.getItem('nexo.visitor_id'),'fresh-id');real.disconnect();
+ });
+});
+
+// Exact gateway responses, captured with curl -i against the running stack.
+const gateway={
+ accepted:(body:object)=>new Response(JSON.stringify(body),{status:202,headers:{'Content-Type':'application/json'}}),
+ acceptedEmpty:()=>new Response(null,{status:202,headers:{'Content-Length':'0'}}),
+ notFound:()=>new Response('404 page not found\n',{status:404,headers:{'Content-Type':'text/plain; charset=utf-8'}}),
+};
+
+test('202 responses keep their body: live and agent chat return run_id; an empty 202 stays undefined',async()=>{
+ await withFakeBrowser(async({storage,route})=>{
+  storage.setItem('nexo.visitor_id','anon-id');
+  route((path,_h,method)=>path==='/auth/guest'?Response.json({token:'v4.local.guest'})
+   :path==='/api/v1/live/messages'&&method==='POST'?gateway.accepted({message_id:'m-1',run_id:'r-live'})
+   :path==='/api/v1/chat'?gateway.accepted({run_id:'r-chat'})
+   :path==='/auth/email/request'?gateway.acceptedEmpty():new Response(null,{status:500}));
+  const real=new RealBackend();await real.connect();
+  assert.deepEqual(await real.sendLiveMessage('hola','Ana'),{message_id:'m-1',run_id:'r-live'});
+  assert.deepEqual(await real.sendMessage('¿Qué hiciste en Infosys?','es'),{run_id:'r-chat'});
+  assert.equal(await real.requestEmailLogin('visitor@example.com','es'),undefined);real.disconnect();
+ });
+});
+
+test('Signed-in owner or user with chess routes missing (404) sees Coming soon, never the access panel',async()=>{
+ for(const mode of ['owner','user'] as const)await withFakeBrowser(async({storage,route})=>{
+  storage.setItem(AUTH_TOKEN_KEY,'v4.local.session');
+  route(path=>path==='/api/v1/auth/me'?Response.json({mode,email_hint:'k***@gmail.com'}):path==='/api/v1/account/notifications'?Response.json({chess_email:true}):gateway.notFound());
+  languageStore.set('en');const session=new AccountChess(new RealBackend());await session.refresh();
+  assert.equal(session.me.mode,mode);assert.equal(session.available,false);
+  assert.equal(chessGate(session),'open');assert.deepEqual(chessNode(session),{locked:false,unread:false,label:t('auth.soon')});session.dispose();
+ });
+});
+
+test('Chess node gate: guest signs in, guest without backend sees Coming soon, user and owner open the board',async()=>{
+ const state=(mode:'guest'|'user'|'owner',available:boolean)=>({me:{mode},available,unread:false,nodeLabel:''});
+ assert.equal(chessGate(state('guest',true)),'login');assert.equal(chessNode(state('guest',true)).locked,true);
+ assert.equal(chessGate(state('guest',false)),'open');
+ for(const mode of ['user','owner'] as const)for(const available of [true,false]){assert.equal(chessGate(state(mode,available)),'open');assert.equal(chessNode(state(mode,available)).locked,false)}
+});
+
+test('After the Google exchange the session updates to owner without reloading',async()=>{
+ await withFakeBrowser(async({storage,route})=>{
+  storage.setItem('nexo.visitor_id','anon-id');let signedIn=false;
+  route((path,_h,method)=>{
+   if(path==='/auth/guest')return Response.json({token:'v4.local.guest'});
+   if(path==='/auth/exchange'&&method==='POST'){signedIn=true;return Response.json({token:'v4.local.owner',visitor_id:'anon-id'})}
+   if(path==='/api/v1/auth/me')return Response.json(signedIn?{mode:'owner',email_hint:'k***@gmail.com'}:{mode:'guest'});
+   if(path==='/api/v1/account/notifications')return Response.json({chess_email:true});
+   return gateway.notFound();
+  });
+  const real=new RealBackend(),session=new AccountChess(real);await real.connect();await session.refresh();assert.equal(session.me.mode,'guest');assert.equal(chessGate(session),'login');
+  const access=new AccessState(real,()=>{},()=>session.refresh());access.navigate(accessRoute('#/login/done?code=one-use')!);
+  for(let i=0;i<20&&access.status!=='success';i++)await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(access.status,'success');assert.equal(session.me.mode,'owner');assert.equal(session.me.email_hint,'k***@gmail.com');assert.equal(chessGate(session),'open');
+  access.dispose();session.dispose();real.disconnect();
  });
 });
 
