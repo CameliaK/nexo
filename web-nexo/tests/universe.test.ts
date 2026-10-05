@@ -36,14 +36,14 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  el('space').getContext=()=>context;
  const listeners={},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
- if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,open:origin=>{assert.equal(origin.faces.length,80);chessOpen=true},setOnClosed:fn=>closeChess=fn};}
+ if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
  const sandbox={t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:(k,f)=>listeners[k]=f,document:{getElementById:el,querySelector:el,createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener(){},body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let mediaFrame;
  if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
  source=source.replace("import { LivePreview, placeSatellite, satelliteFootprint } from './live-satellite.js';",'');
- source=source.replace('return {refreshLanguage,setOwnerGames,openChess,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,setOwnerGames,openChess,dispose(){');
+ source=source.replace('return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){');
  source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);Object.assign(sandbox.api,sandbox.universe);
  const frames=(ms=2700)=>{const end=now+ms;while(now<end){now=Math.min(end,now+50);raf(now)}};
  const enter=id=>{el('node-targets').children.find(e=>e.dataset.node===id).click();frames()};
@@ -373,4 +373,41 @@ test('Chess, owner panel and twelve generated nodes use the same camera projecti
   }
  }
  languageStore.set('es');applyContent('es');
+});
+
+
+test('Owner deep links open the requested game on its desktop/mobile page through the real universe scene',async()=>{
+ for(const width of [1366,390]){
+  const {api,frames,sandbox,listeners}=fixture(true,true);sandbox.innerWidth=width;sandbox.innerHeight=844;listeners.resize();frames(100);
+  const timers=[];sandbox.setTimeout=fn=>{timers.push(fn)};
+  const games=Array.from({length:11},(_,i)=>({id:'link-'+i,tag:String(i).padStart(4,'0'),player_hint:'k***@gmail.com',color:'w',fen:'start',moves:[],turn:'owner',status:'active',updated_at:'2026-10-05T18:00:00.000Z'}));
+  api.setOwnerGames(true,games);let selected;
+  sandbox.bridge.onOwnerGame=(id,origin,provider)=>{selected=id;assert.equal(origin.faces.length,20);sandbox.bridge.chess.open(origin,provider)};
+  const opening=api.openOwnerGame('link-9');
+  for(let i=0;i<12;i++){frames(100);timers.splice(0).forEach(fn=>fn())}
+  assert.equal(await opening,true);assert.equal(api.getLevel().id,'private_owner_games');assert.equal(selected,'link-9');assert.equal(sandbox.bridge.chess.isOpen(),true);
+  assert.ok(api.getNodes().some(node=>node.ownerGame.id==='link-9'));assert.equal(api.records.size,54);
+  const before=api.getLevel();assert.equal(await api.openOwnerGame('missing'),false);assert.equal(api.getLevel(),before);api.dispose();
+ }
+});
+test('A canceled owner link never opens a board after camera travel or an owner session ends',async()=>{
+ const {api,frames,sandbox}=fixture(true,true);frames(100);const timers=[];sandbox.setTimeout=fn=>timers.push(fn);
+ api.setOwnerGames(true,[{id:'one',tag:'A3F2',player_hint:'k***@gmail.com',moves:[],fen:'start',color:'w',turn:'owner',status:'active'}]);
+ let current=true,opens=0;sandbox.bridge.onOwnerGame=()=>opens++;
+ const opening=api.openOwnerGame('one',()=>current);current=false;
+ frames(500);timers.splice(0).forEach(fn=>fn());assert.equal(await opening,false);assert.equal(opens,0);assert.equal(sandbox.bridge.chess.isOpen(),false);api.dispose();
+});
+
+
+test('Owner links wait for pending private data and return from a deeper level or the system before opening',async()=>{
+ for(const origin of ['travel','system']){
+  const {api,frames,sandbox}=fixture(true,true);frames(100);const timers=[];sandbox.setTimeout=fn=>timers.push(fn);
+  if(origin==='travel')api.activate(api.getNodes().find(node=>node.id==='aprendizaje'),true);
+  else{api.enterSystem();frames(600)}
+  api.setOwnerGames(true,[{id:'linked',tag:'B7C1',player_hint:'k***@gmail.com',moves:[],fen:'start',color:'w',turn:'owner',status:'active'}]);
+  let selected='';sandbox.bridge.onOwnerGame=id=>selected=id;
+  const opening=api.openOwnerGame('linked');
+  for(let i=0;i<30;i++){frames(200);timers.splice(0).forEach(fn=>fn())}
+  assert.equal(await opening,true);assert.equal(api.getLevel().id,'private_owner_games');assert.equal(selected,'linked');api.dispose();
+ }
 });

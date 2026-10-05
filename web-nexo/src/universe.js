@@ -989,7 +989,27 @@ function setOwnerGames(owner,games){
   else if(level.privateOwner){const current=new Map(nodes.map(n=>[n.id,n]));nodes=ownerScene.nodes.map(visual=>{const old=current.get(visual.id);return old?Object.assign(old,visual,{data:visual}):instantiate({nodes:[visual]})[0]});bindNodes();updateUI()}
 }
 
+
+// Deep links use the same private scene and node activation as a pointer click.
+function openOwnerGame(id,isCurrent=()=>true){return new Promise(resolve=>{
+  const wait=()=>{
+    if(disposed||!isCurrent()){resolve(false);return}
+    if(travel||systemTravel||pendingOwner){setTimeout(wait,60);return}
+    if(!ownerMode||!ownerKnownGames.some(game=>game.id===id)){resolve(false);return}
+    if(system.chess?.isOpen()){system.chess.closeForNavigation?.(wait);return}
+    if(level.system){exitSystem();setTimeout(wait,60);return}
+    if(level!==root&&!level.privateOwner){goBackTo(0);setTimeout(wait,60);return}
+    ownerPage=Math.floor(ownerKnownGames.findIndex(game=>game.id===id)/ownerPageSize());
+    ownerSignature='';setOwnerGames(true,ownerKnownGames);
+    if(level===root){activate(nodes.find(node=>node.privatePanel),true);setTimeout(wait,60);return}
+    const node=nodes.find(node=>node.ownerGame?.id===id);
+    if(!node){resolve(false);return}
+    project({level,nodes,camera:camera()});node.el.focus({preventScroll:true});activate(node,true);resolve(true);
+  };
+  wait();
+})}
+
 $('companion-target').setAttribute('aria-label',t('guide.open'));
 $('level-title').setAttribute('tabindex','-1');resize();nodes=instantiate(root);bindNodes();updateUI();setPaused(paused);say(t('guide.journey'),root.intro,'welcome',12000);requestAnimationFrame(render);
-return {refreshLanguage,setOwnerGames,openChess,dispose(){disposed=true;ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
+return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){disposed=true;ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
 }
