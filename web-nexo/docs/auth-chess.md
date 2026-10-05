@@ -14,8 +14,8 @@ disponible y presenta «Disponible pronto».
 
 Las respuestas de verify/exchange traen `{ token, visitor_id }`; ese `visitor_id`
 (solo del cuerpo) reemplaza `nexo.visitor_id` inmediatamente. El token PASETO local
-es opaco y nunca se decodifica. Antes de verify/exchange se pide un token de invitado
-fresco y se envía como `Authorization: Bearer`, para que los datos anónimos sigan a
+es opaco y nunca se decodifica. Antes de verify/exchange se reutiliza el token de invitado
+válido (o se obtiene uno si falta) y se envía como `Authorization: Bearer`, para que los datos anónimos sigan a
 la cuenta en el primer inicio de sesión. Las capacidades se determinan
 con `authMe`, nunca con un campo leído del token. La sesión se conserva con
 localStorage; si está bloqueado, funciona durante la sesión actual.
@@ -72,3 +72,31 @@ Los errores de chat se traducen por código (`busy`, `rate_limited`,
 Un 409 se presenta como consulta en curso. Cada chat tiene su propio enfriamiento;
 los 429 respetan `Retry-After`. Un `run.error` con `retryable: false` no ofrece
 reintento, incluso cuando el WS llega antes de la aceptación HTTP.
+
+
+## Token de invitado y reconexión
+
+`nexo.guest.session` conserva en localStorage el token opaco, su `visitorId` y la
+caducidad explícita opcional de `/auth/guest` (`expires_at`: ISO 8601 o Unix en
+segundos/milisegundos). Sin ese campo, no se supone una duración ni se decodifica
+el token. Una caché por transporte comparte la petición en vuelo entre REST y WS;
+el token se reutiliza entre reconexiones y recargas. Un 401 lo descarta y cada
+operación HTTP se reintenta como máximo una vez. Tras un fallo de handshake WS,
+el navegador verifica la autorización por `/api/v1/auth/me`, porque no expone
+el estado HTTP del handshake; una caída de red no implica renovar el token.
+
+Un 429 guarda el plazo de `Retry-After` en `nexo.guest.retryAt`, acepta segundos o
+fecha HTTP y bloquea nuevas peticiones de invitado hasta ese momento, también
+tras recargar. Sin un plazo válido espera 30 segundos. RealBackend es el único
+responsable de reconectar: 1, 2, 4, 8 y hasta 15 segundos, con variación aleatoria;
+el plazo del servidor prevalece si exige más espera. La cabecera muestra
+«Sin conexión, reintentando» / «Offline, retrying» y los chats comparten ese estado.
+
+Iniciar/cerrar sesión, borrar la cuenta o cambiar `visitor_id` descarta la caché
+anterior; una petición tardía no puede reinstalarla. La cuota de IP sigue vigente
+para invitados aunque cambie la identidad; una cuenta usa su propio token sin
+esperar esa cuota. Si localStorage no está disponible, la caché funciona en memoria.
+
+REST envía las credenciales solo mediante headers. WS conserva `/ws?token=…` por
+compatibilidad con el gateway actual: excepción autorizada al requisito de URL.
+No se imprimen tokens en logs ni se crean nuevas URLs con credenciales.

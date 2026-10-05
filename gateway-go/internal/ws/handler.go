@@ -9,8 +9,10 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
 
+	"nexo/gateway/internal/accounts"
 	"nexo/gateway/internal/auth"
 	"nexo/gateway/internal/mask"
+	"nexo/gateway/internal/presence"
 )
 
 const (
@@ -18,6 +20,9 @@ const (
 	writeDeadline = 10 * time.Second
 	readDeadline  = pingInterval + 10*time.Second
 	ownerChannel  = "events:owner"
+	// A presence entry outlives one missed ping, never a dead connection
+	// for long: it is refreshed on every ping and purged once expired.
+	PresenceTTL = 2*pingInterval + 15*time.Second
 )
 
 var upgrader = websocket.Upgrader{
@@ -26,12 +31,13 @@ var upgrader = websocket.Upgrader{
 }
 
 type handler struct {
-	tokens *auth.TokenService
-	rdb    *redis.Client
+	tokens   *auth.TokenService
+	rdb      *redis.Client
+	presence *presence.Store
 }
 
-func NewHandler(tokens *auth.TokenService, rdb *redis.Client) http.HandlerFunc {
-	h := &handler{tokens: tokens, rdb: rdb}
+func NewHandler(tokens *auth.TokenService, rdb *redis.Client, presence *presence.Store) http.HandlerFunc {
+	h := &handler{tokens: tokens, rdb: rdb, presence: presence}
 	return h.serveHTTP
 }
 
@@ -94,6 +100,18 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("ws open visitor=%s mode=%s", mask.ID(visitorID), claims.Mode)
 	defer log.Printf("ws close visitor=%s", mask.ID(visitorID))
 
+	// Presence: the chess email notice is only sent to players with no
+	// socket open.
+	connID := accounts.NewUUID()
+	h.touch(visitorID, connID)
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := h.presence.Leave(ctx, visitorID, connID); err != nil {
+			log.Printf("ws presence leave visitor=%s: %v", mask.ID(visitorID), err)
+		}
+	}()
+
 	for {
 		select {
 		case msg, ok := <-redisCh:
@@ -110,9 +128,18 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
+			h.touch(visitorID, connID)
 
 		case <-connClosed:
 			return
 		}
+	}
+}
+
+func (h *handler) touch(visitorID, connID string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := h.presence.Touch(ctx, visitorID, connID); err != nil {
+		log.Printf("ws presence visitor=%s: %v", mask.ID(visitorID), err)
 	}
 }

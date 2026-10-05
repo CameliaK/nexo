@@ -57,15 +57,18 @@ test('Trace player: unsolicited live-in accepted; other tabs and unknown compone
   player.receive(event(1,'run.start',{kind:'live_in',content_version:3},'incoming'));player.tick();player.receive(hop(2,'h','owner_channel','n8n','start','incoming'));clock.advance(150);player.tick();assert.equal(player.light('n8n').state,'active');assert.equal(player.edge('n8n','owner_channel').state,'active');assert.equal(player.edge('redis','gateway').state,'active');
   player.receive(hop(3,'unknown','missing','llm','start','incoming'));clock.advance(150);player.tick();assert.equal(player.light('llm').state,'idle');
 });
-test('Real backend: all HTTP methods require a token — reject 503 without connect()',async()=>{
+test('Real backend: protected requests wait for guest authorization and propagate a token endpoint outage',async()=>{
+  const original=globalThis.fetch,requests:string[]=[];
+  globalThis.fetch=async path=>{requests.push(String(path));return new Response(null,{status:503})};
   const backend=new RealBackend(),events:BackendEvent[]=[];backend.onEvent(e=>events.push(e));
-  // Without a prior connect() the token is null — all HTTP methods reject immediately.
-  await assert.rejects(()=>backend.sendMessage('Hola'),{status:503});
-  await assert.rejects(()=>backend.listGeneratedNodes(),{status:503});
-  await assert.rejects(()=>backend.deleteGeneratedNode('x'),{status:503});
-  await assert.rejects(()=>backend.sendLiveMessage('Hola'),{status:503});
-  await assert.rejects(()=>backend.listLiveMessages(),{status:503});
-  assert.equal(events.length,0);
+  try{
+    await assert.rejects(()=>backend.sendMessage('Hola'),{status:503});
+    await assert.rejects(()=>backend.listGeneratedNodes(),{status:503});
+    await assert.rejects(()=>backend.deleteGeneratedNode('x'),{status:503});
+    await assert.rejects(()=>backend.sendLiveMessage('Hola'),{status:503});
+    await assert.rejects(()=>backend.listLiveMessages(),{status:503});
+    assert.equal(events.length,0);assert.ok(requests.every(path=>path==='/auth/guest'));
+  }finally{backend.disconnect();globalThis.fetch=original}
 });
 
 test('Chat inbox orders chunks, deduplicates, rejects other tabs and accepts live replies',()=>{

@@ -17,7 +17,7 @@ export function createSystemWindow(architecture:BackendArchitecture,traces:Trace
   const activity=document.createElement('span');activity.className='sr-only';activity.id='system-activity';
   enter.setAttribute('aria-describedby','system-connection system-activity');enter.append(caption);portal.append(enter,status,activity);document.body.append(portal);
   return{element:portal,button:enter,
-    connection(state:ConnectionState){status.textContent=state==='open'?(simulated?t('system.simulated'):t('system.online')):state==='connecting'?t('system.connecting'):t('system.offline');},
+    connection(state:ConnectionState){status.textContent=state==='open'?(simulated?t('system.simulated'):t('system.online')):state==='connecting'?t('system.connecting'):state==='reconnecting'?t('connection.retrying'):t('system.offline');},
     render(){activity.textContent=traces.latest;portal.dataset.active=String(architecture.components.some(c=>traces.light(c.id).state==='active'));}
   };
 }

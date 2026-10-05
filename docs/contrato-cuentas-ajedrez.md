@@ -59,14 +59,24 @@ POST /api/v1/chess/game/move { uci }
 POST /api/v1/chess/game/resign
 ```
 
+Todas responden `{ game }`. `GET` devuelve la partida activa o, si no hay, la última
+terminada (`{ game: null }` si nunca jugó). Crear con una partida activa propia, o con
+`CHESS_MAX_ACTIVE` partidas activas en total, responde `409 busy`. Mover fuera de turno o
+sin partida activa: `409 not_your_turn`; abandonar sin partida activa: `400 invalid_request`.
+Más de `CHESS_MOVES_PER_HOUR` jugadas por cuenta: `429 rate_limited` con `Retry-After`.
+
 ## Dueño (Bearer mode owner; 403 si no)
 
 ```
 GET  /api/v1/owner/chess/games           -> { games: OwnerChessGame[] }
 GET  /api/v1/owner/chess/games/{id}      -> { game }
 POST /api/v1/owner/chess/games/{id}/move { uci } -> { game }
-POST /api/v1/owner/chess/games/{id}/resign
+POST /api/v1/owner/chess/games/{id}/resign -> { game }
 ```
+
+Partida inexistente: `404 invalid_request`. Mover fuera de turno o en una partida terminada:
+`409 not_your_turn`. El dueño no tiene límite de jugadas por hora. Telegram solo avisa
+(`♟ #A3F2 · abrir partida` con `PUBLIC_BASE_URL/#/owner/chess?game=<id>`); nunca recibe jugadas.
 
 ## Tipos
 
@@ -90,6 +100,17 @@ chess.move   data: { game }  al jugador cuando el dueño mueve (aunque esté ina
 owner.chess  data: { game: OwnerChessGame, reason: "new"|"move"|"resign" }
              solo a conexiones owner (canal events:owner)
 ```
+
+`chess.move` también se publica cuando el dueño abandona. `owner.chess` se publica en cada
+cambio (del jugador o del propio dueño, para sincronizar sus pestañas). En ambos el sobre usa
+`run_id = game.id` y un `seq` que sigue el número de jugadas; no forman parte de una ejecución.
+
+**Ejecución `chess`.** Cada acción que cambia una partida (crear, mover, abandonar, del
+jugador o del dueño) es una ejecución propia, con `run_id` nuevo, en el canal de quien actúa:
+`run.start { kind: "chess" }` → `trace.hop`×N (solo componentes y aristas existentes:
+gateway→redis, gateway→agent, agent→postgres, agent→redis, agent→n8n, n8n→owner_channel) →
+`run.done { outcome: "delivered" }` (actúa el jugador) o `"received"` (actúa el dueño), o
+`run.error` con el código del error HTTP. `RunKind` suma `"chess"`.
 
 ## PortfolioBackend suma
 

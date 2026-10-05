@@ -193,6 +193,7 @@ export const es = {
   "system.simulated": "Sistema simulado",
   "system.online": "En línea",
   "system.connecting": "Conectando",
+  "connection.retrying": "Sin conexión, reintentando",
   "system.offline": "Sin conexión",
   "system.flows": "Recorridos del sistema",
   "trace.idle": "Sistema en reposo",

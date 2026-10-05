@@ -33,6 +33,10 @@ type Config struct {
 	ChatActiveTTL     time.Duration // safety TTL of the "one active query" mark
 	TrustedProxies    string        // hosts/CIDRs whose X-Forwarded-For is trusted
 
+	// Hidden chess
+	ChessMovesPerHour  int           // player moves per account per hour
+	ChessEmailCooldown time.Duration // at most one "owner moved" email per game per window
+
 	// Mail
 	SMTPHost string
 	SMTPPort int
@@ -70,6 +74,9 @@ func Load() *Config {
 		ChatRatePerIPHour: integer("CHAT_RATE_PER_IP_HOUR", 60),
 		ChatActiveTTL:     duration("CHAT_ACTIVE_TTL", 120*time.Second),
 		TrustedProxies:    getenv("TRUSTED_PROXIES", "traefik"),
+
+		ChessMovesPerHour:  integer("CHESS_MOVES_PER_HOUR", 30),
+		ChessEmailCooldown: time.Duration(integer("CHESS_EMAIL_COOLDOWN_HOURS", 6)) * time.Hour,
 
 		SMTPHost: os.Getenv("SMTP_HOST"),
 		SMTPPort: integer("SMTP_PORT", 587),

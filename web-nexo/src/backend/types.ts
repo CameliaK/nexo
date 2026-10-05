@@ -307,6 +307,8 @@ export function isBackendEvent(x: unknown): x is BackendEvent {
 /** GET /auth/guest (con el header X-Visitor-Id) */
 export interface GuestTokenResponse {
   token: string;
+  /** Optional explicit expiry; tokens stay opaque. */
+  expires_at?: string | number;
 }
 
 /** POST /api/v1/chat */
