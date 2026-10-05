@@ -1,3 +1,4 @@
+import { createConnectionNotice } from './system/connection';
 import { createAccountNode } from './auth/account';
 import { LoginContinuation } from './auth/continuation';
 import { AccountChess, errorText, chessGate, chessNode } from './auth/session';
@@ -30,10 +31,9 @@ async function start() {
   const setup = await createBackend(), backend = setup.backend;
 
   const traces = new TracePlayer(architecture);
+  const connectionNotice=createConnectionNotice();
   const portal = createSystemWindow(architecture, traces, setup.simulated);
   let connection: ConnectionState = 'closed';
-  let reconnectTimer:ReturnType<typeof setTimeout>|undefined,reconnectDelay=1000,stopped=false;
-  const reconnect=()=>{if(stopped||reconnectTimer)return;reconnectTimer=setTimeout(async()=>{reconnectTimer=undefined;try{await backend.connect()}catch{reconnectDelay=Math.min(15000,reconnectDelay*2);reconnect()}},reconnectDelay)};
   let chats: Chats;
   const account = new AccountChess(backend);
   let accountNode:ReturnType<typeof createAccountNode>;
@@ -64,9 +64,8 @@ async function start() {
   });
   const stopEvents = backend.onEvent(event => {if(event.type!=='chess.move'&&event.type!=='owner.chess'){traces.receive(event);chats.receive(event)}});
   const stopConnection = backend.onConnectionChange(state => {
-    if (connection === 'open' && state !== 'open') {traces.disconnect();reconnect()}
-    if(state==='open'){clearTimeout(reconnectTimer);reconnectTimer=undefined;reconnectDelay=1000}
-    connection = state; portal.connection(state);void chats.connection(state);
+    if (connection === 'open' && state !== 'open') {traces.disconnect()}
+    connection = state; connectionNotice.update(state);portal.connection(state);void chats.connection(state);
     if(state==='open')void account.refresh();
   });
   let stopDevelopment:(()=>void)|undefined;
@@ -93,8 +92,8 @@ async function start() {
     panel.append(summary,help,buttons,status);document.body.append(panel);
   }
   access.readRoute();
-  try { await backend.connect(); } catch { portal.connection('closed'); }
+  try { await backend.connect(); } catch { /* RealBackend schedules its own retry. */ }
   await account.refresh();
-  addEventListener('pagehide', event => { if(event.persisted)return;stopped=true;clearTimeout(transitionTimer);stopDevelopment?.();stopAccount();accountNode.dispose();account.dispose();access.dispose();stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();clearTimeout(reconnectTimer);stopEvents(); stopConnection(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
+  addEventListener('pagehide', event => { if(event.persisted)return;clearTimeout(transitionTimer);stopDevelopment?.();stopAccount();accountNode.dispose();account.dispose();access.dispose();stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();stopEvents(); stopConnection();connectionNotice.dispose(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
 }
 start().catch(error => { console.error(error);document.getElementById('announcement')!.textContent=t('app.startFailed'); });

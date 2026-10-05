@@ -194,6 +194,7 @@ export const en = {
   "system.simulated": "Simulated system",
   "system.online": "Online",
   "system.connecting": "Connecting",
+  "connection.retrying": "Offline, retrying",
   "system.offline": "Offline",
   "system.flows": "System journeys",
   "trace.idle": "System at rest",

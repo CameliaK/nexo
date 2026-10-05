@@ -81,7 +81,7 @@ test('UI relabeling preserves input drafts and skips visitor messages',()=>{
 });
 
 test('RealBackend serializes optional chat lang; MockBackend accepts and ignores it',async()=>{
-  const real=new RealBackend();Reflect.set(real,'token','test-token');const original=globalThis.fetch,bodies:unknown[]=[];
+  const real=new RealBackend();Reflect.set(real,'token','test-token');Reflect.set(real,'authenticatedToken',true);const original=globalThis.fetch,bodies:unknown[]=[];
   globalThis.fetch=async (_url,options)=>{bodies.push(JSON.parse(String(options?.body)));return new Response(JSON.stringify({run_id:'test'}),{status:202,headers:{'Content-Type':'application/json'}})};
   try{await real.sendMessage('Hello','en');await real.sendMessage('Hola','es');await real.sendMessage('Legacy');assert.deepEqual(bodies,[{message:'Hello',lang:'en'},{message:'Hola',lang:'es'},{message:'Legacy'}])}finally{globalThis.fetch=original}
   const mock=new MockBackend({now:()=>0,schedule:()=>0,cancel(){}});await mock.connect();assert.ok((await mock.sendMessage('Hola','en')).run_id);mock.disconnect();

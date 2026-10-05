@@ -79,3 +79,6 @@
 
 .node-target.is-owner-panel .node-label{width:150px}.node-target.is-owner-panel .node-name{font-size:12px}.node-target.is-owner-panel .node-meta{font-size:9px}
 @media(max-width:650px){.node-target.is-owner-panel .node-label{width:135px}.node-target.is-owner-panel .node-name{font-size:10px}.node-target.is-owner-panel .node-meta{font-size:8px}}
+
+.connection-notice{max-width:180px;line-height:1.4;text-align:right;color:#ddca9f;font-size:11px}.connection-notice[hidden]{display:none}.system-status:has(.connection-notice:not([hidden])) #motion-status{display:none}
+@media(max-width:650px){.connection-notice{max-width:150px;font-size:10px}}

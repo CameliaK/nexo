@@ -109,7 +109,7 @@ export class Chats {
   escape(){if(this.liveOpen){this.closeLive();return true}return false}
   private updateUnread(){this.universe.setUnread(this.unread.size);}
   private resetHint(text:string|null){
-    const value=translateText(text||'');return !value||[t('chat.offline'),t('guide.future'),t('chat.mockHint'),t('chat.ask')].includes(value)||!!this.waitHint&&value===translateText(this.waitHint);
+    const value=translateText(text||'');return !value||[t('connection.retrying'),t('chat.offline'),t('guide.future'),t('chat.mockHint'),t('chat.ask')].includes(value)||!!this.waitHint&&value===translateText(this.waitHint);
   }
   refreshLanguage(){
     const record=portfolio.nodes.find(n=>n.type==='live_chat')!,content=record.content as {intro:string;name_label:string;placeholder:string;note:string};
@@ -128,7 +128,7 @@ export class Chats {
     this.agentInput.disabled=!open;this.agentSend.disabled=!open||this.busy||this.pendingSend||!!agentRemaining||!this.agentInput.value.trim();
     this.liveInput.disabled=!open;this.liveSend.disabled=!open||!!liveRemaining||!this.liveInput.value.trim();
     this.agentCounter.textContent=this.agentInput.value.length+'/500';this.liveCounter.textContent=this.liveInput.value.length+'/500';
-    if(!open){this.agentHint.textContent=t('chat.offline');this.liveHint.textContent=t('chat.offline');return}
+    if(!open){this.agentHint.textContent=this.liveHint.textContent=t(this.state==='reconnecting'?'connection.retrying':'chat.offline');return}
     if(agentRemaining)this.agentHint.textContent=t('chat.errorRate')+' '+t('chat.wait',{seconds:agentRemaining});
     else if(this.agentErrorValue)this.agentHint.textContent=chatErrorText(this.agentErrorValue);
     else if(this.resetHint(this.agentHint.textContent))this.agentHint.textContent=this.simulated?t('chat.mockHint'):t('chat.ask');
