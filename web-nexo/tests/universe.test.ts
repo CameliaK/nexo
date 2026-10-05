@@ -24,7 +24,7 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
   getBoundingClientRect(){
    if(this.className==='node-label'){
      const match=this.parent?.style.transform?.match(/translate\(([-\d.]+)px,([-\d.]+)px\)/);
-     if(match){const x=Number(match[1]),y=Number(match[2]),r=parseFloat(this.parent.style['--radius']),mobile=sandbox.innerWidth<650,compact=this.parent.className.includes('is-generated')&&mobile,w=compact?76:mobile?145:160;return{left:x-w/2,top:y+r+(compact?12:19),width:w,height:compact?32:35}}
+     if(match){const x=Number(match[1]),y=Number(match[2]),r=parseFloat(this.parent.style['--radius']),mobile=sandbox.innerWidth<650,compact=this.parent.className.includes('is-generated')&&mobile,z=Number(this.parent.style['--node-label-zoom']||1),w=(this.parent.className.includes('is-owner-panel')?(mobile?135:150):compact?76:mobile?145:160)*z;return{left:x-w/2,top:y+r+(mobile?12:19)*z,width:w,height:(compact?32:35)*z}}
    }
    return this.rect||{left:1120,top:530,width:258,height:170,right:1378,bottom:700};
   }
@@ -43,7 +43,7 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
  source=source.replace("import { LivePreview, placeSatellite, satelliteFootprint } from './live-satellite.js';",'');
- source=source.replace('return {refreshLanguage,setOwnerGames,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,setOwnerGames,dispose(){');
+ source=source.replace('return {refreshLanguage,setOwnerGames,openChess,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,setOwnerGames,openChess,dispose(){');
  source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);Object.assign(sandbox.api,sandbox.universe);
  const frames=(ms=2700)=>{const end=now+ms;while(now<end){now=Math.min(end,now+50);raf(now)}};
  const enter=id=>{el('node-targets').children.find(e=>e.dataset.node===id).click();frames()};
@@ -219,9 +219,9 @@ test('Root chess and generated satellites leave space around graph bodies and la
    const canonical=api.getNodes().filter(n=>!n.generated),generated=api.getNodes().find(n=>n.generated),chess=api.chessOrbit();
    const half=w<650?38:80,gap=w<650?6:20;
    const generatedRect={left:generated.sx-half,right:generated.sx+half,top:generated.sy-generated.sr*1.65,bottom:generated.sy+generated.sr+(w<650?44:54)};
-   const chessRect={left:chess.sx-(w<650?50:75),right:chess.sx+(w<650?50:75),top:chess.sy-(w<650?40:50),bottom:chess.sy+(w<650?90:86)};
+   const chessRect={left:chess.sx-(w<650?55:80),right:chess.sx+(w<650?55:80),top:chess.sy-(w<650?45:60),bottom:chess.sy+(w<650?75:95)};
    for(const rect of [generatedRect,chessRect]){
-     assert.ok(rect.left>=12&&rect.right<=w-12&&rect.top>=12&&rect.bottom<=h-12,`Satellite fits ${w}×${h}`);
+     assert.ok(rect.left>=0&&rect.right<=w&&rect.top>=h*.6,`Satellite occupies the free lower world band ${w}×${h}`);
      for(const n of canonical){
        const reach=n.sr*1.65,body={left:n.sx-reach-gap,right:n.sx+reach+gap,top:n.sy-reach-gap,bottom:n.sy+reach+gap};
        const b=n.el.querySelector('.node-label').getBoundingClientRect(),label={left:b.left-gap,right:b.left+b.width+gap,top:b.top,bottom:b.top+b.height+gap};
@@ -340,4 +340,37 @@ test('Private games stay localized and mobile pages avoid crowding while preserv
  languageStore.set('en');api.refreshLanguage();assert.equal(api.getLevel().title,'Games');assert.match(api.getNodes()[0].meta,/Your turn/);
  api.setOwnerGames(true,games.map((g,i)=>i===0?{...g,moves:[{san:'e4'}]}:g));assert.equal(sandbox.document.activeElement.dataset.node,focusedId);
  sandbox.innerWidth=390;sandbox.innerHeight=844;listeners.resize();frames(100);assert.equal(api.getNodes().length,4);const pager=el('body').children.find(n=>n.className==='owner-pagination');assert.equal(pager.hidden,false);pager.children[2].onclick();frames(100);assert.equal(api.getNodes().length,4);assert.equal(api.getNodes()[0].ownerGame.id,'game4');api.dispose();languageStore.set('es');
+});
+
+test('Chess, owner panel and twelve generated nodes use the same camera projection without overlapping in ES/EN on desktop/mobile',()=>{
+ for(const [w,h] of [[1366,768],[390,844]])for(const lang of ['es','en']){
+  languageStore.set(lang);applyContent(lang);const {api,frames,sandbox,listeners,el}=fixture(true,true);
+  sandbox.innerWidth=w;sandbox.innerHeight=h;listeners.resize();el('companion-panel').hidden=true;el('content-card').hidden=true;
+  const controls=[{left:0,right:w,top:0,bottom:w<650?78:104},{left:w<650?24:46,right:w<650?324:496,top:w<650?103:139,bottom:w<650?203:265},{left:0,right:w,top:h-(w<650?108:102),bottom:h},...(w<650?[{left:22,right:205,top:h-132,bottom:h-110}]:[])];
+  sandbox.document.querySelectorAll=selector=>selector==='*'?[]:controls.map(b=>({getBoundingClientRect:()=>({left:b.left,top:b.top,width:b.right-b.left,height:b.bottom-b.top})}));sandbox.getComputedStyle=()=>({display:'block',visibility:'visible'});
+  api.setOwnerGames(true,[]);
+  for(let i=0;i<12;i++)api.spawnGenerated({id:'gen_space_'+i,generated:true,label:'Creado para ti '+i,summary:'Resumen',created_at:'2026-10-04T00:00:00Z',sources:[],layout:'text',content:{body:'Texto'}},null,true);
+  api.setCamera({x:0,y:0},1);frames(100);
+  const initial=new Map(api.getNodes().map(n=>[n.id,{x:n.sx,y:n.sy,r:n.sr}]));const original=api.chessOrbit();
+  assert.ok(original.sy+(w<650?75:95)<h,'Chess visible at default zoom: '+w+' '+original.sy);const owner=api.getNodes().find(n=>n.privatePanel);assert.ok(owner.sy+owner.sr+55<h,'Owner visible at default zoom: '+w+' '+owner.sy);
+  for(const box of [{left:original.sx-(w<650?55:80),right:original.sx+(w<650?55:80),top:original.sy-(w<650?45:60),bottom:original.sy+(w<650?75:95)},(()=>{const label=owner.el.querySelector('.node-label').getBoundingClientRect();return{left:label.left,right:label.left+label.width,top:owner.sy-owner.sr*1.65,bottom:label.top+label.height}})()])for(const control of controls)assert.equal(satellite.intersects(box,control),false,'default satellites clear fixed UI');
+  for(const z of [.5,1,2]){
+   const pan={x:71,y:-39};api.setCamera(pan,z);frames(100);
+   const chess=api.chessOrbit();assert.ok(Math.abs(chess.sx-(w/2+(original.sx-w/2)*z+pan.x))<.01);assert.ok(Math.abs(chess.sy-(h*.53+(original.sy-h*.53)*z+pan.y))<.01);assert.equal(chess.sr,original.sr*z);
+   const boxes=[{left:chess.sx-(w<650?55:80)*z,right:chess.sx+(w<650?55:80)*z,top:chess.sy-(w<650?45:60)*z,bottom:chess.sy+(w<650?75:95)*z}];
+   for(const n of api.getNodes()){
+    const before=initial.get(n.id);assert.ok(Math.abs(n.sx-(w/2+(before.x-w/2)*z+pan.x))<.01,n.id+' follows pan/zoom');
+    assert.ok(Math.abs(n.sy-(h*.53+(before.y-h*.53)*z+pan.y))<.01,n.id+' follows vertical pan/zoom');
+    const label=n.el.querySelector('.node-label').getBoundingClientRect();
+    const body={left:n.sx-n.sr*1.65,right:n.sx+n.sr*1.65,top:n.sy-n.sr*1.65,bottom:n.sy+n.sr*1.65};
+    const caption={left:label.left,right:label.left+label.width,top:label.top,bottom:label.top+label.height};
+    if(n.generated||n.privatePanel){for(const box of boxes){assert.equal(satellite.intersects(body,box),false,n.id+' body');assert.equal(satellite.intersects(caption,box),false,n.id+' label')}boxes.push(body,caption)}
+    else for(const box of boxes){assert.equal(satellite.intersects(body,box),false,n.id+' body');assert.equal(satellite.intersects(caption,box),false,n.id+' label')}
+   }
+   for(const n of api.getNodes().filter(n=>!n.generated&&!n.privatePanel)){const label=n.el.querySelector('.node-label').getBoundingClientRect();for(const box of boxes){assert.equal(satellite.intersects(box,{left:n.sx-n.sr*1.65,right:n.sx+n.sr*1.65,top:n.sy-n.sr*1.65,bottom:n.sy+n.sr*1.65}),false,n.id+' clears all satellites');assert.equal(satellite.intersects(box,{left:label.left,right:label.left+label.width,top:label.top,bottom:label.top+label.height}),false,n.id+' label clears all satellites')}}
+   const sb=api.distantSystemBounds();for(const box of boxes)assert.equal(satellite.intersects(box,{left:sb.left,right:sb.left+sb.width,top:sb.top,bottom:sb.top+sb.height}),false,'system window');
+   const beforeToggle=api.chessOrbit(),beforeOwner=api.getNodes().find(n=>n.privatePanel);const position={x:beforeOwner.sx,y:beforeOwner.sy};languageStore.toggle();applyContent(languageStore.language);api.refreshLanguage();frames(50);const afterToggle=api.chessOrbit(),afterOwner=api.getNodes().find(n=>n.privatePanel);assert.equal(afterToggle.sx,beforeToggle.sx);assert.equal(afterToggle.sy,beforeToggle.sy);assert.equal(afterOwner.sx,position.x);assert.equal(afterOwner.sy,position.y);
+  }
+ }
+ languageStore.set('es');applyContent('es');
 });

@@ -29,6 +29,8 @@ export class AccountChess {
   busy = false;
   error: unknown = null;
   notifications = true;
+  notificationsReady = false;
+  accountError: unknown = null;
   playerGame: ChessGame | null = null;
   ownerGames: OwnerChessGame[] = [];
   ownerId: string | null = null;
@@ -50,7 +52,7 @@ export class AccountChess {
     try {
       const me = await this.backend.authMe(); if (epoch !== this.epoch) return;
       this.me = me; this.available = true;
-      if (me.mode === 'guest') { this.playerGame = null; this.ownerGames = []; this.ownerId = null; this.unread = false; }
+      if (me.mode === 'guest') { this.notificationsReady=false;this.accountError=null;this.playerGame = null; this.ownerGames = []; this.ownerId = null; this.unread = false; }
       else {
         const revision = this.revision;
         const results = await Promise.allSettled([this.backend.chessGetGame(), this.backend.getNotifications(), ...(me.mode === 'owner' ? [this.backend.ownerChessGames()] : [])]);
@@ -58,7 +60,7 @@ export class AccountChess {
         const [game, settings, games] = results;
         if (game.status === 'fulfilled' && revision === this.revision) this.playerGame = game.value as ChessGame | null;
         else if (game.status === 'rejected') { if (unavailable(game.reason)) this.available = false; else this.error = game.reason; }
-        if (settings.status === 'fulfilled') this.notifications = (settings.value as { chess_email: boolean }).chess_email;
+        if (settings.status === 'fulfilled') { this.notifications = (settings.value as { chess_email: boolean }).chess_email; this.notificationsReady=true;this.accountError=null; } else {this.notificationsReady=false;this.accountError=settings.reason}
         if (games?.status === 'fulfilled' && revision === this.revision) this.ownerGames = games.value as OwnerChessGame[];
         if (games?.status === 'rejected') this.error = games.reason;
         if (me.mode !== 'owner') { this.ownerGames = []; this.ownerId = null; }
@@ -101,13 +103,21 @@ export class AccountChess {
     await this.action(() => id ? this.backend.ownerChessMove(id, uci) : this.backend.chessMove(uci), optimistic);
   }
   async resign() { if (!this.game || this.game.status !== 'active') return; const id = this.ownerId; await this.action(() => id ? this.backend.ownerChessResign(id) : this.backend.chessResign()); }
+  async refreshNotifications() {
+    if(this.me.mode==='guest')return;
+    const epoch=this.epoch;this.notificationsReady=false;this.accountError=null;this.notify();
+    try {const settings=await this.backend.getNotifications();if(epoch!==this.epoch)return;this.notifications=settings.chess_email;this.notificationsReady=true;this.accountError=null}
+    catch(error){if(epoch!==this.epoch)return;this.accountError=error;this.notificationsReady=false}this.notify();
+  }
   async setNotifications(enabled: boolean) {
-    try { this.notifications = (await this.backend.setNotifications({ chess_email: enabled })).chess_email; this.error = null; } catch (error) { this.error = error; } this.notify();
+    const epoch=this.epoch;
+    try {const settings=await this.backend.setNotifications({chess_email:enabled});if(epoch!==this.epoch)return;this.notifications=settings.chess_email;this.accountError=null}
+    catch(error){if(epoch!==this.epoch)return;this.accountError=error}this.notify();
   }
   async signOut(remove = false) {
-    if(this.busy)return;this.busy=true;this.notify();
-    try { if (remove) await this.backend.deleteAccount(); else await this.backend.logout(); this.me={mode:'guest'};this.ownerId = null; this.ownerGames = []; this.playerGame = null; this.unread = false; this.notify(); await this.refresh(); }
-    catch (error) { this.error = error; }
+    if(this.busy)return;++this.epoch;this.busy=true;this.accountError=null;this.notify();
+    try { if (remove) await this.backend.deleteAccount(); else await this.backend.logout(); this.me={mode:'guest'};this.notificationsReady=false;this.accountError=null;this.ownerId = null; this.ownerGames = []; this.playerGame = null; this.unread = false; this.notify(); await this.refresh(); }
+    catch (error) { this.accountError = error; }
     finally{this.busy=false;this.notify()}
   }
   receive(event: BackendEvent) {

@@ -157,44 +157,67 @@ if(chessTarget){
   const subtitle=document.createElement('small');subtitle.textContent=t('chess.nodeCaption');caption.append(subtitle);chessTarget.append(caption);document.body.append(chessTarget);
   chessTarget.addEventListener('pointerenter',()=>chessHover=true);chessTarget.addEventListener('pointerleave',()=>chessHover=false);
   chessTarget.addEventListener('focus',()=>chessHover=true);chessTarget.addEventListener('blur',()=>chessHover=false);
-  chessTarget.addEventListener('click',()=>{if(travel||systemTravel||chatMorph)return;if(system.onChessAccess&&!system.onChessAccess())return;const source=()=>{const node=chessOrbit();return{x:node.sx,y:node.sy,r:node.sr,faces:meshFaces(node)}};drag=null;system.chess.open(source(),source);chessTarget.setAttribute('aria-expanded','true');chessTarget.hidden=true});
+  chessTarget.addEventListener('click',openChess);
   system.chess.setOnClosed(()=>{chessTarget.setAttribute('aria-expanded','false');chessTarget.hidden=level!==root||!system.chessNodeVisible;last=performance.now()});
 }
-function chessOrbit(population=nodes,view=camera()){
-  const drift=paused||reduced.matches?0:1;
-  const x=width*(width<650?.20:.08)+Math.sin(clock*.32+2)*19*drift,y=height*(width<650?.34:.74)+Math.cos(clock*.27+2)*16*drift;
-  const preferred={x:width/2+(x-width/2)*view.zoom+view.pan.x,y:height*.53+(y-height*.53)*view.zoom+view.pan.y};
-  const position=placeRootSatellite(preferred,chessFootprint(),population,view);
-  return{type:'orb',seed:7.2,color:colors.mint,hover:chessHover?.5:0,weightTier:2,sx:position.x,sy:position.y,sr:(width<650?22:27)*(1+(chessHover?.1:0))};
+function openChess(){
+  if(!chessTarget||travel||systemTravel||chatMorph)return;
+  if(system.onChessAccess&&!system.onChessAccess())return;
+  const source=()=>{const node=chessOrbit();return{x:node.sx,y:node.sy,r:node.sr,faces:meshFaces(node)}};
+  drag=null;system.chess.open(source(),source);chessTarget.setAttribute('aria-expanded','true');chessTarget.hidden=true;
 }
-function chessFootprint(){return width<650?{left:-50,right:50,top:-40,bottom:90}:{left:-75,right:75,top:-50,bottom:86}}
+let worldLayoutKey='',worldLayout=new Map();
+function rootWorldLayout(population){
+  // Allocate once at a neutral camera. Pan and zoom only project world positions.
+  const extras=population.filter(n=>n.generated||n.privatePanel);
+  const key=JSON.stringify([width,height,!!system.chessNodeVisible,population.map(n=>[n.id,n.name,n.meta])]);
+  if(key===worldLayoutKey)return worldLayout;
+  worldLayoutKey=key;worldLayout=new Map();
+  const base={zoom:1,pan:{x:0,y:0},parallax:{x:0,y:0}},obstacles=[...fixedObstacles()];
+  const sb=distantSystemBounds(base);
+  obstacles.push({left:sb.left-20,right:sb.left+sb.width+20,top:sb.top-20,bottom:sb.top+sb.height+40});
+  for(const n of population.filter(n=>!n.generated&&!n.privatePanel)){
+    const p=layout(n,root,base),reach=p.r*1.85+16,half=width<650?82:115;
+    obstacles.push({left:p.x-reach,right:p.x+reach,top:p.y-reach,bottom:p.y+reach},
+      {left:p.x-half,right:p.x+half,top:p.y+p.r,bottom:p.y+p.r+(width<650?60:95)});
+  }
+  const items=[...(chessTarget&&system.chessNodeVisible?[{id:'floating-chess',footprint:chessFootprint()}]:[]),...extras.filter(n=>n.privatePanel),...extras.filter(n=>n.generated)];
+  for(const [index,n] of items.entries()){
+    const radius=n.footprint?0:layout(n,root,base).r;
+    const half=n.footprint?0:Math.max(radius*1.85+14,width<650?(n.privatePanel?75:48):(n.privatePanel?80:115));
+    const footprint=n.footprint||{left:-half,right:half,top:-radius*1.85-14,bottom:radius+(n.privatePanel?65:width<650?72:95)};
+    const preferred={x:width*(index%2?.72:.28),y:height*.76+Math.floor(index/2)*150};
+    // Crowded worlds extend below the viewport and remain reachable by panning.
+    // A forced screen clamp would cause overlap and make these nodes feel fixed.
+    const searchWidth=Math.max(width,footprint.right-footprint.left+32);
+    const lowerBand={left:0,right:searchWidth,top:0,bottom:height*.6};
+    let point=placeSatellite({width:searchWidth,height,obstacles:[...obstacles,lowerBand],preferred,footprint});
+    for(let rows=1;!point;rows++)point=placeSatellite({width:searchWidth,height:height+rows*220,obstacles:[...obstacles,lowerBand],preferred,footprint});
+    worldLayout.set(n.id,point);
+    const box=satelliteBox(point,footprint);obstacles.push({left:box.left-16,right:box.right+16,top:box.top-16,bottom:box.bottom+16});
+  }
+  return worldLayout;
+}
+function projectWorld(point,view,seed=0){
+  const drift=paused||reduced.matches?0:1;
+  return{x:width/2+(point.x-width/2+Math.sin(clock*.23+seed)*5*drift)*view.zoom+view.pan.x+view.parallax.x*3,
+    y:height*.53+(point.y-height*.53+Math.cos(clock*.19+seed)*5*drift)*view.zoom+view.pan.y+view.parallax.y*3};
+}
+function chessOrbit(population=nodes,view=camera()){
+  const position=projectWorld(rootWorldLayout(population).get('floating-chess')||{x:width*.28,y:height*.76},view,7.2);
+  return{type:'orb',seed:7.2,color:colors.mint,hover:chessHover?.5:0,weightTier:2,sx:position.x,sy:position.y,sr:(width<650?17:27)*view.zoom*(1+(chessHover?.1:0))};
+}
+function chessFootprint(){return width<650?{left:-55,right:55,top:-45,bottom:75}:{left:-80,right:80,top:-60,bottom:95}}
 const satelliteBox=(position,shape)=>({left:position.x+shape.left,right:position.x+shape.right,top:position.y+shape.top,bottom:position.y+shape.bottom});
 function fixedObstacles(){
   const obstacles=[];
   const add=rect=>{if(rect?.width>0&&rect?.height>0)obstacles.push({left:rect.left,right:rect.left+rect.width,top:rect.top,bottom:rect.top+rect.height})};
-  for(const element of document.querySelectorAll?.('.topbar, .orientation, .level-mark, footer, .language-node, .welcome-help, .scene-info, .development-panel, .generated-inventory, .route-notice, .chess-heading, .chess-close, .chess-aside, .chess-player, .chess-help, .chess-popover-backdrop, .owner-pagination')||[]){
+  for(const element of document.querySelectorAll?.('.topbar, .orientation, .level-mark, footer, .language-node, .welcome-help, .account-node, .scene-info, .development-panel, .generated-inventory, .route-notice, .chess-heading, .chess-close, .chess-aside, .chess-player, .chess-help, .chess-popover-backdrop, .owner-pagination')||[]){
     if(element.hidden||element.closest?.('[hidden]')||getComputedStyle(element).visibility==='hidden'||getComputedStyle(element).display==='none')continue;
     add(element.getBoundingClientRect());
   }
   for(const id of ['companion-panel','content-card']){const element=$(id);if(element&&!element.hidden)add(element.getBoundingClientRect())}
   return obstacles;
-}
-function placeRootSatellite(preferred,footprint,population,view,extra=[]){
-  const graph=[],gap=width<650?6:24;
-  for(const n of population.filter(n=>!n.generated&&!n.privatePanel)){
-    const p=layout(n,root,view),x=p.x+(n.dx||0),y=p.y+(n.dy||0),r=p.r*(1+(n.hover||0)*.12),reach=r*1.65;
-    const label=n.el?.querySelector('.node-label')?.getBoundingClientRect();
-    const half=(label?.width||(width<650?145:200))/2;
-    graph.push({left:x-reach-gap,right:x+reach+gap,top:y-reach-gap,bottom:y+reach+gap},
-      {left:x-half-gap,right:x+half+gap,top:y+r+9,bottom:y+r+19+(label?.height||40)+gap});
-  }
-  const systemBounds=distantSystemBounds(view);
-  const systemGap=width<650?0:24;
-  const obstacles=[...fixedObstacles(),...extra,{left:systemBounds.left-systemGap,right:systemBounds.left+systemBounds.width+systemGap,top:systemBounds.top-systemGap,bottom:systemBounds.top+systemBounds.height+20+systemGap}];
-  const options={width,height,preferred,footprint};
-  // Keep disconnected satellites outside the whole constellation when space allows.
-  const hull=graph.length?{left:Math.min(...graph.map(b=>b.left)),right:Math.max(...graph.map(b=>b.right)),top:Math.min(...graph.map(b=>b.top)),bottom:Math.max(...graph.map(b=>b.bottom))}:null;
-  return (hull&&placeSatellite({...options,obstacles:[...obstacles,hull]}))||placeSatellite({...options,obstacles:[...obstacles,...graph]})||{x:clamp(preferred.x,12-footprint.left,width-12-footprint.right),y:clamp(preferred.y,12-footprint.top,height-12-footprint.bottom)};
 }
 function drawChessSatellite(){
   if(!chessTarget)return;
@@ -207,7 +230,7 @@ function drawChessSatellite(){
     chessTarget.setAttribute('aria-label',t('chess.node')+' · '+state.label);
   }
   const node=chessOrbit();drawNode(node,.92);chessTarget.style.left=node.sx+'px';chessTarget.style.top=node.sy+'px';
-  chessTarget.style.width=chessTarget.style.height=node.sr*2+16+'px';
+  chessTarget.style.width=chessTarget.style.height=node.sr*2+16*zoom+'px';chessTarget.style.setProperty('--node-label-zoom',zoom);chessTarget.style.setProperty('--caption-gap',10*zoom+'px');
 }
 function chatObstacles(includeCompanion=false){
   const obstacles=[...occupiedNodeBounds,...occupiedMediaBounds,...fixedObstacles(),{left:width*.41,right:width*.59,top:height*.43,bottom:height*.63}];
@@ -224,7 +247,7 @@ function chatObstacles(includeCompanion=false){
   // The moving companion yields to chat; media still avoids its body and speech.
   if(includeCompanion)for(const id of ['companion-target','speech-bubble']){const element=$(id);if(element&&!element.hidden)add(element.getBoundingClientRect())}
   if(system.chess?.isOpen())add(document.querySelector('.chess-board')?.getBoundingClientRect());
-  if(chessTarget&&!chessTarget.hidden){const n=chessOrbit();obstacles.push({left:n.sx-65,right:n.sx+65,top:n.sy-n.sr-12,bottom:n.sy+n.sr+50})}
+  if(chessTarget&&!chessTarget.hidden){const n=chessOrbit(),shape=chessFootprint();obstacles.push(satelliteBox({x:n.sx,y:n.sy},{left:shape.left*zoom,right:shape.right*zoom,top:shape.top*zoom,bottom:shape.bottom*zoom}))}
   return obstacles;
 }
 function chatOrbit(){return chatPosition?{...chatPosition,r:width<650?17:21}:{x:width*.79,y:height*.69,r:width<650?17:21}}
@@ -439,29 +462,22 @@ function resize(){
 function camera(){return{zoom,pan:{...pan},parallax:{...parallax}}}
 function layout(n,scene=level,view=camera()){
   const mobile=width<650,usableH=Math.max(210,height-(mobile?340:280));
-  const xSpan=mobile?width*.61:Math.min(width*.52,740),ySpan=mobile?usableH*.81:usableH*.76;
+  const rootSatellites=scene===root&&chessTarget&&system.chessNodeVisible;
+  const xSpan=mobile?width*.61:Math.min(width*(rootSatellites?.58:.52),rootSatellites?800:740),ySpan=mobile?usableH*(rootSatellites?.54:.81):usableH*.76;
+  const offsetY=mobile?(rootSatellites?-Math.min(78,height*.095):30):0;
   let x=n.x,y=n.y;
   if(mobile&&scene===root){const rootPositions=[[0,-.4],[.49,-.1],[.32,.4],[-.36,.4],[-.49,-.1]];const innerPositions=scene.nodes.length===3?[[-.43,.16],[0,-.34],[.43,.16]]:[[-.12,-.05],[.44,-.34],[.4,.37],[-.46,.39],[-.5,-.37]];const index=scene.nodes.indexOf(n.data||n);[x,y]=(scene===root?rootPositions:innerPositions)[index]||[x,y]}
   if(mobile&&scene!==root&&!scene.system){const index=scene.nodes.indexOf(n.data||n),count=scene.nodes.length;if(count===1){x=0;y=.02}else if(count===2){x=index? .43:-.43;y=.02}else{const rows=Math.ceil(count/2);x=index%2?.49:-.49;y=-.43+Math.floor(index/2)*(.88/Math.max(1,rows-1));if(index===count-1&&count%2)x=0}}
   if(mobile&&scene.system){const points={browser:[0,-.52],traefik:[0,-.34],gateway:[-.46,-.14],redis:[.46,-.14],agent:[0,.05],n8n:[-.46,.26],llm:[.46,.26],postgres:[-.46,.49],owner_channel:[.46,.49]};[x,y]=points[n.id];const row={browser:0,traefik:1,gateway:2,redis:2,agent:3,n8n:4,llm:4,postgres:5,owner_channel:5}[n.id],top=Math.min(274,height*.34),bottom=height-282;y=(top+(bottom-top)*row/5-height*.53-30)/ySpan}
-  const mobileScale=scene===root&&scene.nodes.some(node=>node.generated)?.44:scene.architecture?.50:.60;
-  return{x:width/2+x*xSpan*view.zoom+view.pan.x+view.parallax.x*(n.r/8),y:height*.53+(mobile?30:0)+y*ySpan*view.zoom+view.pan.y+view.parallax.y*(n.r/8),r:n.r*(mobile?mobileScale:Math.min(1.06,width/1250+.1))*view.zoom};
+  const mobileScale=rootSatellites?.48:scene===root&&scene.nodes.some(node=>node.generated)?.44:scene.architecture?.50:.60;
+  return{x:width/2+x*xSpan*view.zoom+view.pan.x+view.parallax.x*(n.r/8),y:height*.53+(offsetY+y*ySpan)*view.zoom+view.pan.y+view.parallax.y*(n.r/8),r:n.r*(mobile?mobileScale:Math.min(1.06,width/1250+.1))*view.zoom};
 }
 function instantiate(scene){return scene.nodes.map((n,i)=>({...n,data:n,dx:0,dy:0,vx:0,vy:0,seed:i*1.7+1.3,hover:0,sx:0,sy:0,sr:0}))}
 function project(state){
-  const placed=[];
   for(const n of state.nodes){
-    const p=layout(n,state.level,state.camera);n.sx=p.x+n.dx;n.sy=p.y+n.dy;n.sr=p.r*(1+n.hover*.12);
+    const p=layout(n,state.level,state.camera);n.sx=p.x+n.dx*state.camera.zoom;n.sy=p.y+n.dy*state.camera.zoom;n.sr=p.r*(1+n.hover*.12);
     if(state.level===root&&(n.generated||n.privatePanel)){
-      const index=state.nodes.filter(node=>node.generated||node.privatePanel).indexOf(n),drift=paused||reduced.matches?0:1;
-      const anchorX=width*(index%2?.08:.92),anchorY=height*(width<650?.32:.66)+(Math.floor(index/2)*140);
-      const preferred={x:width/2+(anchorX-width/2)*state.camera.zoom+state.camera.pan.x+Math.sin(clock*.23+n.seed)*8*drift,y:height*.53+(anchorY-height*.53)*state.camera.zoom+state.camera.pan.y+Math.cos(clock*.19+n.seed)*9*drift};
-      const label=n.el?.querySelector('.node-label')?.getBoundingClientRect(),half=Math.max(n.sr*1.65,(label?.width||(width<650?76:200))/2);
-      const footprint={left:-half,right:half,top:-n.sr*1.65,bottom:n.sr+(width<650?12:19)+(label?.height||40)};
-      const extra=[...placed];
-      if(chessTarget&&system.chessNodeVisible){const chess=chessOrbit(state.nodes,state.camera);extra.push(satelliteBox({x:chess.sx,y:chess.sy},chessFootprint()))}
-      const position=placeRootSatellite(preferred,footprint,state.nodes,state.camera,extra);n.sx=position.x;n.sy=position.y;
-      placed.push(satelliteBox(position,footprint));
+      const position=projectWorld(rootWorldLayout(state.nodes).get(n.id),state.camera,n.seed);n.sx=position.x;n.sy=position.y;
     }
     if(n.generated&&n.birthOrigin){const u=smooth((performance.now()-n.born)/1200);n.sx=lerp(n.birthOrigin.x,n.sx,u);n.sy=lerp(n.birthOrigin.y,n.sy,u);n.sr*=.15+.85*u;if(u>=1)n.birthOrigin=null}
   }
@@ -470,7 +486,7 @@ function bindNodes(){
   const focusedNode=nodes.find(n=>n.el===document.activeElement)?.id;
   const target=$('node-targets');target.replaceChildren();target.inert=!!travel;
   for(const n of nodes){
-    const b=document.createElement('button');b.className='node-target'+(n.pending?' is-disabled':'')+(n.reference?' is-reference':'')+(n.generated?' is-generated':'')+(n.ownerGame?(n.ownerGame.status!=='active'?' is-owner-finished':n.ownerGame.turn==='owner'?' is-owner-turn':' is-owner-waiting'):'');b.dataset.node=n.id;
+    const b=document.createElement('button');b.className='node-target'+(n.pending?' is-disabled':'')+(n.reference?' is-reference':'')+(n.generated?' is-generated':'')+(n.privatePanel?' is-owner-panel':'')+(n.ownerGame?(n.ownerGame.status!=='active'?' is-owner-finished':n.ownerGame.turn==='owner'?' is-owner-turn':' is-owner-waiting'):'');b.dataset.node=n.id;
     b.setAttribute('aria-label',n.name+(n.ownerGame?' · '+n.meta:'')+(n.disabled?t('nav.buildingSuffix'):n.reference?t('nav.relatedSuffix'):n.children?t('nav.exploreSuffix'):t('nav.detailsSuffix')));if(n.disabled)b.setAttribute('aria-disabled','true');b.style.setProperty('--node-color',rgba(n.color));
     const label=document.createElement('span');label.className='node-label';const title=document.createElement('span');title.className='node-name';const number=document.createElement('span');number.className='node-index';number.textContent=String(nodes.indexOf(n)+1).padStart(2,'0');title.append(number,document.createTextNode(n.name));const meta=document.createElement('span');meta.className='node-meta';meta.textContent=n.meta;label.append(title,meta);b.append(label);
     b.addEventListener('pointerenter',()=>setHover(n));b.addEventListener('pointerleave',()=>{if(!focusedId)setHover(null)});
@@ -485,7 +501,7 @@ function setHover(n){
   $('instruction-text').textContent=n?(n.disabled?t('nav.pending'):n.children?t('nav.enter',{name:n.name}):n.reference?t('nav.relatedHint'):t('nav.detailsHint')):t('nav.instruction');
 }
 function syncZoomUI(){
-  $('zoom-label').textContent=Math.round(targetZoom*100)+'%';$('zoom-in').disabled=targetZoom>=1.6;$('zoom-out').disabled=targetZoom<=.65;
+  $('zoom-label').textContent=Math.round(targetZoom*100)+'%';$('zoom-in').disabled=targetZoom>=2;$('zoom-out').disabled=targetZoom<=.5;
 }
 function updateUI(){
   syncMediaLevel();syncOwnerPagination();
@@ -655,7 +671,7 @@ function drawEdges(scene,items,alpha=1){
     if(!a.pending&&!b.pending&&!note?.related&&scene.confidence!=='low'){const q=bezier(a,b,(clock*.055+i*.173)%1,bend),pulse=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,8);pulse.addColorStop(0,rgba(c,.7));pulse.addColorStop(.14,rgba(c,.6));pulse.addColorStop(.4,rgba(c,.15));pulse.addColorStop(1,rgba(c,0));ctx.fillStyle=pulse;ctx.fillRect(q.x-8,q.y-8,16,16)}ctx.restore();
   }
 }
-function placeTargets(alpha){for(const n of nodes){const opacity=alpha*(hoverId&&hoverId!==n.id?.55:1)*(n.ownerGame?(n.ownerGame.status!=='active'?.45:n.ownerGame.turn==='owner'?1:.65):1);n.el.style.transform=`translate(${n.sx}px,${n.sy}px) translate(-50%,-50%)`;n.el.style.width=n.el.style.height=Math.max(48,n.sr*2)+'px';n.el.style.setProperty('--radius',n.sr+'px');n.el.style.opacity=opacity;n.el.style.visibility=opacity<.02?'hidden':'visible'}}
+function placeTargets(alpha){for(const n of nodes){const opacity=alpha*(hoverId&&hoverId!==n.id?.55:1)*(n.ownerGame?(n.ownerGame.status!=='active'?.45:n.ownerGame.turn==='owner'?1:.65):1);n.el.style.transform=`translate(${n.sx}px,${n.sy}px) translate(-50%,-50%)`;n.el.style.width=n.el.style.height=Math.max(48,n.sr*2)+'px';n.el.style.setProperty('--radius',n.sr+'px');n.el.style.setProperty('--node-label-zoom',level===root?zoom:1);n.el.style.setProperty('--label-gap',(width<650?12:19)*(level===root?zoom:1)+'px');n.el.style.opacity=opacity;n.el.style.visibility=opacity<.02?'hidden':'visible'}}
 function renderTravel(now){
   const t=travel,p=clamp((now-t.start)/t.duration),u=t.kind==='in'?p:1-p;
   if(p>=.55&&!t.switched)switchLevel();
@@ -808,7 +824,7 @@ function render(now){
   placePanel();drawCompanion(dt);drawChessSatellite();renderGuide();system.chess?.render?.(ctx,now,{zoom,pan,paused});renderMedia(now);drawChatSatellite(now);drawLiveMorph(now);requestAnimationFrame(render);
 }
 function setPaused(value){paused=value;$('pause').setAttribute('aria-pressed',String(value));$('pause').setAttribute('aria-label',value?t('motion.resume'):t('motion.pause'));$('pause').title=value?t('motion.resume'):t('motion.pause');$('pause').innerHTML=value?'<svg viewBox="0 0 24 24"><path d="m9 5 10 7-10 7Z"/></svg>':'<svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg>';$('motion-status').textContent=value?t('motion.paused'):t('motion.running');document.querySelector('.live-dot').style.background=value?'#7d8790':'var(--mint)'}
-function changeZoom(amount){if(travel||systemTravel)return;targetZoom=clamp(targetZoom+amount,.65,1.6);syncZoomUI()}
+function changeZoom(amount){if(travel||systemTravel)return;targetZoom=clamp(targetZoom+amount,.5,2);syncZoomUI()}
 $('pause').addEventListener('click',()=>setPaused(!paused));$('back').addEventListener('click',goBack);$('zoom-in').addEventListener('click',()=>changeZoom(.1));$('zoom-out').addEventListener('click',()=>changeZoom(-.1));
 $('reset').addEventListener('click',()=>{if(travel||systemTravel)return;pan={x:0,y:0};if(panelOpen){panelWorld.x=(width<650?24:width-366)-width/2;panelWorld.y=Math.max(100,height*.32)-height*.53}targetZoom=1;changeZoom(0)});
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();if(travel||systemTravel)return;if(level.system){exitSystem();return}if(stack.length)goBackTo(0);else{pan={x:0,y:0};targetZoom=1;changeZoom(0)}});
@@ -975,5 +991,5 @@ function setOwnerGames(owner,games){
 
 $('companion-target').setAttribute('aria-label',t('guide.open'));
 $('level-title').setAttribute('tabindex','-1');resize();nodes=instantiate(root);bindNodes();updateUI();setPaused(paused);say(t('guide.journey'),root.intro,'welcome',12000);requestAnimationFrame(render);
-return {refreshLanguage,setOwnerGames,dispose(){disposed=true;ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
+return {refreshLanguage,setOwnerGames,openChess,dispose(){disposed=true;ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
 }

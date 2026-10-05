@@ -1,4 +1,11 @@
 export const es = {
+  "account.node": "Mi cuenta",
+  "account.open": "Abrir Mi cuenta",
+  "account.signedAs": "Sesión iniciada como {email}",
+  "auth.signedIn": "Sesión iniciada",
+  "chat.errorRate": "Límite de mensajes alcanzado. Espera para volver a enviar.",
+  "chat.errorLLM": "Nexo no está disponible ahora. Intenta más tarde.",
+  "chat.errorInternal": "No se pudo completar la solicitud. Intenta otra vez.",
   "auth.intro": "Accede para jugar una partida con Kirbith.",
   "owner.previous": "Anterior",
   "owner.next": "Siguiente",

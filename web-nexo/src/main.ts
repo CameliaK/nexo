@@ -1,3 +1,5 @@
+import { createAccountNode } from './auth/account';
+import { LoginContinuation } from './auth/continuation';
 import { AccountChess, errorText, chessGate, chessNode } from './auth/session';
 import { createAccessPanel } from './auth/panel';
 import { t, translateUI, languageStore } from './i18n';
@@ -34,16 +36,20 @@ async function start() {
   const reconnect=()=>{if(stopped||reconnectTimer)return;reconnectTimer=setTimeout(async()=>{reconnectTimer=undefined;try{await backend.connect()}catch{reconnectDelay=Math.min(15000,reconnectDelay*2);reconnect()}},reconnectDelay)};
   let chats: Chats;
   const account = new AccountChess(backend);
-  const chess = createChessUI(account);
+  let accountNode:ReturnType<typeof createAccountNode>;
+  let storage:Storage|undefined;try{storage=localStorage}catch{/* In-memory continuation. */}
+  const continuation=new LoginContinuation(storage);
+  const chess = createChessUI(account,()=>accountNode.open());
   const media = createMediaUI();
   const universe = createUniverse({ architecture, simulated: setup.simulated, traces, portal, positions: systemPositions(architecture), connection: () => connection,
     chess,
     chessAccess:()=>chessNode(account),
-    onChessAccess:()=>{if(chessGate(account)==='login'){access.open();return false}if(!account.available||account.error)void account.refresh();account.selectPlayer();return true},
+    onChessAccess:()=>{if(chessGate(account)==='login'){continuation.requestChess();access.open();return false}if(!account.available||account.error)void account.refresh();account.selectPlayer();return true},
     onOwnerGame:(id:string,origin:any,provider:any)=>{if(account.selectOwner(id))chess.open(origin,provider)},
     chessNodeVisible: CHESS_NODE_VISIBLE, media,
     onLiveOpen:()=>chats.openLive(),onSceneChanged:()=>chats?.sceneChanged(),onDiscard:(id:string)=>void chats.discard(id),onEscape:()=>chats.escape() });
-  const access=createAccessPanel(account,{simulatedLink:setup.development?.simulatedLink,onRoute:()=>{if(!welcome.element.hidden)welcome.close()},onIdentity:()=>{chats.resetIdentity();void chats.connection(connection)}});
+  const access=createAccessPanel(account,{simulatedLink:setup.development?.simulatedLink,onAccount:()=>accountNode.open(),onSignedIn:()=>{if(continuation.takeChess())universe.openChess()},onRoute:()=>{if(!welcome.element.hidden)welcome.close()},onIdentity:()=>{chats.resetIdentity();void chats.connection(connection)}});
+  accountNode=createAccountNode(account,()=>access.open());
   let identityKey='guest';
   const stopAccount=account.subscribe(()=>{const key=account.me.mode+':'+(account.me.email_hint||'');if(key!==identityKey){chats?.resetIdentity();identityKey=key}universe.setOwnerGames(account.me.mode==='owner',account.ownerGames)});
   welcome.attachUniverse(()=>universe.firstRootNode());
@@ -89,6 +95,6 @@ async function start() {
   access.readRoute();
   try { await backend.connect(); } catch { portal.connection('closed'); }
   await account.refresh();
-  addEventListener('pagehide', event => { if(event.persisted)return;stopped=true;clearTimeout(transitionTimer);stopDevelopment?.();stopAccount();account.dispose();access.dispose();stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();clearTimeout(reconnectTimer);stopEvents(); stopConnection(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
+  addEventListener('pagehide', event => { if(event.persisted)return;stopped=true;clearTimeout(transitionTimer);stopDevelopment?.();stopAccount();accountNode.dispose();account.dispose();access.dispose();stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();clearTimeout(reconnectTimer);stopEvents(); stopConnection(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
 }
 start().catch(error => { console.error(error);document.getElementById('announcement')!.textContent=t('app.startFailed'); });

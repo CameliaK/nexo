@@ -22,7 +22,7 @@ interface Animation { move:Move; before:PositionPiece[]; start:number; duration:
 interface Morph { opening:boolean; start:number; duration:number; source:Triangle[]; color:number[] }
 interface Drag { from:Square; id:number; start:Point; current:Point; moved:boolean }
 
-export function createChessUI(remote?: AccountChess) {
+export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   const game=new ChessGame();
   const dialog=document.createElement('section');dialog.className='chess-scene';dialog.id='chess-scene';dialog.hidden=true;
   dialog.tabIndex=-1;
@@ -130,20 +130,13 @@ export function createChessUI(remote?: AccountChess) {
   }
   const online=document.createElement('div');online.className='chess-online';
   const note=$('.chess-local-note'),remoteError=document.createElement('p');remoteError.className='chess-server-error';remoteError.setAttribute('role','status');
-  const account=document.createElement('details');account.className='chess-account';
-  const accountTitle=document.createElement('summary');const accountLabel=document.createElement('label'),accountInput=document.createElement('input'),accountText=document.createElement('span');accountInput.type='checkbox';accountLabel.append(accountInput,accountText);
-  const accountHelp=document.createElement('p'),logout=document.createElement('button'),remove=document.createElement('button'),resign=document.createElement('button');
-  logout.type=remove.type=resign.type='button';resign.className='chess-resign';
-  account.append(accountTitle,accountLabel,accountHelp,logout,remove);note.before(online,remoteError,account);
-  if(remote){
-    $('.chess-actions').append(resign);
-    accountInput.addEventListener('change',()=>{accountInput.disabled=true;void remote.setNotifications(accountInput.checked).finally(()=>accountInput.disabled=false)});
-    logout.addEventListener('click',()=>void remote.signOut());
-    remove.addEventListener('click',()=>showPopover(t('account.deleteTitle'),t('account.deleteDetail'),[{label:t('account.delete'),action:()=>void remote.signOut(true)}]));
-    resign.addEventListener('click',()=>showPopover(t('chess.resignTitle'),t('chess.resignDetail'),[{label:t('chess.resign'),action:()=>void remote.resign()}]));
-  }
+  const sessionLine=document.createElement('p');sessionLine.className='chess-session-line';
+  const sessionText=document.createElement('span'),accountLink=document.createElement('button');accountLink.type='button';accountLink.className='chess-account-link';accountLink.addEventListener('click',()=>openAccount?.());sessionLine.append(sessionText,accountLink);
+  const resign=document.createElement('button');resign.type='button';resign.className='chess-resign';
+  note.before(online,remoteError,sessionLine);
+  if(remote){$('.chess-actions').append(resign);resign.addEventListener('click',()=>showPopover(t('chess.resignTitle'),t('chess.resignDetail'),[{label:t('chess.resign'),action:()=>void remote.resign()}]))}
   function refreshOnline(){
-    online.hidden=account.hidden=remoteError.hidden=!remote;
+    online.hidden=sessionLine.hidden=remoteError.hidden=!remote;
     if(!remote)return;
     $('.chess-local').textContent=t('chess.online');note.textContent='';
     const record=remote.game;
@@ -151,8 +144,8 @@ export function createChessUI(remote?: AccountChess) {
     $('.chess-status-detail').textContent=record?.status&&record.status!=='active'?t(('chess.result.'+record.status) as 'chess.result.checkmate'):record&&game.check?t('chess.check'):!record?t('chess.chooseDetail'):'';
     dialog.classList.toggle('chess-ended',!!record&&record.status!=='active');dialog.setAttribute('aria-busy',String(remote.busy));
     remoteError.textContent=remote.error?errorText(remote.error):'';remoteError.hidden=!remote.error;
-    accountTitle.textContent=t('account.title')+' · '+(remote.me.email_hint||'');accountText.textContent=t('account.emailNotifications');accountInput.checked=remote.notifications;accountHelp.textContent=t('account.notificationsHelp');logout.disabled=remove.disabled=remote.busy;logout.textContent=t('account.logout');remove.textContent=t('account.delete');
-    account.hidden=remote.me.mode==='guest';resign.textContent=t('chess.resign');resign.hidden=!record||record.status!=='active';resign.disabled=remote.busy;
+    sessionLine.hidden=remote.me.mode==='guest';sessionText.textContent=t('account.signedAs',{email:remote.me.email_hint||''});accountLink.textContent=t('account.node');
+    resign.textContent=t('chess.resign');resign.hidden=!record||record.status!=='active';resign.disabled=remote.busy;
     $('.chess-restart').hidden=!!remote.ownerId;($<HTMLButtonElement>('.chess-restart')).disabled=remote.busy||record?.status==='active';
     $('.chess-claim').hidden=true;
     online.replaceChildren();
@@ -426,7 +419,7 @@ export function createChessUI(remote?: AccountChess) {
     }else game.reset();
     if(selected&&!remote.canMove)selected=null;
     refresh();
-    if(active&&remote.me.mode==='guest')close();
+    if(active&&remote.me.mode==='guest'&&remote.available)close();
   });
   return {refreshLanguage(){refresh();translateUI(dialog);syncBoard()},open,render,progress,isOpen:()=>active,closeForNavigation:(fn:()=>void)=>{queuedExit=fn;close()},setOnClosed:(fn:()=>void)=>{onClosed=fn},dispose(){stopRemote?.();disposed=true;removeEventListener('resize',onResize);removeEventListener('blur',onBlur);removeEventListener('keydown',onEscape);reduced.removeEventListener('change',onMotion);document.body.classList.remove('is-chess');dialog.remove()}};
 }

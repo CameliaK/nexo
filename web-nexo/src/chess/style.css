@@ -41,3 +41,6 @@ body.is-chess .node-name{font-size:10px;color:#92b1a5}body.is-chess .node-label{
 @media(max-height:720px){.chess-captures{flex-wrap:nowrap;overflow-x:auto;pointer-events:auto;scrollbar-width:thin}.chess-captures span{flex-shrink:0}}
 .chess-scene[data-density=compact] .chess-heading h2{font-size:13px;margin:4px 0}
 .chess-scene[data-density=compact] .chess-local,.chess-scene[data-density=compact] .chess-help{display:none}
+
+.floating-chess-caption{transform:translateX(-50%) scale(var(--node-label-zoom,1));transform-origin:50% 0;top:calc(100% + var(--caption-gap,10px));width:150px;white-space:normal}
+@media(max-width:650px){.floating-chess-caption{width:100px}}

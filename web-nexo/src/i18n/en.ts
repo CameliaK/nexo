@@ -1,5 +1,12 @@
 import type { UIKey } from './es';
 export const en = {
+  "account.node": "Account",
+  "account.open": "Open Account",
+  "account.signedAs": "Signed in as {email}",
+  "auth.signedIn": "Signed in",
+  "chat.errorRate": "Message limit reached. Wait before sending again.",
+  "chat.errorLLM": "Nexo is unavailable right now. Try again later.",
+  "chat.errorInternal": "Could not complete the request. Please try again.",
   "auth.intro": "Sign in to play a game against Kirbith.",
   "owner.previous": "Previous",
   "owner.next": "Next",

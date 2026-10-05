@@ -5,18 +5,14 @@
 .access-glass p { line-height:1.6;font-size:14px; }
 .access-glass label { display:grid;gap:8px;font-size:13px; }
 .access-glass input { width:100%;box-sizing:border-box;border:1px solid #47665b;background:#101c23;color:#d8eee2;padding:12px;font:inherit; }
-.access-glass button,.chess-account button,.chess-online button { cursor:pointer;font:inherit;color:#c5e8d7;border:1px solid #39564d;background:rgba(22,43,45,.8);padding:10px 13px; }
+.access-glass button,.chess-online button { cursor:pointer;font:inherit;color:#c5e8d7;border:1px solid #39564d;background:rgba(22,43,45,.8);padding:10px 13px; }
 .access-glass form>button,.access-glass>button:not(.access-close) { width:100%;margin-top:14px; }
 .access-glass .access-close { position:absolute;right:14px;top:12px;background:none;border:0;font-size:24px;width:40px;height:40px; }
 .access-status { min-height:24px;color:#e7c99a; }
 .access-glass .access-privacy { font-size:12px;color:#8fa89e; }
 .access-glass button:disabled { cursor:wait;opacity:.5; }
-.access-glass :focus-visible,.chess-account :focus-visible,.chess-online :focus-visible { outline:2px solid #aef1d2;outline-offset:3px; }
-.chess-account { margin-top:10px;padding-top:10px;border-top:1px solid rgba(174,241,210,.16);font-size:12px; }
-.chess-account summary { cursor:pointer;overflow-wrap:anywhere; }
-.chess-account label { display:flex;gap:7px;align-items:start;line-height:1.5;margin:12px 0 5px; }
-.chess-account p,.chess-online p { line-height:1.5;font-size:11px;color:#91ada1; }
-.chess-account button { margin:5px 6px 0 0;font-size:11px; }
+.access-glass :focus-visible,.chess-online :focus-visible { outline:2px solid #aef1d2;outline-offset:3px; }
+.chess-online p { line-height:1.5;font-size:11px;color:#91ada1; }
 .chess-online { display:grid;gap:8px; }
 .chess-online button { font-size:12px; }
 .chess-server-error { color:#ecc196;font-size:12px;line-height:1.5; }
@@ -29,8 +25,25 @@
 @keyframes chess-incoming { 50% { filter:drop-shadow(0 0 9px rgba(174,241,210,.7)); } }
 @media(max-width:600px) { .access-glass { padding:24px 18px; }.access-glass h2 { font-size:23px; } }
 @media(prefers-reduced-motion:reduce) { .floating-chess.has-chess-unread,.node-target.is-owner-turn .node-index { animation:none; } }
-.chess-scene[data-layout=stacked] .chess-account,.chess-scene[data-layout=stacked] .chess-online,.chess-scene[data-layout=stacked] .chess-server-error { grid-column:1/-1; }
+.chess-scene[data-layout=stacked] .chess-online,.chess-scene[data-layout=stacked] .chess-server-error { grid-column:1/-1; }
 .owner-pagination { position:fixed;right:20px;bottom:80px;z-index:12;display:flex;align-items:center;gap:10px;color:#a8cabb;font-size:12px;padding:8px;background:#0d1d23eb;border:1px solid #aef1d233; }
 .owner-pagination[hidden] { display:none; }
 .owner-pagination button { font:inherit;padding:8px;color:#c5e8d7;background:#172b2e;border:1px solid #39564d;cursor:pointer; }
 .owner-pagination button:disabled { opacity:.4;cursor:default; }
+.account-node { touch-action:manipulation;position:fixed;left:157px;bottom:30px;width:50px;height:50px;z-index:45;display:grid;place-items:center;isolation:isolate;background:none;border:0;color:var(--mint);font:500 9px 'Space Grotesk',sans-serif; }
+.account-node svg { position:absolute;inset:0;width:100%;height:100%;fill:#10251c77;stroke:currentColor;stroke-width:.9;opacity:.6; }
+.account-node span { z-index:1;max-width:40px;line-height:1.3; }
+.account-node:hover svg,.account-node:focus-visible svg { opacity:1; }
+.account-node:focus-visible { outline:1px solid var(--mint);outline-offset:4px; }
+.account-glass .account-notifications { display:flex;align-items:start;gap:10px; }
+.account-notifications input { width:18px;height:18px;flex:none;margin:2px 0; }
+.account-settings button,.account-confirmation button { width:100%;margin-top:12px; }
+.account-email { overflow-wrap:anywhere; }
+.chess-session-line { font-size:11px;line-height:1.5;overflow-wrap:anywhere;color:#91ada1; }
+.chess-session-line button.chess-account-link { display:block;margin-top:5px;padding:3px 0;border:0;background:none;text-decoration:underline;font-size:11px; }
+.session-notice { position:fixed;z-index:90;top:110px;right:24px;max-width:calc(100% - 48px);padding:10px 16px;border:1px solid #aef1d244;background:#102520ec;color:#c5e8d7;font-size:13px;pointer-events:none; }
+.session-notice[hidden] { display:none; }
+footer .scene-info { margin-left:175px; }
+@media(max-width:650px){.account-node{left:126px;bottom:16px;width:42px;height:42px;font-size:8px}footer .scene-info{margin-left:0}.session-notice{top:80px}.chess-scene[data-layout=stacked] .chess-session-line{grid-column:1/-1}}
+
+@media(max-width:380px){.language-node{bottom:77px}.welcome-help,.account-node{bottom:80px}footer .scene-info{bottom:150px}footer .instruction{display:none}}

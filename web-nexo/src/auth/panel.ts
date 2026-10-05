@@ -2,7 +2,7 @@ import { t, languageStore } from '../i18n';
 import { AccountChess, errorText } from './session';
 import { AccessState, accessRoute, type AccessRoute } from './access';
 
-export function createAccessPanel(session: AccountChess, options: { document?: Document; onIdentity?: () => void; onRoute?: () => void; simulatedLink?: () => string | null } = {}) {
+export function createAccessPanel(session: AccountChess, options: { document?: Document; onIdentity?: () => void; onRoute?: () => void; simulatedLink?: () => string | null; onSignedIn?: () => void; onAccount?: () => void } = {}) {
   const doc = options.document || document;
   const root = doc.createElement('section'); root.className = 'access-overlay'; root.hidden = true;
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'access-title');
@@ -21,11 +21,15 @@ export function createAccessPanel(session: AccountChess, options: { document?: D
   form.append(label, send); box.append(close, title, detail, form, google, confirm, status, privacy); root.append(box); doc.body.append(root);
   const simulatedLink=doc.createElement('button');simulatedLink.type='button';
   if(options.simulatedLink){box.append(simulatedLink);simulatedLink.onclick=()=>{const link=options.simulatedLink?.();if(link)location.hash=link}}
-  let previous: HTMLElement | null = null;
+  const notice=doc.createElement('p');notice.className='session-notice';notice.hidden=true;notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');doc.body.append(notice);
+  let noticeTimer:ReturnType<typeof setTimeout>|undefined;
+  let previous: HTMLElement | null = null, accessRequested = false;
   const locked = new Map<HTMLElement, boolean>();
   const state = new AccessState(session.backend, render, async () => { options.onIdentity?.(); await session.refresh(); });
   function render() {
     const kind = state.route.kind, login = kind === 'login', busy = state.status === 'sending', success = state.status === 'success';
+    if(!notice.hidden)notice.textContent=t('auth.signedIn');
+    if(session.me.mode!=='guest'&&kind!=='unsubscribe'){title.textContent=detail.textContent=status.textContent='';if(!root.hidden||accessRequested){accessRequested=false;completeSignIn()}return}
     title.textContent = t(kind === 'unsubscribe' ? 'auth.unsubscribeTitle' : kind === 'confirm' ? 'auth.confirmTitle' : 'auth.title');
     simulatedLink.textContent=t('lab.loginLink');simulatedLink.hidden=!options.simulatedLink?.()||!login;
     close.setAttribute('aria-label', t('common.close'));
@@ -37,22 +41,30 @@ export function createAccessPanel(session: AccountChess, options: { document?: D
     google.textContent = t('auth.google');
     confirm.hidden = login || success || kind === 'done' && state.status !== 'error'; confirm.disabled = busy;
     confirm.textContent = t(kind === 'unsubscribe' ? 'auth.unsubscribe' : 'auth.confirm');
-    status.textContent = state.status === 'error' ? errorText(state.error) : busy ? t(kind === 'done' ? 'auth.exchange' : 'auth.sending') : state.status === 'sent' ? t('auth.checkEmail') + '. ' + t('auth.generic') : success ? t(kind === 'unsubscribe' ? 'auth.unsubscribed' : 'auth.success') : '';
+    status.textContent = state.status === 'error' ? errorText(state.error) : busy ? t(kind === 'done' ? 'auth.exchange' : 'auth.sending') : state.status === 'sent' ? t('auth.checkEmail') + '. ' + t('auth.generic') : success ? t(kind === 'unsubscribe' ? 'auth.unsubscribed' : 'auth.exchange') : '';
     privacy.textContent = t('auth.privacy'); privacy.hidden = !login;
     root.setAttribute('aria-busy', String(busy));
-    if (success && kind !== 'unsubscribe' && typeof history !== 'undefined') history.replaceState(null, '', location.pathname + location.search);
+    if(success&&kind==='unsubscribe'&&typeof history!=='undefined'&&accessRoute(location.hash)?.kind==='unsubscribe')history.replaceState(null,'',location.pathname+location.search);
+
   }
   function open(route: AccessRoute = { kind: 'login', credential: '' }) {
+    if(session.me.mode!=='guest'&&route.kind!=='unsubscribe'){hide();options.onAccount?.();return}
     if (root.hidden) {
       previous = doc.activeElement as HTMLElement; root.hidden = false;
       for (const child of Array.from(doc.body.children) as HTMLElement[]) if (child !== root) { locked.set(child, child.inert); child.inert = true; }
     }
-    state.navigate(route); (route.kind === 'login' ? input : route.kind === 'done' ? close : confirm).focus({ preventScroll: true });
+    accessRequested=route.kind!=='unsubscribe';state.navigate(route); (route.kind === 'login' ? input : route.kind === 'done' ? close : confirm).focus({ preventScroll: true });
   }
   function hide() {
-    root.hidden = true; for (const [element, inert] of locked) element.inert = inert; locked.clear();
-    if (previous?.isConnected) previous.focus({ preventScroll: true });
+    const wasOpen=!root.hidden;root.hidden = true; for (const [element, inert] of locked) element.inert = inert; locked.clear();
+    if (wasOpen&&previous?.isConnected) previous.focus({ preventScroll: true });
   }
+  function completeSignIn(){
+    hide();notice.hidden=false;notice.textContent=t('auth.signedIn');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{notice.hidden=true},4000);
+    if(typeof history!=='undefined')history.replaceState(null,'',location.pathname+location.search);
+    options.onSignedIn?.();
+  }
+  const stopSession=session.subscribe(render);
   form.addEventListener('submit', event => { event.preventDefault(); void state.send(input.value); });
   google.addEventListener('click', () => void state.google()); confirm.addEventListener('click', () => void state.confirm()); close.addEventListener('click', hide);
   root.addEventListener('click', event => { if (event.target === root) hide(); });
@@ -73,5 +85,5 @@ export function createAccessPanel(session: AccountChess, options: { document?: D
   addEventListener('hashchange', routeChanged);
   const stopLanguage = languageStore.subscribe(render); const timer = setInterval(() => { if (!root.hidden) render(); }, 500);
   render();
-  return { open, close: hide, readRoute: routeChanged, state, element: root, dispose() { state.dispose(); hide(); clearInterval(timer); stopLanguage(); removeEventListener('hashchange', routeChanged); doc.removeEventListener('keydown', onKey, true);doc.removeEventListener('focusin',onFocus,true); root.remove(); } };
+  return { open, close: hide, readRoute: routeChanged, state, element: root, dispose() { state.dispose(); hide(); clearInterval(timer);clearTimeout(noticeTimer);stopSession();notice.remove(); stopLanguage(); removeEventListener('hashchange', routeChanged); doc.removeEventListener('keydown', onKey, true);doc.removeEventListener('focusin',onFocus,true); root.remove(); } };
 }

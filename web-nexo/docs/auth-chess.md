@@ -42,3 +42,33 @@ panel cerrado. Ninguna de estas herramientas se incluye en producción.
 
 La cuenta permite modificar los avisos, cerrar sesión y confirmar su eliminación.
 El mock guarda sesión, partida y preferencias para comprobar una recarga.
+
+
+## Mi cuenta y acceso
+
+El nodo fijo «Mi cuenta» / «Account» está junto a idioma y ayuda. Para invitados
+abre el acceso; para usuarios muestra correo enmascarado, avisos y cierre de sesión,
+con confirmación antes de borrar la cuenta. Las preferencias y sus errores son
+independientes de la disponibilidad del ajedrez. El tablero solo incluye la línea
+de sesión y un enlace a Mi cuenta.
+
+Después del enlace o Google, el acceso se cierra y aparece un aviso breve. Si se
+inició desde el candado, abre el ajedrez, incluido su estado «Disponible pronto».
+La intención se guarda durante 15 minutos en `nexo.login.continue` para sobrevivir
+al redireccionamiento o al enlace en otra pestaña; se consume una sola vez.
+
+## Nodos y errores de chat
+
+Ajedrez, Mi panel y los nodos generados tienen posiciones en el mundo. Las zonas
+libres se calculan al cambiar contenido, idioma o tamaño; el pan y zoom (50–200 %)
+solo proyectan esas posiciones y sus etiquetas. Ajedrez y Mi panel tienen prioridad
+en la franja inferior; cuando hay muchos nodos, el mundo se extiende hacia abajo
+y se llega a los restantes con pan, sin forzar solapamientos. La deriva se detiene
+con movimiento reducido. El chat en vivo sigue reservando un espacio libre sobre
+la proyección del mundo y mantiene su posición durante hover/foco.
+
+Los errores de chat se traducen por código (`busy`, `rate_limited`,
+`llm_unavailable`, `internal`), sin publicar el mensaje interno del servidor.
+Un 409 se presenta como consulta en curso. Cada chat tiene su propio enfriamiento;
+los 429 respetan `Retry-After`. Un `run.error` con `retryable: false` no ofrece
+reintento, incluso cuando el WS llega antes de la aceptación HTTP.
