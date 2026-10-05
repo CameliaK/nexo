@@ -34,6 +34,9 @@ type Handler struct {
 	Limiter      *ratelimit.Limiter
 	AgentURL     string
 	MovesPerHour int
+
+	// Email notice to the player when the owner moves or resigns (notify.go).
+	Notifier *Notifier
 }
 
 // agentReply is the agent's answer: the status and the raw JSON body, which
@@ -230,11 +233,11 @@ func (h *Handler) OwnerMove(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.action(w, r, h.newRun(r), "/owner/games/"+url.PathEscape(r.PathValue("id"))+"/move",
-		"Validando jugada", "received", map[string]any{"uci": body.UCI}, nil)
+		"Validando jugada", "received", map[string]any{"uci": body.UCI}, h.ownerActed(false))
 }
 
 // POST /api/v1/owner/chess/games/{id}/resign
 func (h *Handler) OwnerResign(w http.ResponseWriter, r *http.Request) {
 	h.action(w, r, h.newRun(r), "/owner/games/"+url.PathEscape(r.PathValue("id"))+"/resign",
-		"Abandono", "received", map[string]any{}, nil)
+		"Abandono", "received", map[string]any{}, h.ownerActed(true))
 }
