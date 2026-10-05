@@ -6,14 +6,21 @@ it and publishes the game events:
 - owner.chess → events:owner, on every change (player or owner).
 - chess.move  → events:{player visitor_id}, when the owner moves or resigns,
   whether or not the player has the page open.
+
+When the player moves, the owner also gets a Telegram notice through the
+existing n8n outbound flow ("♟ #TAG · abrir partida" + link to the panel), at
+most once per game every CHESS_NOTIFY_MINUTES. Telegram only notifies: it
+never carries moves, and the notice never carries the player's email.
 """
 
 import asyncio
 import json
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import asyncpg
+import httpx
 import redis.asyncio as aioredis
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
@@ -29,18 +36,30 @@ router = APIRouter(prefix="/internal/chess")
 _EXPIRY_EVERY_S = 3600
 
 
+@dataclass
+class TelegramNotice:
+    n8n_url: str
+    bot_token: str
+    chat_id: str
+    public_base_url: str
+    every_minutes: int
+
+
 class _State:
     rdb: aioredis.Redis | None = None
     pool: asyncpg.Pool | None = None
     max_active: int = 5
     expiry = cg.Expiry(idle_days=30, empty_hours=48)
+    telegram: TelegramNotice | None = None
 
 
 state = _State()
 
 
-def init(rdb: aioredis.Redis, pool: asyncpg.Pool, *, max_active: int, expiry: cg.Expiry) -> None:
+def init(rdb: aioredis.Redis, pool: asyncpg.Pool, *, max_active: int, expiry: cg.Expiry,
+         telegram: TelegramNotice) -> None:
     state.rdb, state.pool, state.max_active, state.expiry = rdb, pool, max_active, expiry
+    state.telegram = telegram
 
 
 async def expiry_loop() -> None:
@@ -95,6 +114,40 @@ async def _notify_owner(row, reason: str, hops: _Hops) -> None:
     await hops.start("a2", "agent", "redis", "Avisando al dueño")
     await _game_event("events:owner", "owner.chess", game, len(game["moves"]) + 1, reason=reason)
     await hops.end("a2", "agent", "redis")
+
+
+async def _telegram_owner(row, hops: _Hops) -> None:
+    """Notice to the owner on Telegram, at most once per game per window. The
+    window is claimed before sending (two quick moves never both notify) and
+    released if the send fails."""
+    tg = state.telegram
+    if not tg or not tg.bot_token or not tg.chat_id:
+        return
+    key = f"chess:notify:{row['id']}"
+    if not await state.rdb.set(key, 1, nx=True, ex=tg.every_minutes * 60):
+        return
+    await hops.start("a3", "agent", "n8n", "Aviso al dueño")
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.post(tg.n8n_url, json={
+                "kind": "chess",
+                "tag": row["tag"],
+                "link": f"{tg.public_base_url}/#/owner/chess?game={row['id']}",
+                "telegram_bot_token": tg.bot_token,
+                "telegram_chat_id": tg.chat_id,
+            })
+        ok = resp.status_code == 200 and resp.json().get("ok") is True
+    except Exception as exc:
+        log.error("chess: telegram notice tag=%s failed: %s", row["tag"], exc)
+        ok = False
+    if not ok:
+        await state.rdb.delete(key)
+        await hops.error("a3", "agent", "n8n", "Aviso no enviado")
+        return
+    await hops.start("a4", "n8n", "owner_channel", "Telegram")
+    await hops.end("a4", "n8n", "owner_channel")
+    await hops.end("a3", "agent", "n8n")
+    log.info("chess: telegram notice sent tag=%s", row["tag"])
 
 
 async def _notify_player(row, reason: str, hops: _Hops) -> None:
@@ -156,6 +209,7 @@ async def move(body: _PlayerReq):
     except cg.ChessError as e:
         return _err(e)
     await _notify_owner(row, "move", hops)
+    await _telegram_owner(row, hops)
     return {"game": cg.player_view(row)}
 
 

@@ -72,6 +72,13 @@ async def lifespan(app: FastAPI):
         _db_pool,
         max_active=cfg.chess_max_active,
         expiry=chess_game.Expiry(idle_days=cfg.chess_expire_days, empty_hours=cfg.chess_empty_expire_hours),
+        telegram=chess_api.TelegramNotice(
+            n8n_url=cfg.n8n_live_outbound_url,
+            bot_token=cfg.telegram_bot_token,
+            chat_id=cfg.telegram_chat_id,
+            public_base_url=cfg.public_base_url,
+            every_minutes=cfg.chess_notify_minutes,
+        ),
     )
     chess_sweeper = asyncio.create_task(chess_api.expiry_loop())
     log.info("chess ready (max %d active, expire %dd idle / %dh without moves)",

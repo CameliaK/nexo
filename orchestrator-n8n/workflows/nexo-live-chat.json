@@ -24,7 +24,7 @@
       "typeVersion": 2,
       "position": [300, 300],
       "parameters": {
-        "jsCode": "const body = $('Webhook Trigger').first().json.body;\nconst label = (body.visitor_id || '????').slice(0, 4).toUpperCase();\nconst name = body.name || 'visitante';\nconst text = '#' + label + ' \\u00b7 ' + name + '\\n\\n' + body.text;\nreturn [{ json: { text, token: body.telegram_bot_token, chat_id: body.telegram_chat_id } }];"
+        "jsCode": "const body = $('Webhook Trigger').first().json.body;\n// Chess notice: only the game's #tag and the link to the owner panel (never the player's email).\n// Telegram only notifies; moves are made from the web panel.\nif (body.kind === 'chess') {\n  const tag = String(body.tag || '????').slice(0, 4).toUpperCase();\n  const text = '\\u265f #' + tag + ' \\u00b7 abrir partida\\n' + (body.link || '');\n  return [{ json: { text, token: body.telegram_bot_token, chat_id: body.telegram_chat_id } }];\n}\nconst label = (body.visitor_id || '????').slice(0, 4).toUpperCase();\nconst name = body.name || 'visitante';\nconst text = '#' + label + ' \\u00b7 ' + name + '\\n\\n' + body.text;\nreturn [{ json: { text, token: body.telegram_bot_token, chat_id: body.telegram_chat_id } }];"
       }
     },
     {
