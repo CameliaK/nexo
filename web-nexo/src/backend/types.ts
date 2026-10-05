@@ -141,8 +141,9 @@ export type ProcessStatus = "active" | "done" | "skipped";
  *  - chat:     pregunta al agente.
  *  - live_out: el visitante escribe un mensaje al dueño.
  *  - live_in:  el dueño responde (llega al visitante sin que haga nada).
+ *  - chess:    una acción de ajedrez; no requiere registrar run_id desde HTTP.
  */
-export type RunKind = "chat" | "live_out" | "live_in";
+export type RunKind = "chat" | "live_out" | "live_in" | "chess";
 
 /** Cómo terminó la ejecución. */
 export type RunOutcome = "route" | "generated" | "unknown" | "delivered" | "received";

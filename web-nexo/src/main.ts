@@ -1,3 +1,4 @@
+import { createOwnerChessRoute } from './auth/owner-route';
 import { createConnectionNotice } from './system/connection';
 import { createAccountNode } from './auth/account';
 import { LoginContinuation } from './auth/continuation';
@@ -52,6 +53,7 @@ async function start() {
   accountNode=createAccountNode(account,()=>access.open());
   let identityKey='guest';
   const stopAccount=account.subscribe(()=>{const key=account.me.mode+':'+(account.me.email_hint||'');if(key!==identityKey){chats?.resetIdentity();identityKey=key}universe.setOwnerGames(account.me.mode==='owner',account.ownerGames)});
+  const ownerRoute=createOwnerChessRoute(account,(id,isCurrent)=>{if(!welcome.element.hidden)welcome.close();return universe.openOwnerGame(id,isCurrent)});
   welcome.attachUniverse(()=>universe.firstRootNode());
   chats=new Chats(backend,universe,traces,setup.simulated);
   let transitionTimer:ReturnType<typeof setTimeout>;
@@ -94,6 +96,6 @@ async function start() {
   access.readRoute();
   try { await backend.connect(); } catch { /* RealBackend schedules its own retry. */ }
   await account.refresh();
-  addEventListener('pagehide', event => { if(event.persisted)return;clearTimeout(transitionTimer);stopDevelopment?.();stopAccount();accountNode.dispose();account.dispose();access.dispose();stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();stopEvents(); stopConnection();connectionNotice.dispose(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
+  addEventListener('pagehide', event => { if(event.persisted)return;clearTimeout(transitionTimer);stopDevelopment?.();stopAccount();accountNode.dispose();ownerRoute.dispose();account.dispose();access.dispose();stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();stopEvents(); stopConnection();connectionNotice.dispose(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
 }
 start().catch(error => { console.error(error);document.getElementById('announcement')!.textContent=t('app.startFailed'); });

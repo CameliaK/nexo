@@ -54,14 +54,19 @@ export class AccountChess {
       this.me = me; this.available = true;
       if (me.mode === 'guest') { this.notificationsReady=false;this.accountError=null;this.playerGame = null; this.ownerGames = []; this.ownerId = null; this.unread = false; }
       else {
-        const revision = this.revision;
+        const revision = this.revision, ownerSnapshot = new Map(this.ownerGames.map(game => [game.id, game]));
         const results = await Promise.allSettled([this.backend.chessGetGame(), this.backend.getNotifications(), ...(me.mode === 'owner' ? [this.backend.ownerChessGames()] : [])]);
         if (epoch !== this.epoch) return;
         const [game, settings, games] = results;
         if (game.status === 'fulfilled' && revision === this.revision) this.playerGame = game.value as ChessGame | null;
         else if (game.status === 'rejected') { if (unavailable(game.reason)) this.available = false; else this.error = game.reason; }
         if (settings.status === 'fulfilled') { this.notifications = (settings.value as { chess_email: boolean }).chess_email; this.notificationsReady=true;this.accountError=null; } else {this.notificationsReady=false;this.accountError=settings.reason}
-        if (games?.status === 'fulfilled' && revision === this.revision) this.ownerGames = games.value as OwnerChessGame[];
+        if (games?.status === 'fulfilled') {
+          // A WS update can arrive while the HTTP list is loading, including the first load.
+          const changed = new Map(this.ownerGames.filter(game => ownerSnapshot.get(game.id) !== game).map(game => [game.id, game]));
+          const loaded = games.value as OwnerChessGame[];
+          this.ownerGames = [...loaded.map(game => changed.get(game.id) || game), ...[...changed.values()].filter(game => !loaded.some(old => old.id === game.id))];
+        }
         if (games?.status === 'rejected') this.error = games.reason;
         if (me.mode !== 'owner') { this.ownerGames = []; this.ownerId = null; }
       }
@@ -131,7 +136,7 @@ export class AccountChess {
       this.notify();
     } else if (event.type === 'owner.chess' && this.me.mode === 'owner') {
       const game = event.data.game, old = this.ownerGames.find(g => g.id === game.id);
-      if (old && game.moves.length < old.moves.length) return;
+      if (old && (game.moves.length < old.moves.length || game.updated_at < old.updated_at)) return;
       if(this.ownerId===game.id)this.revision++; this.ownerGames = [game, ...this.ownerGames.filter(g => g.id !== game.id)]; this.notify();
     }
   }

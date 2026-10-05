@@ -32,6 +32,7 @@ export class EventInbox {
     run.pending.set(value.seq,value);
     while(run.pending.has(run.next)){
       const event=run.pending.get(run.next)!;run.pending.delete(run.next++);
+      if(event.type==='run.start'&&event.data.kind==='chess'){this.finish(event.run_id);return}
       if(event.type==='run.start'){run.allowed=this.known.has(event.run_id)||event.data.kind==='live_in'}
       if(!run.allowed){run.preauth.push(event);continue}
       this.deliver(event);

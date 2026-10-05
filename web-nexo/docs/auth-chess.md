@@ -100,3 +100,24 @@ esperar esa cuota. Si localStorage no está disponible, la caché funciona en me
 REST envía las credenciales solo mediante headers. WS conserva `/ws?token=…` por
 compatibilidad con el gateway actual: excepción autorizada al requisito de URL.
 No se imprimen tokens en logs ni se crean nuevas URLs con credenciales.
+
+
+## Enlaces y eventos de ajedrez
+
+`#/owner/chess?game=<id>` espera a resolver la sesión y la lista de partidas.
+Solo en modo dueño abre «Mi panel», selecciona la página que contiene esa partida
+(también en móvil) y despliega su tablero. Los IDs de la URL deben codificarse con
+`encodeURIComponent`. Invitados, usuarios, IDs ausentes y partidas no disponibles
+conservan el sitio normal; el enlace no abre acceso ni pide datos privados por sí
+mismo. Un cambio de ruta cancela la apertura pendiente.
+
+`run.start` con `kind: "chess"` habilita las trazas de esa ejecución sin registrar
+su `run_id` desde HTTP. El reproductor ordena y deduplica los hops del mismo sobre
+v2, y termina con `run.done`/`run.error`. Su actividad aparece en la ventana al
+sistema con textos ES/EN, sin abrir conversaciones ni mover la cámara.
+
+`chess.move` y `owner.chess` se procesan aparte de las trazas: su `run_id` es el ID
+de la partida, no el de una acción. Actualizan el tablero, el indicador del jugador
+y la constelación del dueño sin recargar. Los eventos del dueño recibidos durante
+la carga HTTP se conservan al llegar la lista, y un evento anterior no puede
+revertir una partida ya actualizada o abandonada.
