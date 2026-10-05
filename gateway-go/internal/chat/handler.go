@@ -13,6 +13,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"nexo/gateway/internal/auth"
+	"nexo/gateway/internal/mask"
 )
 
 var agentClient = &http.Client{Timeout: 10 * time.Second}
@@ -69,7 +70,7 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		"input":           body.Message,
 		"content_version": 3,
 	}); err != nil {
-		log.Printf("chat: publish run.start visitor=%s: %v", visitorID, err)
+		log.Printf("chat: publish run.start visitor=%s: %v", mask.ID(visitorID), err)
 		writeErr(w, http.StatusInternalServerError, "internal", "failed to publish event")
 		return
 	}
@@ -106,7 +107,7 @@ func (h *handler) callAgent(visitorID, runID, message string, seqStart int) {
 
 	resp, err := agentClient.Post(h.agentURL+"/internal/chat", "application/json", bytes.NewReader(payload))
 	if err != nil {
-		log.Printf("chat: agent call failed visitor=%s run=%s: %v", visitorID, runID, err)
+		log.Printf("chat: agent call failed visitor=%s run=%s: %v", mask.ID(visitorID), runID, err)
 		seq := seqStart
 		_ = h.pub(ctx, visitorID, "trace.hop", runID, &seq, map[string]any{
 			"hop_id": "h2", "from": "gateway", "to": "agent",
@@ -120,7 +121,7 @@ func (h *handler) callAgent(visitorID, runID, message string, seqStart int) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusAccepted {
-		log.Printf("chat: agent returned %d visitor=%s run=%s", resp.StatusCode, visitorID, runID)
+		log.Printf("chat: agent returned %d visitor=%s run=%s", resp.StatusCode, mask.ID(visitorID), runID)
 		seq := seqStart
 		_ = h.pub(ctx, visitorID, "trace.hop", runID, &seq, map[string]any{
 			"hop_id": "h2", "from": "gateway", "to": "agent",

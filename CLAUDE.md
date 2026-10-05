@@ -135,6 +135,27 @@ No des una fase por terminada solo porque compiló. El estándar es:
 4. Si la fase toca algo que el frontend consume, levantar `web-react` también y confirmar en
    el navegador con `VITE_BACKEND=real`.
 
+## Cuentas y dueño (gateway)
+
+- Tablas del gateway (migraciones propias embebidas en `gateway-go/internal/db/migrations`,
+  registradas en `gateway_migrations`): `accounts`, `identities` (`provider` es texto libre:
+  un proveedor nuevo no necesita migración) y `chess_games` (FK a `accounts` con cascada).
+- Login por enlace de correo y por Google (OIDC + PKCE). El mismo correo verificado es la
+  misma cuenta. Dueño = `OWNER_EMAIL` + proveedor en `OWNER_PROVIDERS`; si no, nadie (falla
+  cerrado). El modo sale **solo** de los claims del token validado.
+- `SMTP_TLS` falla cerrado (`starttls` obligatorio o `ssl`); solo el override de dev lo pone en
+  `none` para mailpit (UI en `localhost:8025`, nunca en producción).
+
+## Decisiones aceptadas
+
+- **El `visitor_id` canónico actúa como credencial del modo invitado.** Quien lo conozca puede
+  pedir `GET /auth/guest` con él y ver los nodos generados y el chat en vivo de esa cuenta como
+  invitado (como ya pasaba antes de las cuentas). El ajedrez y la cuenta exigen modo `user`.
+  Por eso el gateway **nunca** registra ids completos en los logs (primeros 8 caracteres, igual
+  que correos y tokens enmascarados).
+  *Endurecimiento posible para después:* rechazar `/auth/guest` para ids vinculados a una
+  cuenta, y que el frontend genere un id nuevo al cerrar sesión.
+
 ## Lecciones aprendidas
 
 - **n8n 1.123.x: Code nodes corren en vm2, que bloquea `require()`, `fetch` y `process.env`.**

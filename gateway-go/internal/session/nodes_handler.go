@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"nexo/gateway/internal/mask"
 )
 
 var nodeProxyClient = &http.Client{Timeout: 10 * time.Second}
@@ -44,7 +46,7 @@ func (h *nodesListHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprintf("%s/internal/session/nodes?visitor_id=%s", h.agentURL, visitorID)
 	resp, err := nodeProxyClient.Get(url)
 	if err != nil {
-		log.Printf("session/nodes list: agent unavailable: %v", err)
+		log.Printf("session/nodes list: agent unavailable: %v", mask.URLErr(err))
 		writeNodeErr(w, http.StatusServiceUnavailable, "internal", "agent unavailable")
 		return
 	}
@@ -72,7 +74,7 @@ func (h *nodesDeleteHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	req, _ := http.NewRequestWithContext(r.Context(), http.MethodDelete, url, nil)
 	resp, err := nodeProxyClient.Do(req)
 	if err != nil {
-		log.Printf("session/nodes delete: agent unavailable: %v", err)
+		log.Printf("session/nodes delete: agent unavailable: %v", mask.URLErr(err))
 		writeNodeErr(w, http.StatusServiceUnavailable, "internal", "agent unavailable")
 		return
 	}

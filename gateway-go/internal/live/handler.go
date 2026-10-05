@@ -14,6 +14,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"nexo/gateway/internal/auth"
+	"nexo/gateway/internal/mask"
 )
 
 var agentClient = &http.Client{Timeout: 10 * time.Second}
@@ -82,7 +83,7 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 		"kind":            "live_out",
 		"content_version": 2,
 	}); err != nil {
-		log.Printf("live/post: publish run.start visitor=%s: %v", visitorID, err)
+		log.Printf("live/post: publish run.start visitor=%s: %v", mask.ID(visitorID), err)
 		writeErr(w, http.StatusInternalServerError, "internal", "failed to publish event")
 		return
 	}
@@ -105,7 +106,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := agentClient.Get(h.agentURL + "/internal/live/messages?visitor_id=" + visitorID)
 	if err != nil {
-		log.Printf("live/get: agent unavailable: %v", err)
+		log.Printf("live/get: agent unavailable: %v", mask.URLErr(err))
 		writeErr(w, http.StatusServiceUnavailable, "internal", "agent unavailable")
 		return
 	}
@@ -127,7 +128,7 @@ func (h *Handler) callAgent(visitorID, runID, messageID, text, name string, seqS
 	})
 	resp, err := agentClient.Post(h.agentURL+"/internal/live/messages", "application/json", bytes.NewReader(payload))
 	if err != nil {
-		log.Printf("live: agent call failed visitor=%s run=%s: %v", visitorID, runID, err)
+		log.Printf("live: agent call failed visitor=%s run=%s: %v", mask.ID(visitorID), runID, err)
 		seq := seqStart
 		_ = pub(ctx, h.rdb, visitorID, "run.error", runID, &seq, map[string]any{
 			"code": "internal", "message": "No se pudo procesar el mensaje.", "retryable": true,

@@ -52,14 +52,39 @@ services:
       - PASETO_LOCAL_KEY=${PASETO_LOCAL_KEY:-}
       - TOKEN_EXPIRY=24h
       - AGENT_URL=http://agent:8000
+      - POSTGRES_URL=postgresql://nexo:${POSTGRES_PASSWORD:-nexo}@postgres:5432/nexo
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost}
+      # Cuentas
+      - USER_TOKEN_TTL=168h
+      - OWNER_TOKEN_TTL=8h
+      - OWNER_EMAIL=${OWNER_EMAIL:-}
+      - OWNER_PROVIDERS=google
+      - AUTH_EMAIL_PER_HOUR=5
+      - AUTH_EMAIL_PER_IP_HOUR=20
+      # Correo. SMTP_TLS falla cerrado: starttls (obligatorio) o ssl.
+      # Solo docker-compose.override.yml (dev, mailpit) lo pone en none.
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_TLS=${SMTP_TLS:-starttls}
+      - MAIL_FROM=${MAIL_FROM:-}
+      # Google (OIDC)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL:-}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.gateway.rule=PathPrefix(`/health`) || PathPrefix(`/auth`) || PathPrefix(`/api`) || PathPrefix(`/ws`)"
       - "traefik.http.routers.gateway.entrypoints=web"
       - "traefik.http.services.gateway.loadbalancer.server.port=8080"
     depends_on:
-      - redis
-      - agent
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      agent:
+        condition: service_started
     restart: unless-stopped
 
   agent:

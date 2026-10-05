@@ -38,6 +38,13 @@ export class Chats {
     this.timer=setInterval(()=>this.refresh(),500);this.refresh();
     if(!read('nexo.visitor_id'))save('nexo.visitor_id',crypto.randomUUID());
   }
+  private identityEpoch=0;
+  resetIdentity(){
+    this.identityEpoch++;
+    this.inbox.reset();this.runs.clear();this.liveRows.clear();this.liveHistory.replaceChildren();this.agentHistory.replaceChildren();
+    for(const id of this.generated.keys())this.universe.removeGenerated(id);this.generated.clear();this.unread.clear();this.routeQueue=[];this.updateUnread();
+    this.busy=false;this.activeRun=null;
+  }
   register(id:string,outgoing=true){this.inbox.register(id);this.traces.register(id,outgoing)}
   receive(event:BackendEvent){this.inbox.receive(event)}
   async connection(state:ConnectionState){
@@ -45,7 +52,9 @@ export class Chats {
     if(lost){const interrupted=this.busy||this.pendingSend;this.busy=false;this.pendingSend=false;this.inbox.reset();this.routeQueue=[];this.routeNotice.hidden=true;if(interrupted)this.agentError(new Error(t('chat.lost')));for(const row of this.liveRows.values())if(row.state==='sending'||row.state==='sent')this.delivery(row.message.id,'failed')}
     this.refresh();
     if(state==='open'){
+      const identityEpoch=this.identityEpoch;
       const [history,nodes]=await Promise.allSettled([this.backend.listLiveMessages(),this.backend.listGeneratedNodes()]);
+      if(identityEpoch!==this.identityEpoch||this.stopped)return;
       if(history.status==='fulfilled')for(const message of history.value.messages)this.addLive(message,'sent',true);
       if(nodes.status==='fulfilled')for(const node of nodes.value)this.acceptGenerated(node,null,true);
       this.updateUnread();

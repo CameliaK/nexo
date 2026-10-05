@@ -148,6 +148,10 @@ export type RunKind = "chat" | "live_out" | "live_in";
 export type RunOutcome = "route" | "generated" | "unknown" | "delivered" | "received";
 
 export type ErrorCode =
+  | "login_required"
+  | "forbidden"
+  | "not_your_turn"
+  | "illegal_move"
   | "rate_limited"
   | "unauthorized"
   | "invalid_request"
@@ -251,9 +255,16 @@ export type BackendEvent =
   | LiveMessageEvent
   | LiveDeliveryEvent
   | RunDoneEvent
-  | RunErrorEvent;
+  | RunErrorEvent
+  | ChessMoveEvent
+  | OwnerChessEvent;
+
+export type ChessMoveEvent = Envelope<"chess.move", { game: ChessGame }>;
+export type OwnerChessEvent = Envelope<"owner.chess", { game: OwnerChessGame; reason: "new" | "move" | "resign" }>;
 
 export const EVENT_TYPES = [
+  "chess.move",
+  "owner.chess",
   "run.start",
   "process.step",
   "trace.hop",
@@ -273,6 +284,13 @@ export const EVENT_TYPES = [
 export function isBackendEvent(x: unknown): x is BackendEvent {
   if (typeof x !== "object" || x === null) return false;
   const e = x as Record<string, unknown>;
+  if (e.type === 'chess.move' || e.type === 'owner.chess') {
+    const data = e.data as { game?: ChessGame; reason?: string } | undefined;
+    return !!data?.game && typeof data.game.id === 'string' && typeof data.game.fen === 'string' &&
+      Array.isArray(data.game.moves) && (data.game.color === 'w' || data.game.color === 'b') &&
+      ['player', 'owner'].includes(data.game.turn) && ['active', 'checkmate', 'stalemate', 'draw', 'resigned'].includes(data.game.status) &&
+      (e.type !== 'owner.chess' || typeof (data.game as OwnerChessGame).tag === 'string' && typeof (data.game as OwnerChessGame).player_hint === 'string' && ['new', 'move', 'resign'].includes(data.reason || ''));
+  }
   return (
     e.v === CONTRACT_VERSION &&
     typeof e.type === "string" &&
@@ -344,7 +362,36 @@ export class BackendError extends Error {
 
 export type ConnectionState = "connecting" | "open" | "reconnecting" | "closed";
 
+export interface AuthMe { mode: 'guest' | 'user' | 'owner'; email_hint?: string }
+export interface Notifications { chess_email: boolean }
+export interface AuthToken { token: string; visitor_id?: string }
+/** color is the player's side, using the same w/b notation as FEN. */
+export interface ChessGame {
+  id: string; color: 'w' | 'b'; fen: string;
+  moves: { san: string; uci: string; by: 'player' | 'owner'; ts: string }[];
+  turn: 'player' | 'owner'; status: 'active' | 'checkmate' | 'stalemate' | 'draw' | 'resigned'; updated_at: string;
+}
+export interface OwnerChessGame extends ChessGame { tag: string; player_hint: string }
+
 export interface PortfolioBackend {
+  authMe(): Promise<AuthMe>;
+  requestEmailLogin(email: string, lang: 'es' | 'en'): Promise<void>;
+  verifyEmailLogin(token: string): Promise<AuthToken>;
+  startGoogleLogin(): Promise<void>;
+  exchangeCode(code: string): Promise<AuthToken>;
+  logout(): Promise<void>;
+  unsubscribe(token: string): Promise<void>;
+  getNotifications(): Promise<Notifications>;
+  setNotifications(settings: Notifications): Promise<Notifications>;
+  deleteAccount(): Promise<void>;
+  chessGetGame(): Promise<ChessGame | null>;
+  chessNewGame(color: ChessGame['color']): Promise<ChessGame>;
+  chessMove(uci: string): Promise<ChessGame>;
+  chessResign(): Promise<ChessGame>;
+  ownerChessGames(): Promise<OwnerChessGame[]>;
+  ownerChessMove(id: string, uci: string): Promise<OwnerChessGame>;
+  ownerChessResign(id: string): Promise<OwnerChessGame>;
+
   /** Obtiene el token de invitado y abre el WebSocket. Idempotente. */
   connect(): Promise<void>;
   disconnect(): void;

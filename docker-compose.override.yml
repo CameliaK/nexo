@@ -1,6 +1,8 @@
-# Auto-loaded in development: adds debug ports that must not be exposed in prod.
+# Auto-loaded in development: adds debug ports and dev-only services that must
+# not exist in prod.
 # - Traefik dashboard at localhost:8888
 # - n8n UI at localhost:5678
+# - Mailpit (captures every email the gateway sends) UI at localhost:8025
 # Production uses docker-compose.prod.yml instead of this file.
 services:
   traefik:
@@ -10,3 +12,24 @@ services:
   n8n:
     ports:
       - "5678:5678"
+
+  # SMTP 1025 stays inside the Docker network; only the UI/API is published.
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    ports:
+      - "127.0.0.1:8025:8025"
+    restart: unless-stopped
+
+  # Dev only: send through mailpit, which speaks plain SMTP. The base file
+  # defaults to SMTP_TLS=starttls (mandatory TLS) for production.
+  gateway:
+    environment:
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
+      - SMTP_TLS=none
+      - SMTP_USER=
+      - SMTP_PASS=
+      - MAIL_FROM=Nexo <no-reply@nexo.local>
+    depends_on:
+      mailpit:
+        condition: service_started

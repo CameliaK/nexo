@@ -1,3 +1,5 @@
+import { canonicalVisitorId, AUTH_TOKEN_KEY } from './identity';
+import type { AuthMe, AuthToken, Notifications, ChessGame, OwnerChessGame } from './types';
 import { t } from '../i18n';
 import { BackendError, isBackendEvent } from './types';
 import type {
@@ -30,6 +32,50 @@ export class RealBackend implements PortfolioBackend {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempt = 0;
 
+  constructor() {
+    try { this.token = localStorage.getItem(AUTH_TOKEN_KEY); this.authenticatedToken = !!this.token; } catch { /* Ephemeral session. */ }
+  }
+  private authenticatedToken = false;
+  private sessionGeneration = 0;
+  async authMe(): Promise<AuthMe> {
+    try { return await this._request('GET', '/api/v1/auth/me') as AuthMe; }
+    catch(error){if(error instanceof BackendError&&error.status===401){await this.clearIdentity();return {mode:'guest'}}throw error}
+  }
+  async requestEmailLogin(email: string, lang: 'es' | 'en') { await this._request('POST', '/auth/email/request', { email, lang }, false, true); }
+  async verifyEmailLogin(token: string) { return this.adopt(await this._request('POST', '/auth/email/verify', { token }, false, true) as AuthToken); }
+  async startGoogleLogin() { location.assign('/auth/google/login'); }
+  async exchangeCode(code: string) { return this.adopt(await this._request('POST', '/auth/exchange', { code }, false, true) as AuthToken); }
+  async unsubscribe(token: string) { await this._request('POST', '/auth/unsubscribe', { token }, false, true); }
+  async logout() { await this._request('POST', '/auth/logout'); await this.clearIdentity(); }
+  async deleteAccount() { await this._request('DELETE', '/api/v1/account'); await this.clearIdentity(); }
+  async getNotifications() { return await this._request('GET', '/api/v1/account/notifications') as Notifications; }
+  async setNotifications(settings: Notifications) { return await this._request('PUT', '/api/v1/account/notifications', settings) as Notifications; }
+  private async gameRequest(method: string, path: string, body?: unknown): Promise<ChessGame | null> {
+    const result = await this._request(method, path, body) as ChessGame | { game: ChessGame | null } | null;
+    return ((result && 'game' in result ? result.game : result) || null) as ChessGame | null;
+  }
+  async chessGetGame() { return this.gameRequest('GET', '/api/v1/chess/game'); }
+  async chessNewGame(color: ChessGame['color']) { return (await this.gameRequest('POST', '/api/v1/chess/game', { color }))!; }
+  async chessMove(uci: string) { return (await this.gameRequest('POST', '/api/v1/chess/game/move', { uci }))!; }
+  async chessResign() { return (await this.gameRequest('POST', '/api/v1/chess/game/resign'))!; }
+  async ownerChessGames() { return (await this._request('GET', '/api/v1/owner/chess/games') as { games: OwnerChessGame[] }).games; }
+  async ownerChessMove(id: string, uci: string) { return (await this.gameRequest('POST', `/api/v1/owner/chess/games/${encodeURIComponent(id)}/move`, { uci })) as OwnerChessGame; }
+  async ownerChessResign(id: string) { return (await this.gameRequest('POST', `/api/v1/owner/chess/games/${encodeURIComponent(id)}/resign`)) as OwnerChessGame; }
+  private async adopt(result: AuthToken) {
+    this.disconnect(); this.token = result.token; this.authenticatedToken = true;
+    const id = result.visitor_id || canonicalVisitorId(result.token);
+    if (id) this.visitorId = id;
+    try { localStorage.setItem(AUTH_TOKEN_KEY, result.token); if (id) localStorage.setItem(VISITOR_ID_KEY, id); } catch { /* Ephemeral identity. */ }
+    // HTTP login succeeded even if realtime is temporarily unavailable.
+    void this.connect().catch(() => this.scheduleReconnect());
+    return result;
+  }
+  private async clearIdentity() {
+    this.disconnect(); this.token = null; this.authenticatedToken = false; this.visitorId = crypto.randomUUID();
+    try { localStorage.removeItem(AUTH_TOKEN_KEY); localStorage.setItem(VISITOR_ID_KEY, this.visitorId); } catch { /* Ephemeral identity. */ }
+    void this.connect().catch(() => this.scheduleReconnect());
+  }
+
   // ── PortfolioBackend pública ───────────────────────────────────────────────
 
   async connect(): Promise<void> {
@@ -40,6 +86,7 @@ export class RealBackend implements PortfolioBackend {
 
   disconnect(): void {
     this.intentionalClose = true;
+    this.sessionGeneration++;
     if (this.reconnectTimer !== null) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -123,14 +170,16 @@ export class RealBackend implements PortfolioBackend {
   }
 
   private async _openConnection(): Promise<void> {
+    const generation = this.sessionGeneration;
     this.change('connecting');
     try {
-      this.token = await this.fetchToken();
+      if (!this.token || !this.authenticatedToken) { const token = await this.fetchToken(); if (generation !== this.sessionGeneration) return; this.token = token; }
     } catch (err) {
+      if(generation!==this.sessionGeneration)return;
       this.change('closed');
       throw err;
     }
-    await this._openWebSocket();
+    if (generation === this.sessionGeneration) await this._openWebSocket();
   }
 
   private _openWebSocket(): Promise<void> {
@@ -143,6 +192,7 @@ export class RealBackend implements PortfolioBackend {
       let opened = false;
 
       ws.onopen = () => {
+        if (this.ws !== ws) { ws.close(); resolve(); return; }
         opened = true;
         this.reconnectAttempt = 0;
         this.change('open');
@@ -150,6 +200,7 @@ export class RealBackend implements PortfolioBackend {
       };
 
       ws.onmessage = (ev: MessageEvent<string>) => {
+        if (this.ws !== ws) return;
         try {
           const msg: unknown = JSON.parse(ev.data);
           if (isBackendEvent(msg)) this.events.forEach(h => h(msg));
@@ -157,6 +208,7 @@ export class RealBackend implements PortfolioBackend {
       };
 
       ws.onclose = () => {
+        if (this.ws !== ws) { if (!opened) resolve(); return; }
         this.ws = null;
         if (!opened) reject(new BackendError('internal', t('error.connection'), 503));
         if (this.intentionalClose) { this.change('closed'); return; }
@@ -185,23 +237,19 @@ export class RealBackend implements PortfolioBackend {
     path: string,
     body?: unknown,
     retry = true,
+    publicRequest = false,
   ): Promise<unknown> {
-    if (!this.token) throw new BackendError('internal', t('error.offline'), 503);
+    if (!this.token && !publicRequest) throw new BackendError('internal', t('error.offline'), 503);
 
     const res = await fetch(path, {
       method,
+      credentials: 'same-origin',
       headers: {
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-        'Authorization': `Bearer ${this.token}`,
+        ...(!publicRequest && this.token ? { 'Authorization': `Bearer ${this.token}` } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-
-    if (res.status === 401 && retry) {
-      // Token vencido: refresca y reintenta una vez.
-      this.token = await this.fetchToken();
-      return this._request(method, path, body, false);
-    }
 
     if (!res.ok) {
       let code: ErrorCode = 'internal';
@@ -212,14 +260,22 @@ export class RealBackend implements PortfolioBackend {
         code = errBody.error.code;
         message = errBody.error.message;
       } catch { /* La respuesta puede no ser JSON en errores de infraestructura. */ }
+      if (res.status === 401 && code === 'unauthorized' && retry && !this.authenticatedToken && !publicRequest) {
+        this.token = await this.fetchToken();
+        return this._request(method, path, body, false);
+      }
       if (res.status === 429) {
         const header = res.headers.get('Retry-After');
-        if (header) retryAfterSec = Number(header);
+        if (header) retryAfterSec = /^\d+$/.test(header) ? Number(header) : Math.max(0, Math.ceil((Date.parse(header) - Date.now()) / 1000));
       }
       throw new BackendError(code, message, res.status, retryAfterSec);
     }
 
-    if (res.status === 204) return undefined;
-    return res.json();
+    if (res.status === 204 || res.status === 202) return undefined;
+    const data = await res.json();
+    if (publicRequest && data && typeof data.token === 'string') {
+      const canonical = res.headers.get('X-Visitor-Id'); if (canonical) data.visitor_id = canonical;
+    }
+    return data;
   }
 }

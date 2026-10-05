@@ -1,3 +1,5 @@
+import { MockAccount } from './mock-account';
+import type { ChessGame, Notifications } from './types';
 import { t } from '../i18n';
 import scenariosFile from '../data/mock-scenarios.json';
 import { BackendError, LIMITS, isBackendEvent } from './types';
@@ -22,7 +24,9 @@ export class MockBackend implements PortfolioBackend {
   private state: ConnectionState = 'closed';
   private chatRun: string | null = null;
   private saved: Saved = { conversation: null, messages: [], nodes: [] };
+  private account: MockAccount;
   constructor(private time: Clock = clock, private storage?: StorageLike) {
+    this.account = new MockAccount(time, event => this.events.forEach(handler => handler(event)), storage);
     try { const saved = JSON.parse(storage?.getItem('nexo.mock.session.v2') || 'null'); if (saved && Array.isArray(saved.messages) && Array.isArray(saved.nodes)) this.saved = saved; } catch { /* Storage can be unavailable. */ }
   }
   private persist() { try { this.storage?.setItem('nexo.mock.session.v2', JSON.stringify(this.saved)); } catch { /* In-memory mode remains usable. */ } }
@@ -53,6 +57,27 @@ export class MockBackend implements PortfolioBackend {
   async listLiveMessages() { return structuredClone({ conversation_id: this.saved.conversation, messages: this.saved.messages }); }
   async listGeneratedNodes() { return structuredClone(this.saved.nodes); }
   async deleteGeneratedNode(id: string) { this.saved.nodes = this.saved.nodes.filter(n => n.id !== id).map(n=>n.children?{...n,children:n.children.filter(child=>child.id!==id)}:n); this.persist(); }
+
+  authMe() { return this.account.authMe(); }
+  requestEmailLogin(email: string, lang: 'es' | 'en') { return this.account.requestEmailLogin(email, lang); }
+  verifyEmailLogin(token: string) { return this.account.verifyEmailLogin(token); }
+  startGoogleLogin() { return this.account.startGoogleLogin(); }
+  exchangeCode(code: string) { return this.account.exchangeCode(code); }
+  logout() { return this.account.logout(); }
+  unsubscribe(token: string) { return this.account.unsubscribe(token); }
+  getNotifications() { return this.account.getNotifications(); }
+  setNotifications(value: Notifications) { return this.account.setNotifications(value); }
+  async deleteAccount() { await this.account.deleteAccount(); this.saved = { conversation: null, messages: [], nodes: [] }; this.persist(); }
+  chessGetGame() { return this.account.chessGetGame(); }
+  chessNewGame(color: ChessGame['color']) { return this.account.chessNewGame(color); }
+  chessMove(uci: string) { return this.account.chessMove(uci); }
+  chessResign() { return this.account.chessResign(); }
+  ownerChessGames() { return this.account.ownerChessGames(); }
+  ownerChessMove(id: string, uci: string) { return this.account.ownerChessMove(id, uci); }
+  ownerChessResign(id: string) { return this.account.ownerChessResign(id); }
+  simulatedLink() { return this.account.simulatedLink(); }
+  simulateReply() { return this.account.simulateReply(); }
+  setOwnerMode(owner: boolean) { return this.account.setOwnerMode(owner); }
 
   /** Only the development composition root exposes this, never production UI. */
   playScenario(id: string, input = t('mock.testMessage')) {

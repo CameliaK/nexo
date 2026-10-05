@@ -68,5 +68,11 @@ export class ChessGame {
     this.claimed = true;
     return true;
   }
+  loadRemote(fen: string, moves: { uci: string }[]) {
+    const replay = new Chess();
+    try { for (const move of moves) replay.move(move.uci); this.engine = replay.fen() === fen ? replay : new Chess(fen); }
+    catch { this.engine = new Chess(fen); }
+    this.positions = [positionKey(fen)]; this.claimed = false;
+  }
   reset() { this.engine.reset(); this.positions = [positionKey(this.fen)]; this.claimed = false; }
 }

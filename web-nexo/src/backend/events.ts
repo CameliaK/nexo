@@ -24,6 +24,7 @@ export class EventInbox {
     }
   }
   receive(value:unknown){
+    if (typeof value === 'object' && value && 'type' in value && (value.type === 'chess.move' || value.type === 'owner.chess')) return;
     if(!isBackendEvent(value)||!Number.isSafeInteger(value.seq)||value.seq<1||this.closed.has(value.run_id))return;
     let run=this.runs.get(value.run_id);
     if(!run){if(this.runs.size>=64)return;run={next:1,allowed:false,pending:new Map(),preauth:[]};this.runs.set(value.run_id,run)}

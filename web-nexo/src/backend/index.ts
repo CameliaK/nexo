@@ -3,7 +3,7 @@ import { RealBackend } from './real';
 export interface BackendSetup {
   backend: PortfolioBackend;
   simulated: boolean;
-  development?: { scenarios: string[]; play: (id: string) => { run_id: string }; };
+  development?: { scenarios: string[]; play: (id: string) => { run_id: string }; simulatedLink: () => string | null; setOwnerMode: (owner: boolean) => Promise<void>; simulateReply: () => Promise<void>; };
 }
 export async function createBackend(): Promise<BackendSetup> {
   const choice = import.meta.env.VITE_BACKEND || 'mock';
@@ -12,7 +12,7 @@ export async function createBackend(): Promise<BackendSetup> {
     let storage: Storage | undefined;
     try { storage = localStorage; } catch { /* Browser privacy mode. */ }
     const backend = new MockBackend(undefined, storage);
-    return { backend, simulated: true, development: { scenarios: scenarioIds, play: id => backend.playScenario(id) } };
+    return { backend, simulated: true, development: { scenarios: scenarioIds, play: id => backend.playScenario(id), simulatedLink: () => backend.simulatedLink(), setOwnerMode: owner => backend.setOwnerMode(owner), simulateReply: () => backend.simulateReply() } };
   }
   return { backend: new RealBackend(), simulated: false };
 }

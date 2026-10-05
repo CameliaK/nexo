@@ -31,6 +31,7 @@ export class TracePlayer {
     }
   }
   receive(value: unknown) {
+    if (typeof value === 'object' && value && 'type' in value && (value.type === 'chess.move' || value.type === 'owner.chess')) return;
     if (!isBackendEvent(value) || !Number.isSafeInteger(value.seq) || value.seq < 1 || this.rejected.has(value.run_id)) return;
     const event = value;
     let run = this.runs.get(event.run_id);

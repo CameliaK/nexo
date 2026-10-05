@@ -2,9 +2,11 @@ package auth
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"regexp"
 
+	"nexo/gateway/internal/mask"
 	"nexo/gateway/internal/session"
 )
 
@@ -28,6 +30,7 @@ func (h *guestHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.sessions.Touch(r.Context(), visitorID); err != nil {
+		log.Printf("auth/guest: session touch visitor=%s: %v", mask.ID(visitorID), err)
 		writeErr(w, http.StatusInternalServerError, "internal", "session unavailable")
 		return
 	}

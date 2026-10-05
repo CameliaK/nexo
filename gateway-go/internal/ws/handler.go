@@ -10,12 +10,14 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"nexo/gateway/internal/auth"
+	"nexo/gateway/internal/mask"
 )
 
 const (
 	pingInterval  = 30 * time.Second
 	writeDeadline = 10 * time.Second
 	readDeadline  = pingInterval + 10*time.Second
+	ownerChannel  = "events:owner"
 )
 
 var upgrader = websocket.Upgrader{
@@ -40,15 +42,16 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	visitorID, err := h.tokens.Verify(tokenStr)
+	claims, err := h.tokens.VerifyClaims(r.Context(), tokenStr)
 	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
+	visitorID := claims.VisitorID
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("ws upgrade visitor=%s: %v", visitorID, err)
+		log.Printf("ws upgrade visitor=%s: %v", mask.ID(visitorID), err)
 		return
 	}
 	defer conn.Close()
@@ -63,7 +66,13 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Each connection subscribes ONLY to its visitor's channel.
 	// Publishing to events:{other_visitor_id} never reaches this connection.
-	pubsub := h.rdb.Subscribe(context.Background(), "events:"+visitorID)
+	// Owner connections — mode read from the validated token, nothing else —
+	// also get events:owner; a player's socket never subscribes to it.
+	channels := []string{"events:" + visitorID}
+	if claims.Mode == auth.ModeOwner {
+		channels = append(channels, ownerChannel)
+	}
+	pubsub := h.rdb.Subscribe(context.Background(), channels...)
 	defer pubsub.Close()
 
 	redisCh := pubsub.Channel()
@@ -82,8 +91,8 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	log.Printf("ws open visitor=%s", visitorID)
-	defer log.Printf("ws close visitor=%s", visitorID)
+	log.Printf("ws open visitor=%s mode=%s", mask.ID(visitorID), claims.Mode)
+	defer log.Printf("ws close visitor=%s", mask.ID(visitorID))
 
 	for {
 		select {

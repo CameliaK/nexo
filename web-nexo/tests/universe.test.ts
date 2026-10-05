@@ -43,7 +43,7 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
  source=source.replace("import { LivePreview, placeSatellite, satelliteFootprint } from './live-satellite.js';",'');
- source=source.replace('return {refreshLanguage,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,dispose(){');
+ source=source.replace('return {refreshLanguage,setOwnerGames,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,setOwnerGames,dispose(){');
  source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);Object.assign(sandbox.api,sandbox.universe);
  const frames=(ms=2700)=>{const end=now+ms;while(now<end){now=Math.min(end,now+50);raf(now)}};
  const enter=id=>{el('node-targets').children.find(e=>e.dataset.node===id).click();frames()};
@@ -319,4 +319,25 @@ test('Message node keeps its position on keyboard focus and recalculates safely 
  sandbox.innerWidth=390;sandbox.innerHeight=844;listeners.resize();frames(50);
  const resized=api.getChatPosition();assert.equal(api.chatTarget.hidden,false);assert.ok(resized.x>12&&resized.x<378&&resized.y>12&&resized.y<832);
  api.chatTarget.handlers.blur();api.dispose();
+});
+
+test('Guest chess lock opens access without unfolding the board; incoming badge changes neither level nor camera',()=>{
+ languageStore.set('es');const {api,frames,sandbox,chessTarget}=fixture(true);let logins=0;
+ sandbox.bridge.chessAccess=()=>({locked:true,unread:false,label:t('auth.required')});sandbox.bridge.onChessAccess=()=>{logins++;return false};frames(100);const target=chessTarget();assert.equal(target.classList.contains('is-locked'),true);assert.equal(target.querySelector('small').textContent,t('auth.required'));target.click();assert.equal(logins,1);assert.equal(sandbox.bridge.chess.isOpen(),false);
+ api.setCamera({x:83,y:-21},1.1);frames(100);const camera=JSON.stringify(api.camera()),level=api.getLevel();sandbox.bridge.chessAccess=()=>({locked:false,unread:true,label:t('chess.newMove')});frames(100);assert.equal(target.classList.contains('has-chess-unread'),true);assert.equal(JSON.stringify(api.camera()),camera);assert.equal(api.getLevel(),level);
+});
+test('Owner dashboard is a private constellation, updates in place, and disappears without changing public ids',()=>{
+ const {api,frames,enter,sandbox}=fixture(true);frames(100);const ids=[...api.records.keys()].join('|'),rootNodes=api.getNodes().length;
+ const game={id:'example',tag:'A3F2',player_hint:'k***@gmail.com',color:'w',fen:'start',moves:[{san:'e4'}],turn:'owner',status:'active',updated_at:'now'};
+ api.setOwnerGames(false,[]);assert.equal(api.getNodes().length,rootNodes);api.setOwnerGames(true,[game]);assert.equal(api.getNodes().length,rootNodes+1);const node=api.getNodes().find(n=>n.privatePanel);assert.equal(node.name,t('owner.panel'));assert.equal([...api.records.keys()].join('|'),ids);enter(node.id);assert.equal(api.getLevel().title,t('owner.games'));assert.equal(api.getNodes()[0].name,'#A3F2');assert.ok(api.getNodes()[0].el.className.includes('is-owner-turn'));
+ const camera=JSON.stringify(api.camera());api.setOwnerGames(true,[{...game,moves:[{san:'e4'},{san:'e5'}],turn:'player'}]);assert.equal(JSON.stringify(api.camera()),camera);assert.match(api.getNodes()[0].meta,/2/);let opened='';sandbox.bridge.onOwnerGame=id=>opened=id;api.getNodes()[0].el.click();assert.equal(opened,game.id);
+ api.setOwnerGames(false,[]);assert.equal(api.getLevel().id,portfolio.root.id);assert.equal(api.getNodes().length,rootNodes);assert.equal([...api.records.keys()].join('|'),ids);
+});
+
+test('Private games stay localized and mobile pages avoid crowding while preserving the focused game',()=>{
+ languageStore.set('es');const {api,frames,enter,sandbox,el,listeners}=fixture(true);frames(100);const games=Array.from({length:11},(_,i)=>({id:'game'+i,tag:String(i).padStart(4,'0'),player_hint:'k***@gmail.com',color:'w',fen:'start',moves:[],turn:'owner',status:'active'}));
+ api.setOwnerGames(true,games);enter('private_owner_panel');assert.equal(api.getNodes().length,6);api.getNodes()[0].el.focus();const focusedId=api.getNodes()[0].id;
+ languageStore.set('en');api.refreshLanguage();assert.equal(api.getLevel().title,'Games');assert.match(api.getNodes()[0].meta,/Your turn/);
+ api.setOwnerGames(true,games.map((g,i)=>i===0?{...g,moves:[{san:'e4'}]}:g));assert.equal(sandbox.document.activeElement.dataset.node,focusedId);
+ sandbox.innerWidth=390;sandbox.innerHeight=844;listeners.resize();frames(100);assert.equal(api.getNodes().length,4);const pager=el('body').children.find(n=>n.className==='owner-pagination');assert.equal(pager.hidden,false);pager.children[2].onclick();frames(100);assert.equal(api.getNodes().length,4);assert.equal(api.getNodes()[0].ownerGame.id,'game4');api.dispose();languageStore.set('es');
 });
