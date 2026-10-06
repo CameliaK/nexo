@@ -1,5 +1,5 @@
 import { GuestTokens, retryAfterMs } from './guest-token';
-import { AUTH_TOKEN_KEY } from './identity';
+import { clearLocalSession, AUTH_TOKEN_KEY } from './identity';
 import type { AuthMe, AuthToken, Notifications, ChessGame, OwnerChessGame } from './types';
 import { t } from '../i18n';
 import { BackendError, isBackendEvent } from './types';
@@ -33,6 +33,7 @@ export class RealBackend implements PortfolioBackend {
   private intentionalClose = false;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempt = 0;
+  private ticketRetryAt = 0;
 
   constructor() {
     try { this.token = localStorage.getItem(AUTH_TOKEN_KEY); this.authenticatedToken = !!this.token;if(this.authenticatedToken)this.guestTokens.clear(); } catch { /* Ephemeral session. */ }
@@ -50,6 +51,11 @@ export class RealBackend implements PortfolioBackend {
   async exchangeCode(code: string) { return this.signIn('/auth/exchange', { code }); }
   async unsubscribe(token: string) { await this._request('POST', '/auth/unsubscribe', { token }, false, true); }
   async logout() { await this._request('POST', '/auth/logout'); await this.clearIdentity(); }
+  async deleteSessionData() {
+    await this._request('DELETE', '/api/v1/session/data');
+    this.disconnect(); this.guestTokens.clear(); this.token = null; this.authenticatedToken = false; this.visitorId = null;
+    clearLocalSession();
+  }
   async deleteAccount() { await this._request('DELETE', '/api/v1/account'); await this.clearIdentity(); }
   async getNotifications() { return await this._request('GET', '/api/v1/account/notifications') as Notifications; }
   async setNotifications(settings: Notifications) { return await this._request('PUT', '/api/v1/account/notifications', settings) as Notifications; }
@@ -194,20 +200,24 @@ export class RealBackend implements PortfolioBackend {
   private async _openConnection(): Promise<void> {
     const generation = this.sessionGeneration;
     this.change('connecting');
+    if (this.ticketRetryAt > Date.now()) throw new BackendError('rate_limited', t('connection.retrying'), 429, Math.ceil((this.ticketRetryAt - Date.now()) / 1000));
     try {
-      if (!this.authenticatedToken) { const token = await this.authorization(); if (generation !== this.sessionGeneration) return; this.token = token; }
-    } catch (err) {
-      if(generation!==this.sessionGeneration)return;
-      throw err;
+      const result = await this._request('POST', '/api/v1/ws-ticket') as { ticket: string; expires_in: number };
+      if (generation !== this.sessionGeneration) return;
+      if (typeof result?.ticket !== 'string' || !result.ticket || !(result.expires_in > 0)) throw new BackendError('internal', t('error.connection'), 503);
+      await this._openWebSocket(result.ticket);
+    } catch (error) {
+      if (generation !== this.sessionGeneration) return;
+      if (error instanceof BackendError && error.status === 429 && (this.authenticatedToken || this.guestTokens.retryUntil <= Date.now())) this.ticketRetryAt = Date.now() + (error.retryAfterSec ?? 30) * 1000;
+      throw error;
     }
-    if (generation === this.sessionGeneration) await this._openWebSocket();
   }
 
-  private _openWebSocket(): Promise<void> {
+  private _openWebSocket(ticket: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(
-        `${proto}//${location.host}/ws?token=${encodeURIComponent(this.token!)}`,
+        `${proto}//${location.host}/ws?ticket=${encodeURIComponent(ticket)}`,
       );
       this.ws = ws;
       let opened = false;
@@ -251,7 +261,7 @@ export class RealBackend implements PortfolioBackend {
     const previous=this.ws;this.ws=null;previous?.close(1000);
     this.change('reconnecting');
     const base=RECONNECT_DELAYS[Math.min(this.reconnectAttempt++,RECONNECT_DELAYS.length-1)];
-    const delay=Math.max(Math.min(15000,base*(.85+Math.random()*.3)),(this.authenticatedToken?0:this.guestTokens.retryUntil-Date.now()));
+    const delay=Math.max(Math.min(15000,base*(.85+Math.random()*.3)),this.ticketRetryAt-Date.now(),(this.authenticatedToken?0:this.guestTokens.retryUntil-Date.now()));
     this.reconnectTimer=setTimeout(()=>{
       this.reconnectTimer=null;
       if(!this.intentionalClose)void this.connect().catch(()=>{});

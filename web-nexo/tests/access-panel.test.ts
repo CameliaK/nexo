@@ -13,10 +13,12 @@ function fixture(){
  const handlers=new Map<string,((event:any)=>void)[]>();
  class Element {
   children:Element[]=[];parent:Element|null=null;attributes=new Map<string,string>();handlers=new Map<string,(event:any)=>void>();
-  hidden=false;inert=false;disabled=false;className='';id='';type='';value='';name='';required=false;autocomplete='';maxLength=0;textContent='';onclick:(()=>void)|undefined;
+  dataset:Record<string,string>={};hidden=false;inert=false;disabled=false;className='';id='';type='';value='';name='';required=false;autocomplete='';maxLength=0;textContent='';onclick:(()=>void)|undefined;
   constructor(public tagName:string){}
   get isConnected():boolean{return this===doc.body||!!this.parent?.isConnected}
   append(...items:Element[]){for(const item of items){item.parent=this;this.children.push(item)}}
+  get childNodes(){return this.children}
+  replaceChildren(...items:Element[]){this.children=[];this.append(...items)}
   remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this);this.parent=null}
   setAttribute(key:string,value:string){this.attributes.set(key,value)}getAttribute(key:string){return this.attributes.get(key)||null}
   contains(target:Element):boolean{return this===target||this.children.some(child=>child.contains(target))}
@@ -28,7 +30,7 @@ function fixture(){
   click(){if(!this.disabled){this.handlers.get('click')?.({target:this});this.onclick?.()}}
  }
  const fire=(kind:string,target:Element,fields:Record<string,unknown>={})=>{const event={target,...fields,preventDefault(){},stopImmediatePropagation(){}};target.handlers.get(kind)?.(event);for(const fn of handlers.get(kind)||[])fn(event);return event};
- doc={body:new Element('body'),activeElement:null,createElement:(tag:string)=>new Element(tag),addEventListener:(kind:string,fn:(e:any)=>void)=>handlers.set(kind,[...(handlers.get(kind)||[]),fn]),removeEventListener:(kind:string,fn:(e:any)=>void)=>handlers.set(kind,(handlers.get(kind)||[]).filter(handler=>handler!==fn))};
+ doc={body:new Element('body'),activeElement:null,createElement:(tag:string)=>new Element(tag),createTextNode:(text:string)=>{const node=new Element('text');node.textContent=text;return node},addEventListener:(kind:string,fn:(e:any)=>void)=>handlers.set(kind,[...(handlers.get(kind)||[]),fn]),removeEventListener:(kind:string,fn:(e:any)=>void)=>handlers.set(kind,(handlers.get(kind)||[]).filter(handler=>handler!==fn))};
  const background=new Element('main'),previous=new Element('button');background.append(previous);doc.body.append(background);doc.activeElement=previous;
  return {doc:doc as Document,previous,background,fire};
 }
@@ -93,4 +95,13 @@ test('Chess continuation survives redirects, is consumed once and expires withou
  const first=new LoginContinuation(storage,()=>100);first.requestChess();const redirected=new LoginContinuation(storage,()=>200);assert.equal(redirected.takeChess(),true);assert.equal(redirected.takeChess(),false);
  first.requestChess();assert.equal(new LoginContinuation(storage,()=>1_000_000).takeChess(),false);
  const ephemeral=new LoginContinuation();ephemeral.requestChess();assert.equal(ephemeral.takeChess(),true);assert.equal(ephemeral.takeChess(),false);
+});
+
+test('Access privacy link stays keyboard reachable and keeps focus when the localized panel re-renders',()=>{
+ const {f,panel,dispose}=setup();
+ try{
+  panel.open();const link=panel.element.querySelector('a') as any;assert.equal(link.href,'/privacidad');link.focus();
+  languageStore.set('en');assert.equal(f.doc.activeElement,link);assert.equal(link.textContent,t('privacy.title'));
+  f.fire('keydown',link,{key:'Tab'});assert.equal(f.doc.activeElement,panel.element.querySelector('button'));
+ }finally{dispose();languageStore.set('es')}
 });

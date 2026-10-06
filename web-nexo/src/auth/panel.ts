@@ -1,3 +1,4 @@
+import { privacyNotice } from '../privacy/link';
 import { t, languageStore } from '../i18n';
 import { AccountChess, errorText } from './session';
 import { AccessState, accessRoute, type AccessRoute } from './access';
@@ -17,7 +18,8 @@ export function createAccessPanel(session: AccountChess, options: { document?: D
   const google = doc.createElement('button'); google.type = 'button';
   const confirm = doc.createElement('button'); confirm.type = 'button';
   const status = doc.createElement('p'); status.className = 'access-status'; status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
-  const privacy = doc.createElement('p'); privacy.className = 'access-privacy';
+  const privacy = privacyNotice('privacy.access', doc); privacy.className = 'access-privacy';
+  const privacyAnchor = privacy.querySelector<HTMLAnchorElement>('a')!;
   form.append(label, send); box.append(close, title, detail, form, google, confirm, status, privacy); root.append(box); doc.body.append(root);
   const simulatedLink=doc.createElement('button');simulatedLink.type='button';
   if(options.simulatedLink){box.append(simulatedLink);simulatedLink.onclick=()=>{const link=options.simulatedLink?.();if(link)location.hash=link}}
@@ -42,7 +44,7 @@ export function createAccessPanel(session: AccountChess, options: { document?: D
     confirm.hidden = login || success || kind === 'done' && state.status !== 'error'; confirm.disabled = busy;
     confirm.textContent = t(kind === 'unsubscribe' ? 'auth.unsubscribe' : 'auth.confirm');
     status.textContent = state.status === 'error' ? errorText(state.error) : busy ? t(kind === 'done' ? 'auth.exchange' : 'auth.sending') : state.status === 'sent' ? t('auth.checkEmail') + '. ' + t('auth.generic') : success ? t(kind === 'unsubscribe' ? 'auth.unsubscribed' : 'auth.exchange') : '';
-    privacy.textContent = t('auth.privacy'); privacy.hidden = !login;
+    privacy.querySelector('span')!.textContent = t('privacy.access'); privacyAnchor.textContent = t('privacy.title'); privacy.hidden = !login;
     root.setAttribute('aria-busy', String(busy));
     if(success&&kind==='unsubscribe'&&typeof history!=='undefined'&&accessRoute(location.hash)?.kind==='unsubscribe')history.replaceState(null,'',location.pathname+location.search);
 
@@ -72,7 +74,7 @@ export function createAccessPanel(session: AccountChess, options: { document?: D
     if (root.hidden) return;
     if (event.key === 'Escape') { event.preventDefault(); hide(); }
     if (event.key === 'Tab') {
-      const items = [close, input, send, google, confirm, ...(options.simulatedLink?[simulatedLink]:[])].filter(item => !item.disabled && !item.hidden && !item.closest('[hidden]'));
+      const items = [close, input, send, google, confirm, privacyAnchor, ...(options.simulatedLink?[simulatedLink]:[])].filter(item => !('disabled' in item && item.disabled) && !item.hidden && !item.closest('[hidden]'));
       const index = items.indexOf(doc.activeElement as typeof close);
       if (index < 0 || event.shiftKey && index === 0 || !event.shiftKey && index === items.length - 1) { event.preventDefault(); items[event.shiftKey ? items.length - 1 : 0]?.focus(); }
     }

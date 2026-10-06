@@ -16,6 +16,7 @@ try{
   page.on("pageerror",error=>console.error(error.message));
   await page.route('**/*',async route=>{
    const path=new URL(route.request().url()).pathname;
+   if(path==='/api/v1/ws-ticket')return route.fulfill({json:{ticket:crypto.randomUUID(),expires_in:30}});
    if(path==='/auth/guest')return route.fulfill({json:{token:'fixture-guest'}});
    if(path==='/api/v1/auth/me')return route.fulfill({json:{mode:'user',email_hint:'v***@example.com'}});
    if(path==='/api/v1/account/notifications')return route.fulfill({json:{chess_email:true}});
