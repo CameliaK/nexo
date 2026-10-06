@@ -14,7 +14,7 @@ class Config:
     telegram_bot_token: str
     telegram_chat_id: str
     route_confidence_threshold: float = 0.7
-    rag_similarity_threshold: float = 0.75
+    rag_similarity_threshold: float = 0.35
     llm_daily_calls: int = 1500
     public_base_url: str = "http://localhost"
     chess_max_active: int = 5
@@ -46,7 +46,7 @@ def load() -> Config:
             os.environ.get("ROUTE_CONFIDENCE_THRESHOLD", "0.7")
         ),
         rag_similarity_threshold=float(
-            os.environ.get("RAG_SIMILARITY_THRESHOLD", "0.75")
+            os.environ.get("RAG_SIMILARITY_THRESHOLD", "0.35")
         ),
         llm_daily_calls=int(os.environ.get("LLM_DAILY_CALLS", "1500")),
         public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://localhost").rstrip("/"),

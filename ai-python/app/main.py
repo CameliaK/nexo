@@ -63,10 +63,12 @@ async def lifespan(app: FastAPI):
     _rag_model = rag_mod.EmbeddingModel()
 
     fragment_count = await db_mod.count_fragments(_db_pool)
-    if fragment_count == 0:
-        log.info("rag_fragments is empty — running auto-ingestion")
+    stamp = await rag_mod.stored_stamp(_db_pool)
+    if fragment_count == 0 or stamp != rag_mod.ingestion_stamp():
+        log.warning("rag: re-ingesting (%d fragments stored with %s, now %s)",
+                    fragment_count, stamp, rag_mod.ingestion_stamp())
         count = await rag_mod.ingest(cfg.portfolio_path, _rag_model, _db_pool)
-        log.info("auto-ingested %d fragments", count)
+        log.warning("rag: ingested %d fragments", count)
     else:
         log.info("rag_fragments has %d fragments", fragment_count)
 
