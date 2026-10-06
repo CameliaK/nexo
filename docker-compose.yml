@@ -15,10 +15,16 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
       - "--entrypoints.web.address=:80"
+      - "--ping=true"
     ports:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
     logging: *default-logging
 
@@ -36,6 +42,11 @@ services:
 
   redis:
     image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
     logging: *default-logging
     volumes:
@@ -163,7 +174,9 @@ services:
     logging: *default-logging
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n:1
+    # Versión fijada: los flujos y activate-via-api.js están verificados con
+    # 1.123.x (Code nodes en vm2, ver CLAUDE.md). Subirla es un cambio a probar.
+    image: docker.n8n.io/n8nio/n8n:1.123.27
     environment:
       - DOCKER_API_VERSION=1.44
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-nexo-dev-change-in-prod}
@@ -190,6 +203,12 @@ services:
     depends_on:
       agent:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5678/healthz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
     restart: unless-stopped
     logging: *default-logging
 
