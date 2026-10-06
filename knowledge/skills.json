@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": 1,
+    "version": 2,
     "generated": "2026-10-06",
     "sources": [
       "portfolio-content.json (contenido v3)",
@@ -55,8 +55,7 @@
         {
           "level": "proyecto",
           "node": "aprendizaje.proyectos-academicos.fitness-app",
-          "note": "Parte del backend en Java.",
-          "needs_review": true
+          "note": "Parte del sistema (listado en el CV; el reparto entre Java y C# no está definido en el portafolio)."
         }
       ]
     },
@@ -92,8 +91,7 @@
         {
           "level": "proyecto",
           "node": "aprendizaje.proyectos-academicos.fitness-app",
-          "note": "Parte del backend en C#.",
-          "needs_review": true
+          "note": "Parte del sistema (listado en el CV; el reparto entre Java y C# no está definido en el portafolio)."
         }
       ]
     },
@@ -154,8 +152,7 @@
         {
           "level": "experiencia",
           "node": "experiencia.dgti.hermes",
-          "note": "Capa JavaScript entre el backend C# y MySQL.",
-          "needs_review": true
+          "note": "Capa en JavaScript entre el backend en C# y MySQL, a modo de gateway."
         }
       ]
     },
@@ -626,8 +623,7 @@
         {
           "level": "proyecto",
           "node": "aprendizaje.proyectos-academicos.fitness-app",
-          "note": "Comunicación entre servicios.",
-          "needs_review": true
+          "note": "Transmisión (streaming) de los videos de los ejercicios."
         }
       ]
     },

@@ -1,0 +1,70 @@
+{
+  "meta": {
+    "language": "en",
+    "note": "Content patch 2: owner's answers, 2026-10-06."
+  },
+  "updates": [
+    {
+      "id": "aprendizaje.proyectos-academicos.fitness-app",
+      "set": {
+        "architecture.components[java].what": "Part of the system built in Java.",
+        "architecture.components[csharp].what": "Part of the system built in C#.",
+        "architecture.components[grpc].what": "Streaming of the exercise videos through gRPC.",
+        "review_note": "Confirm with the project repository which part was Java and which was C#: the current split of connections is an assumption (the owner remembers Java as backend and C# as frontend, with doubts; Flutter was the mobile client)."
+      },
+      "delete": [
+        "architecture.components[java].needs_review",
+        "architecture.components[csharp].needs_review",
+        "architecture.components[grpc].needs_review"
+      ]
+    },
+    {
+      "id": "experiencia.dgti.hermes",
+      "set": {
+        "architecture.components[jsgw].what": "A JavaScript layer between the C# backend and the MySQL database, working as a gateway."
+      },
+      "delete": [
+        "needs_review",
+        "review_note",
+        "architecture.components[jsgw].needs_review"
+      ]
+    },
+    {
+      "id": "proyectos-personales.qfb-app",
+      "set": {
+        "summary": "A pharmaceutical care system that helps patients stick to their treatment.",
+        "content.body": "NKare is a pharmaceutical care and follow-up system. It helps patients stick to their treatment (adherence) and checks that they receive the right treatment. It is under construction.",
+        "keywords": [
+          "nkare",
+          "pharmaceutical care",
+          "treatment adherence",
+          "health",
+          "personal project",
+          "under construction"
+        ]
+      },
+      "delete": [
+        "needs_review",
+        "review_note"
+      ]
+    },
+    {
+      "id": "proyectos-personales.negocios-ia",
+      "set": {
+        "summary": "A business management platform with artificial intelligence.",
+        "content.body": "FleetFix helps manage businesses using artificial intelligence implementations. It is under construction.",
+        "keywords": [
+          "fleetfix",
+          "business management",
+          "artificial intelligence",
+          "personal project",
+          "under construction"
+        ]
+      },
+      "delete": [
+        "needs_review",
+        "review_note"
+      ]
+    }
+  ]
+}

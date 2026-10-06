@@ -1,0 +1,70 @@
+{
+  "meta": {
+    "language": "es",
+    "note": "Parche de contenido 2: respuestas del dueño del 2026-10-06."
+  },
+  "updates": [
+    {
+      "id": "aprendizaje.proyectos-academicos.fitness-app",
+      "set": {
+        "architecture.components[java].what": "Parte del sistema construida en Java.",
+        "architecture.components[csharp].what": "Parte del sistema construida en C#.",
+        "architecture.components[grpc].what": "Transmisión (streaming) de los videos de los ejercicios mediante gRPC.",
+        "review_note": "Confirmar con el repositorio del proyecto qué parte era Java y cuál C#: el reparto actual de las conexiones es una suposición (el dueño recuerda Java como backend y C# como frontend, con duda; Flutter era el cliente móvil)."
+      },
+      "delete": [
+        "architecture.components[java].needs_review",
+        "architecture.components[csharp].needs_review",
+        "architecture.components[grpc].needs_review"
+      ]
+    },
+    {
+      "id": "experiencia.dgti.hermes",
+      "set": {
+        "architecture.components[jsgw].what": "Capa en JavaScript entre el backend en C# y la base de datos MySQL, a modo de gateway."
+      },
+      "delete": [
+        "needs_review",
+        "review_note",
+        "architecture.components[jsgw].needs_review"
+      ]
+    },
+    {
+      "id": "proyectos-personales.qfb-app",
+      "set": {
+        "summary": "Sistema de atención farmacéutica para que los pacientes sigan su tratamiento.",
+        "content.body": "NKare es un sistema de atención y seguimiento farmacéutico. Ayuda a que los pacientes se apeguen a su tratamiento (adherencia) y a verificar que reciban el tratamiento correcto. Está en construcción.",
+        "keywords": [
+          "nkare",
+          "atención farmacéutica",
+          "adherencia al tratamiento",
+          "salud",
+          "proyecto personal",
+          "en construcción"
+        ]
+      },
+      "delete": [
+        "needs_review",
+        "review_note"
+      ]
+    },
+    {
+      "id": "proyectos-personales.negocios-ia",
+      "set": {
+        "summary": "Plataforma de gestión de negocios con inteligencia artificial.",
+        "content.body": "FleetFix ayuda a administrar negocios apoyándose en implementaciones de inteligencia artificial. Está en construcción.",
+        "keywords": [
+          "fleetfix",
+          "gestión de negocios",
+          "inteligencia artificial",
+          "proyecto personal",
+          "en construcción"
+        ]
+      },
+      "delete": [
+        "needs_review",
+        "review_note"
+      ]
+    }
+  ]
+}
