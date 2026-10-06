@@ -1071,27 +1071,24 @@
             "label": "Servicios Java",
             "tech": "Java",
             "kind": "service",
-            "what": "Parte del backend implementada en Java.",
-            "contribution": null,
-            "needs_review": true
+            "what": "Parte del sistema construida en Java.",
+            "contribution": null
           },
           {
             "id": "grpc",
             "label": "Comunicación gRPC",
             "tech": "gRPC",
             "kind": "service",
-            "what": "Protocolo de llamadas remotas de alto rendimiento entre servicios.",
-            "contribution": null,
-            "needs_review": true
+            "what": "Transmisión (streaming) de los videos de los ejercicios mediante gRPC.",
+            "contribution": null
           },
           {
             "id": "csharp",
             "label": "Servicios C#",
             "tech": "C#",
             "kind": "service",
-            "what": "Parte del backend implementada en C#.",
-            "contribution": null,
-            "needs_review": true
+            "what": "Parte del sistema construida en C#.",
+            "contribution": null
           },
           {
             "id": "cicd",
@@ -1139,7 +1136,7 @@
         ]
       },
       "needs_review": true,
-      "review_note": "Confirmar qué parte del backend era Java y cuál C#, y dónde entraba gRPC."
+      "review_note": "Confirmar con el repositorio del proyecto qué parte era Java y cuál C#: el reparto actual de las conexiones es una suposición (el dueño recuerda Java como backend y C# como frontend, con duda; Flutter era el cliente móvil)."
     },
     {
       "id": "proyectos-personales.qfb-app",
@@ -1170,18 +1167,19 @@
       "order": 1,
       "label": "NKare",
       "type": "project",
-      "summary": "Proyecto personal en construcción.",
+      "summary": "Sistema de atención farmacéutica para que los pacientes sigan su tratamiento.",
       "keywords": [
         "nkare",
+        "atención farmacéutica",
+        "adherencia al tratamiento",
+        "salud",
         "proyecto personal",
         "en construcción"
       ],
       "status": "en_construccion",
       "content": {
-        "body": "Proyecto personal actualmente en construcción."
-      },
-      "needs_review": true,
-      "review_note": "Asumido: NKare = app de seguimiento farmacoterapéutico. Confirmar el mapeo de nombres."
+        "body": "NKare es un sistema de atención y seguimiento farmacéutico. Ayuda a que los pacientes se apeguen a su tratamiento (adherencia) y a verificar que reciban el tratamiento correcto. Está en construcción."
+      }
     },
     {
       "id": "proyectos-personales.negocios-ia",
@@ -1189,18 +1187,18 @@
       "order": 2,
       "label": "FleetFix",
       "type": "project",
-      "summary": "Proyecto personal en construcción.",
+      "summary": "Plataforma de gestión de negocios con inteligencia artificial.",
       "keywords": [
         "fleetfix",
+        "gestión de negocios",
+        "inteligencia artificial",
         "proyecto personal",
         "en construcción"
       ],
       "status": "en_construccion",
       "content": {
-        "body": "Proyecto personal actualmente en construcción."
-      },
-      "needs_review": true,
-      "review_note": "Asumido: FleetFix = plataforma de gestión de negocios con IA. Confirmar el mapeo de nombres."
+        "body": "FleetFix ayuda a administrar negocios apoyándose en implementaciones de inteligencia artificial. Está en construcción."
+      }
     },
     {
       "id": "proyectos-personales.este-portafolio",
@@ -1553,9 +1551,8 @@
             "label": "Capa JavaScript",
             "tech": "JavaScript",
             "kind": "service",
-            "what": "Servicio en JavaScript que hacía de puente entre el backend C# y la base de datos, a modo de gateway.",
-            "contribution": null,
-            "needs_review": true
+            "what": "Capa en JavaScript entre el backend en C# y la base de datos MySQL, a modo de gateway.",
+            "contribution": null
           },
           {
             "id": "mysql",
@@ -1596,9 +1593,7 @@
             "label": "aloja"
           }
         ]
-      },
-      "needs_review": true,
-      "review_note": "Confirmar el rol exacto de la capa JavaScript (gateway hacia MySQL) y si el backend se estaba migrando a JavaScript."
+      }
     },
     {
       "id": "experiencia.dest",

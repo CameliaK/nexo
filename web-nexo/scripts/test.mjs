@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 const require=createRequire(import.meta.url),root=fileURLToPath(new URL('..',import.meta.url));
 const directory=resolve(root,'.test-build');
-const files=['tests/backend.test.ts','tests/universe.test.ts','tests/chess.test.ts','tests/media.test.ts','tests/i18n.test.ts','tests/welcome.test.ts','tests/auth.test.ts','tests/access-panel.test.ts','tests/chat-errors.test.ts','tests/guest-token.test.ts','tests/chess-support.test.ts'];
+const files=['tests/content.test.ts','tests/backend.test.ts','tests/universe.test.ts','tests/chess.test.ts','tests/media.test.ts','tests/i18n.test.ts','tests/welcome.test.ts','tests/auth.test.ts','tests/access-panel.test.ts','tests/chat-errors.test.ts','tests/guest-token.test.ts','tests/chess-support.test.ts'];
 if(dirname(directory)!==resolve(root))throw Error('Test output must stay in the project.');
 await mkdir(directory,{recursive:true});
 try {

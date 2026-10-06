@@ -1071,27 +1071,24 @@
             "label": "Java services",
             "tech": "Java",
             "kind": "service",
-            "what": "Part of the backend implemented in Java.",
-            "contribution": null,
-            "needs_review": true
+            "what": "Part of the system built in Java.",
+            "contribution": null
           },
           {
             "id": "grpc",
             "label": "gRPC communication",
             "tech": "gRPC",
             "kind": "service",
-            "what": "High-performance remote procedure call protocol between services.",
-            "contribution": null,
-            "needs_review": true
+            "what": "Streaming of the exercise videos through gRPC.",
+            "contribution": null
           },
           {
             "id": "csharp",
             "label": "C# services",
             "tech": "C#",
             "kind": "service",
-            "what": "Part of the backend implemented in C#.",
-            "contribution": null,
-            "needs_review": true
+            "what": "Part of the system built in C#.",
+            "contribution": null
           },
           {
             "id": "cicd",
@@ -1139,7 +1136,7 @@
         ]
       },
       "needs_review": true,
-      "review_note": "Confirm which part of the backend used Java and which used C#, and where gRPC was used."
+      "review_note": "Confirm with the project repository which part was Java and which was C#: the current split of connections is an assumption (the owner remembers Java as backend and C# as frontend, with doubts; Flutter was the mobile client)."
     },
     {
       "id": "proyectos-personales.qfb-app",
@@ -1170,18 +1167,19 @@
       "order": 1,
       "label": "NKare",
       "type": "project",
-      "summary": "Personal project under construction.",
+      "summary": "A pharmaceutical care system that helps patients stick to their treatment.",
       "keywords": [
         "nkare",
-        "proyecto personal",
-        "en construcción"
+        "pharmaceutical care",
+        "treatment adherence",
+        "health",
+        "personal project",
+        "under construction"
       ],
       "status": "en_construccion",
       "content": {
-        "body": "Personal project currently under construction."
-      },
-      "needs_review": true,
-      "review_note": "Assumed: NKare = pharmacotherapy monitoring app. Confirm the name mapping."
+        "body": "NKare is a pharmaceutical care and follow-up system. It helps patients stick to their treatment (adherence) and checks that they receive the right treatment. It is under construction."
+      }
     },
     {
       "id": "proyectos-personales.negocios-ia",
@@ -1189,18 +1187,18 @@
       "order": 2,
       "label": "FleetFix",
       "type": "project",
-      "summary": "Personal project under construction.",
+      "summary": "A business management platform with artificial intelligence.",
       "keywords": [
         "fleetfix",
-        "proyecto personal",
-        "en construcción"
+        "business management",
+        "artificial intelligence",
+        "personal project",
+        "under construction"
       ],
       "status": "en_construccion",
       "content": {
-        "body": "Personal project currently under construction."
-      },
-      "needs_review": true,
-      "review_note": "Assumed: FleetFix = AI business management platform. Confirm the name mapping."
+        "body": "FleetFix helps manage businesses using artificial intelligence implementations. It is under construction."
+      }
     },
     {
       "id": "proyectos-personales.este-portafolio",
@@ -1553,9 +1551,8 @@
             "label": "JavaScript layer",
             "tech": "JavaScript",
             "kind": "service",
-            "what": "JavaScript service that acted as a gateway between the C# backend and the database.",
-            "contribution": null,
-            "needs_review": true
+            "what": "A JavaScript layer between the C# backend and the MySQL database, working as a gateway.",
+            "contribution": null
           },
           {
             "id": "mysql",
@@ -1596,9 +1593,7 @@
             "label": "hosts"
           }
         ]
-      },
-      "needs_review": true,
-      "review_note": "Confirm the exact role of the JavaScript layer (gateway to MySQL) and whether the backend was being migrated to JavaScript."
+      }
     },
     {
       "id": "experiencia.dest",
