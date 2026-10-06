@@ -41,7 +41,8 @@ func (l *Limiter) Hit(ctx context.Context, key string, max int, window time.Dura
 		return nil
 	})
 	if err != nil {
-		return Result{}, fmt.Errorf("ratelimit %s: %w", key, err)
+		// The key carries a visitor/account id or an IP: never in the error.
+		return Result{}, fmt.Errorf("ratelimit: %w", err)
 	}
 	if incr.Val() <= int64(max) {
 		return Result{Allowed: true}, nil

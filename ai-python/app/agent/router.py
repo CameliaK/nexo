@@ -8,6 +8,7 @@ import asyncpg
 import httpx
 import redis.asyncio as aioredis
 
+from ..logsafe import mask_id
 from .. import node_builder
 from .. import rag as rag_mod
 from ..events import EventPublisher
@@ -115,7 +116,7 @@ async def run(
             })
             raise _BudgetError(h2_start) from exc
         except Exception as exc:
-            log.exception("LLM understand failed run=%s visitor=%s", run_id, visitor_id)
+            log.exception("LLM understand failed run=%s visitor=%s", run_id, mask_id(visitor_id))
             h3_ms = int((time.monotonic() - h3_start) * 1000)
             await pub.publish("trace.hop", {
                 "hop_id": "h3", "from": "agent", "to": "llm",
@@ -185,7 +186,7 @@ async def run(
             })
             raise _BudgetError(h2_start) from exc
         except Exception as exc:
-            log.exception("LLM stream failed run=%s visitor=%s", run_id, visitor_id)
+            log.exception("LLM stream failed run=%s visitor=%s", run_id, mask_id(visitor_id))
             h_ans_ms = int((time.monotonic() - h_ans_start) * 1000)
             await pub.publish("trace.hop", {
                 "hop_id": answer_hop_id, "from": "agent", "to": "llm",
@@ -245,7 +246,7 @@ async def run(
         })
 
     except Exception:
-        log.exception("unexpected error run=%s visitor=%s", run_id, visitor_id)
+        log.exception("unexpected error run=%s visitor=%s", run_id, mask_id(visitor_id))
         h2_ms = int((time.monotonic() - h2_start) * 1000)
         await pub.publish("trace.hop", {
             "hop_id": "h2", "from": "gateway", "to": "agent",
@@ -325,7 +326,7 @@ async def _n8n_deep_route(
             resp.raise_for_status()
             n8n_result = resp.json()
     except Exception as exc:
-        log.exception("n8n webhook failed run=%s visitor=%s url=%s", run_id, visitor_id, n8n_webhook_url)
+        log.exception("n8n webhook failed run=%s visitor=%s url=%s", run_id, mask_id(visitor_id), n8n_webhook_url)
         h4_ms = int((time.monotonic() - h4_start) * 1000)
         await pub.publish("trace.hop", {
             "hop_id": "h4", "from": "agent", "to": "n8n",

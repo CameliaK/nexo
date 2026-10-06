@@ -45,7 +45,7 @@ services:
   web-nexo:
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.web-nexo.rule=Host(`${DOMAIN}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.web-nexo.rule=Host(`${DOMAIN}`) && PathPrefix(`/`) && !PathPrefix(`/ws`) && !PathPrefix(`/api`) && !PathPrefix(`/auth`) && !PathPrefix(`/health`)"
       - "traefik.http.routers.web-nexo.entrypoints=websecure"
       - "traefik.http.routers.web-nexo.tls=true"
       - "traefik.http.routers.web-nexo.tls.certresolver=letsencrypt"

@@ -28,6 +28,7 @@ from pydantic import BaseModel
 
 from . import chess_game as cg
 from .events import EventPublisher
+from .logsafe import redact
 
 log = logging.getLogger(__name__)
 
@@ -138,7 +139,7 @@ async def _telegram_owner(row, hops: _Hops) -> None:
             })
         ok = resp.status_code == 200 and resp.json().get("ok") is True
     except Exception as exc:
-        log.error("chess: telegram notice tag=%s failed: %s", row["tag"], exc)
+        log.error("chess: telegram notice tag=%s failed: %s", row["tag"], redact(exc))
         ok = False
     if not ok:
         await state.rdb.delete(key)

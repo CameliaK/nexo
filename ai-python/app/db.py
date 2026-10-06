@@ -34,6 +34,13 @@ _STATEMENTS = [
     CREATE INDEX IF NOT EXISTS generated_nodes_visitor_idx
       ON generated_nodes (visitor_id)
     """,
+    # Retention: nodes go after NODES_RETENTION_DAYS without the visitor
+    # loading them. Rows that predate the column count from their creation.
+    "ALTER TABLE generated_nodes ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ",
+    "UPDATE generated_nodes SET last_seen_at = created_at WHERE last_seen_at IS NULL",
+    "ALTER TABLE generated_nodes ALTER COLUMN last_seen_at SET DEFAULT NOW()",
+    "ALTER TABLE generated_nodes ALTER COLUMN last_seen_at SET NOT NULL",
+
     """
     CREATE TABLE IF NOT EXISTS live_messages (
       id               TEXT PRIMARY KEY,
@@ -54,6 +61,7 @@ _STATEMENTS = [
     CREATE INDEX IF NOT EXISTS live_messages_conv
       ON live_messages (conversation_id)
     """,
+    "CREATE INDEX IF NOT EXISTS live_messages_ts ON live_messages (ts)",
 ]
 
 

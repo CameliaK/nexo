@@ -18,11 +18,14 @@ from . import rag as rag_mod
 from . import node_builder
 from . import chess_api
 from . import chess_game
+from . import retention
 from .events import EventPublisher
+from .logsafe import install as install_log_filters, mask_id, redact
 from .llm.budget import BudgetedLLM, LLMBudgetExceeded
 from .llm.deepseek import DeepSeekProvider
 
 log = logging.getLogger(__name__)
+install_log_filters()
 
 cfg = load()
 
@@ -84,9 +87,15 @@ async def lifespan(app: FastAPI):
     log.info("chess ready (max %d active, expire %dd idle / %dh without moves)",
              cfg.chess_max_active, cfg.chess_expire_days, cfg.chess_empty_expire_hours)
 
+    retention_policy = retention.Retention(nodes_days=cfg.nodes_retention_days, live_days=cfg.live_retention_days)
+    retention_sweeper = asyncio.create_task(retention.loop(_db_pool, retention_policy))
+    log.warning("retention: generated nodes %dd without activity, live messages %dd",
+                cfg.nodes_retention_days, cfg.live_retention_days)
+
     yield
 
     chess_sweeper.cancel()
+    retention_sweeper.cancel()
 
     if _rdb:
         await _rdb.aclose()
@@ -151,6 +160,16 @@ async def delete_session_node(node_id: str, visitor_id: str = Query(...)):
     deleted = await node_builder.delete_node(node_id, visitor_id, _db_pool)
     if not deleted:
         raise HTTPException(status_code=404, detail="node not found")
+
+
+@app.delete("/internal/session/data")
+async def delete_session_data(visitor_id: str = Query(...)):
+    """Erases everything the agent keeps for one visitor: generated nodes and
+    live-chat messages (DELETE /api/v1/session/data)."""
+    if _db_pool is None:
+        raise HTTPException(status_code=503, detail="service not ready")
+    nodes, messages = await retention.delete_visitor(_db_pool, visitor_id)
+    return {"nodes": nodes, "messages": messages}
 
 
 # ── Internal endpoints called by n8n ─────────────────────────────────────────
@@ -222,7 +241,7 @@ async def internal_rag_search(body: _RagSearchRequest):
     if used:
         count = await node_builder.count_visitor_nodes(body.visitor_id, _db_pool)
         if count >= node_builder.NODES_PER_VISITOR:
-            log.info("visitor %s at node limit (%d), used=False", body.visitor_id, count)
+            log.info("visitor %s at node limit (%d), used=False", mask_id(body.visitor_id), count)
             used = False
 
     return {
@@ -364,8 +383,8 @@ async def _run_live_out(
             await pub.publish("run.error", {"code": "delivery_failed", "message": "No se pudo enviar el mensaje.", "retryable": True})
 
     except Exception as exc:
-        log.error("live_out: n8n call failed run=%s: %s", run_id, exc)
-        await pub.publish("trace.hop", {"hop_id": "h2", "from": "gateway", "to": "n8n", "phase": "error", "detail": str(exc)[:100]})
+        log.error("live_out: n8n call failed run=%s: %s", run_id, redact(exc))
+        await pub.publish("trace.hop", {"hop_id": "h2", "from": "gateway", "to": "n8n", "phase": "error", "detail": redact(exc)[:100]})
         await pub.publish("run.error", {"code": "internal", "message": "Error de conexión interna.", "retryable": True})
 
 
@@ -507,8 +526,8 @@ async def internal_telegram_poll():
             )
         data = resp.json()
     except Exception as exc:
-        log.error("telegram poll failed: %s", exc)
-        return {"processed": 0, "error": str(exc)}
+        log.error("telegram poll failed: %s", redact(exc))
+        return {"processed": 0, "error": redact(exc)}
 
     if not data.get("ok") or not data.get("result"):
         return {"processed": 0}
@@ -533,6 +552,6 @@ async def internal_telegram_poll():
             else:
                 log.warning("telegram poll: reply to unknown telegram_msg_id=%d", msg["reply_to_message"]["message_id"])
         except Exception as exc:
-            log.error("telegram poll: error processing reply: %s", exc)
+            log.error("telegram poll: error processing reply: %s", redact(exc))
 
     return {"processed": processed, "total_updates": len(updates)}

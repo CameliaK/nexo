@@ -202,6 +202,7 @@ Un nodo (`live_chat`, dentro de Contacto) abre un panel de chat. Lo que el visit
 | `POST /api/v1/chat` | Body `{ "message" }`. Responde `202 { "run_id" }`; los eventos llegan por el WebSocket |
 | `GET /api/v1/session/nodes` | `{ "nodes": [GeneratedNode] }` del visitante |
 | `DELETE /api/v1/session/nodes/{id}` | Descarta un nodo generado (`204`) |
+| `DELETE /api/v1/session/data` | Bearer de invitado o de cuenta. Borra los nodos generados, los mensajes del chat en vivo y la sesión de ese visitante (`204`). Límite: 5/h por visitante y 20/h por IP (`429` con `Retry-After`). La cuenta, si la hay, sigue existiendo (para borrarla: `DELETE /api/v1/account`) |
 | `POST /api/v1/live/messages` | Body `{ "text", "name"? }`. Responde `202 { "message_id", "run_id" }` |
 | `GET /api/v1/live/messages` | `{ "conversation_id", "messages": [LiveMessage] }` (`conversation_id` es `null` si aún no hay) |
 
@@ -297,6 +298,15 @@ Forma exacta en `backend-types.ts` (`GeneratedNode`).
 - El **token** de invitado expira. El **`visitor_id`** (UUID en `localStorage`) no.
 - Los nodos generados y la conversación del chat en vivo se guardan en Postgres por `visitor_id`, con Redis como caché.
 - Al cargar la página, el frontend llama a `GET /api/v1/session/nodes` y `GET /api/v1/live/messages`.
+- **Retención** (tarea periódica en el agente, cada hora y al arrancar):
+  - Nodos generados: se borran tras `NODES_RETENTION_DAYS` (90) días sin actividad. Actividad =
+    que el visitante cargue sus nodos (`GET /api/v1/session/nodes`), lo que reinicia el plazo.
+  - Mensajes del chat en vivo: cada mensaje se borra `LIVE_RETENTION_DAYS` (180) días después
+    de enviado.
+  - El visitante puede borrar todo antes con `DELETE /api/v1/session/data`.
+- Los logs nunca guardan tokens, correos ni ids completos (ids: primeros 8 caracteres). Docker
+  rota los logs de cada servicio (3 × 10 MB). n8n no guarda las ejecuciones correctas y purga
+  las fallidas a los 7 días.
 - **Si el backend no responde**, el portafolio funciona normal. El chat y el chat en vivo se muestran como no disponibles.
 
 ---
