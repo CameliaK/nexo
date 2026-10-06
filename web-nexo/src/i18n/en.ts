@@ -1,5 +1,19 @@
 import type { UIKey } from './es';
 export const en = {
+  "privacy.title": "Privacy notice",
+  "privacy.link": "Privacy",
+  "privacy.back": "Back to the universe",
+  "privacy.language": "Change language",
+  "privacy.delete": "Delete my data",
+  "privacy.confirm": "Delete this browser’s data?",
+  "privacy.detail": "Your generated nodes, messages and session will be deleted. Your account and chess games will still exist. You will be signed out in this browser.",
+  "privacy.deleting": "Deleting data…",
+  "privacy.error": "Your data could not be deleted. Please try again.",
+  "privacy.wait": "Wait {seconds} s before trying again.",
+  "privacy.assistant": "Your questions are sent to an AI provider to answer you. Don’t type sensitive personal data.",
+  "privacy.live": "Your message (and your name, if you enter one) reaches me through Telegram and is stored so I can reply.",
+  "privacy.access": "We use your email only to sign you in, save your game and notify you of moves. You can delete your account at any time.",
+
   "account.node": "Account",
   "account.open": "Open Account",
   "account.signedAs": "Signed in as {email}",

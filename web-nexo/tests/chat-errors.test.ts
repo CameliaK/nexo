@@ -12,6 +12,7 @@ function setup(response:(path:string,request:any)=>Response){
   children=[];childNodes=[];dataset={};attributes={};value='';textContent='';className='';hidden=false;disabled=false;handlers={};parentElement=null;
   append(...items){for(const item of items){item.parentElement?.removeChild(item);this.children.push(item);item.parentElement=this}}
   removeChild(item){this.children=this.children.filter(child=>child!==item)}
+  replaceWith(item){const parent=this.parentElement;this.remove();parent?.append(item)}
   replaceChildren(...items){this.children=[];this.append(...items)}remove(){this.parentElement?.removeChild(this)}
   setAttribute(key,value){this.attributes[key]=value}getAttribute(key){return this.attributes[key]??null}removeAttribute(key){delete this.attributes[key]}
   addEventListener(key,fn){this.handlers[key]=fn}focus(){}blur(){}closest(){return null}
@@ -19,7 +20,7 @@ function setup(response:(path:string,request:any)=>Response){
   querySelector(selector){return this.querySelectorAll(selector)[0]||null}
  }
  const els=new Map(),make=(tag='div')=>{const el=new Element();el.tagName=tag;return el},get=(key)=>{if(!els.has(key))els.set(key,make());return els.get(key)};
- const doc={createElement:make,getElementById:get,querySelector:get,body:make('body')};globalThis.document=doc;
+ const doc={createTextNode:text=>{const e=make('text');e.textContent=text;return e},createElement:make,getElementById:get,querySelector:get,body:make('body')};globalThis.document=doc;
  const storage=new Map([[AUTH_TOKEN_KEY,'signed-in-token'],['nexo.visitor_id','visitor']]);globalThis.localStorage={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)};
  const requests=[];globalThis.fetch=async(path,request)=>{requests.push({path,request});return response(String(path),request)};
  const backend=new RealBackend(),universe={openAgent(){},setUnread(){},setChatMessage(){},spawnGenerated(){},removeGenerated(){},isSystem:()=>false,nodeLabel:id=>id};

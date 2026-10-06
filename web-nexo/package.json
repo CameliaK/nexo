@@ -9,7 +9,8 @@
     "preview": "vite preview --host 127.0.0.1 --port 4175 --strictPort",
     "test": "node scripts/test.mjs",
     "perf": "node scripts/performance.mjs",
-    "test:browser": "node scripts/chess-browser.mjs"
+    "test:browser": "node scripts/chess-browser.mjs",
+    "test:privacy-browser": "node scripts/privacy-browser.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

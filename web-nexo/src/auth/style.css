@@ -50,3 +50,5 @@ footer .scene-info { margin-left:175px; }
 .access-overlay,.account-overlay{backdrop-filter:none;background:#050c11d9}.access-glass,.account-glass{animation:account-reveal var(--motion-panel,245ms) var(--motion-ease-out,ease-out)}
 @keyframes account-reveal{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.access-glass,.account-glass{animation:none}}
+
+.account-delete-data,.account-privacy{display:block;margin-top:14px}.access-privacy a{color:#b6d3ca;text-underline-offset:3px}

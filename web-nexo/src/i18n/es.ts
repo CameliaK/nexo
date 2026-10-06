@@ -1,4 +1,18 @@
 export const es = {
+  "privacy.title": "Aviso de privacidad",
+  "privacy.link": "Privacidad",
+  "privacy.back": "Volver al universo",
+  "privacy.language": "Cambiar idioma",
+  "privacy.delete": "Borrar mis datos",
+  "privacy.confirm": "¿Borrar los datos de este navegador?",
+  "privacy.detail": "Se borrarán tus nodos generados, mensajes y sesión. Tu cuenta y tus partidas siguen existiendo. Se cerrará la sesión en este navegador.",
+  "privacy.deleting": "Borrando datos…",
+  "privacy.error": "No se pudieron borrar los datos. Inténtalo de nuevo.",
+  "privacy.wait": "Espera {seconds} s antes de volver a intentarlo.",
+  "privacy.assistant": "Tus preguntas se envían a un proveedor de IA para responderte. No escribas datos personales sensibles.",
+  "privacy.live": "Tu mensaje (y el nombre, si lo escribes) me llega por Telegram y se guarda para que pueda responderte.",
+  "privacy.access": "Usamos tu correo solo para iniciar sesión, guardar tu partida y avisarte de jugadas. Puedes borrar tu cuenta cuando quieras.",
+
   "account.node": "Mi cuenta",
   "account.open": "Abrir Mi cuenta",
   "account.signedAs": "Sesión iniciada como {email}",

@@ -47,6 +47,7 @@ export class MockAccount {
     if (!code || code !== this.saved.code) throw new BackendError('unauthorized', t('auth.invalidLink'), 401);
     this.saved.code = null; return this.login();
   }
+  async clearSession() { this.saved.id = crypto.randomUUID(); this.saved.link = null; this.saved.code = null; await this.logout(); }
   async logout() { this.saved.me = { mode: 'guest' }; this.saved.previousMe=undefined; this.persist(); }
   async unsubscribe(token: string) { if (!token) throw new BackendError('invalid_request', t('auth.invalidLink'), 400); this.saved.settings.chess_email = false; this.persist(); }
   async getNotifications() { this.require(); return { ...this.saved.settings }; }
