@@ -149,6 +149,19 @@ func (s *TokenService) VerifyClaims(ctx context.Context, tokenStr string) (*Clai
 		}
 	}
 
+	if err := s.Recheck(ctx, c); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// Recheck re-applies expiry and revocation (token revoked, account deleted)
+// to claims validated earlier — e.g. when a WebSocket ticket issued from
+// them is redeemed. A Redis failure fails closed.
+func (s *TokenService) Recheck(ctx context.Context, c *Claims) error {
+	if !c.Expires.IsZero() && time.Now().After(c.Expires) {
+		return errors.New("token expired")
+	}
 	var keys []string
 	if c.JTI != "" {
 		keys = append(keys, revokedKey(c.JTI))
@@ -159,13 +172,13 @@ func (s *TokenService) VerifyClaims(ctx context.Context, tokenStr string) (*Clai
 	if len(keys) > 0 {
 		n, err := s.rdb.Exists(ctx, keys...).Result()
 		if err != nil {
-			return nil, fmt.Errorf("revocation check: %w", err)
+			return fmt.Errorf("revocation check: %w", err)
 		}
 		if n > 0 {
-			return nil, ErrRevoked
+			return ErrRevoked
 		}
 	}
-	return c, nil
+	return nil
 }
 
 // Revoke blocks the token until it would have expired anyway.

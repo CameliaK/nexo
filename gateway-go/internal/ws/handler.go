@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -32,25 +33,19 @@ var upgrader = websocket.Upgrader{
 
 type handler struct {
 	tokens   *auth.TokenService
+	tickets  *Tickets
 	rdb      *redis.Client
 	presence *presence.Store
 }
 
-func NewHandler(tokens *auth.TokenService, rdb *redis.Client, presence *presence.Store) http.HandlerFunc {
-	h := &handler{tokens: tokens, rdb: rdb, presence: presence}
+func NewHandler(tokens *auth.TokenService, tickets *Tickets, rdb *redis.Client, presence *presence.Store) http.HandlerFunc {
+	h := &handler{tokens: tokens, tickets: tickets, rdb: rdb, presence: presence}
 	return h.serveHTTP
 }
 
 func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
-	tokenStr := r.URL.Query().Get("token")
-	if tokenStr == "" {
-		http.Error(w, "missing token", http.StatusUnauthorized)
-		return
-	}
-
-	claims, err := h.tokens.VerifyClaims(r.Context(), tokenStr)
-	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	claims, ok := h.authenticate(w, r)
+	if !ok {
 		return
 	}
 	visitorID := claims.VisitorID
@@ -134,6 +129,37 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+// authenticate accepts ?ticket= (one-time, from POST /api/v1/ws-ticket) or,
+// as a temporary fallback, ?token= (deprecated: the session token ends up in
+// URLs and access logs). The mode comes only from the validated claims.
+func (h *handler) authenticate(w http.ResponseWriter, r *http.Request) (*auth.Claims, bool) {
+	q := r.URL.Query()
+	if ticket := q.Get("ticket"); ticket != "" {
+		claims, err := h.tickets.redeem(r.Context(), ticket)
+		if err != nil {
+			if !errors.Is(err, errBadTicket) && !errors.Is(err, auth.ErrRevoked) {
+				log.Printf("ws ticket: %v", err)
+			}
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return nil, false
+		}
+		return claims, true
+	}
+	tokenStr := q.Get("token")
+	if tokenStr == "" {
+		http.Error(w, "missing ticket", http.StatusUnauthorized)
+		return nil, false
+	}
+	claims, err := h.tokens.VerifyClaims(r.Context(), tokenStr)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return nil, false
+	}
+	log.Printf("ws: deprecated ?token= used visitor=%s mode=%s — switch to POST /api/v1/ws-ticket + ?ticket=",
+		mask.ID(claims.VisitorID), claims.Mode)
+	return claims, true
 }
 
 func (h *handler) touch(visitorID, connID string) {

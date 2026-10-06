@@ -99,7 +99,9 @@ func main() {
 	mux.HandleFunc("GET /health", health.Handler)
 	mux.HandleFunc("GET /auth/guest", auth.NewHandler(tokens, sessions, limiter, ips, cfg.AuthGuestPerIPHour))
 	presenceStore := presence.New(rdb, ws.PresenceTTL)
-	mux.HandleFunc("GET /ws", ws.NewHandler(tokens, rdb, presenceStore))
+	wsTickets := ws.NewTickets(rdb, tokens)
+	mux.HandleFunc("POST /api/v1/ws-ticket", tokens.RequireAuth(wsTickets.Issue))
+	mux.HandleFunc("GET /ws", ws.NewHandler(tokens, wsTickets, rdb, presenceStore))
 	mux.HandleFunc("POST /api/v1/chat", chat.NewHandler(tokens, rdb, cfg.AgentURL, chat.Limits{
 		Limiter: limiter, IPs: ips,
 		PerHour: cfg.ChatRatePerHour, PerIPHour: cfg.ChatRatePerIPHour, ActiveTTL: cfg.ChatActiveTTL,
