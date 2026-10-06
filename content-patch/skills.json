@@ -1,0 +1,1053 @@
+{
+  "meta": {
+    "version": 2,
+    "generated": "2026-10-06",
+    "sources": [
+      "portfolio-content.json (contenido v3)",
+      "CV"
+    ],
+    "levels": {
+      "experiencia": "Usado en un trabajo o prácticas profesionales.",
+      "proyecto": "Usado en un proyecto (académico o personal) con su nodo en el portafolio.",
+      "formacion": "Aprendido en estudios o capacitación, sin proyecto propio asociado.",
+      "mencion": "Listado en el CV, sin proyecto ni experiencia asociados en el portafolio."
+    },
+    "domains": [
+      "frontend",
+      "backend",
+      "mobile",
+      "desktop",
+      "data",
+      "ai_ml",
+      "cloud",
+      "devops",
+      "testing",
+      "design"
+    ],
+    "rules": [
+      "Cada afirmación de un nodo generado debe apoyarse en una evidencia de este archivo.",
+      "Una evidencia con needs_review=true NO se afirma: se omite hasta que el dueño la confirme.",
+      "El nivel 'mencion' se presenta como 'listado en el CV, sin proyecto asociado', nunca como dominio.",
+      "No se infieren años de experiencia ni niveles de dominio que no estén aquí.",
+      "El campo node apunta a ids de portfolio-content.json; mencion usa el nodo personal."
+    ]
+  },
+  "skills": [
+    {
+      "id": "java",
+      "name": "Java",
+      "aliases": [],
+      "kind": "language",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "formacion",
+          "node": "aprendizaje.universidad.fundamentos",
+          "note": "Bases sólidas de programación orientada a objetos en la carrera."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.sistema-financiero",
+          "note": "Backend con Spring Boot."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.fitness-app",
+          "note": "Parte del sistema (listado en el CV; el reparto entre Java y C# no está definido en el portafolio)."
+        }
+      ]
+    },
+    {
+      "id": "csharp",
+      "name": "C#",
+      "aliases": [
+        "C Sharp",
+        ".NET C#"
+      ],
+      "kind": "language",
+      "domains": [
+        "backend",
+        "desktop",
+        "frontend"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.dgti.hermes",
+          "note": "Backend del sistema HERMES en C# sobre .NET."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.astralis",
+          "note": "Juego de cartas en línea en C# (WPF, WCF)."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.sistema-financiero",
+          "note": "Frontend en C# sobre .NET con Avalonia UI."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.fitness-app",
+          "note": "Parte del sistema (listado en el CV; el reparto entre Java y C# no está definido en el portafolio)."
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "aliases": [],
+      "kind": "language",
+      "domains": [
+        "backend",
+        "ai_ml"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.buscador",
+          "note": "Backend con FastAPI y RAG."
+        },
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.digital-twin",
+          "note": "Backend con FastAPI y modelos de ML."
+        },
+        {
+          "level": "experiencia",
+          "node": "experiencia.dest.plataforma",
+          "note": "Pipeline de RAG con FAISS."
+        },
+        {
+          "level": "formacion",
+          "node": "aprendizaje.extras.infosys-ia",
+          "note": "RAG con LangChain y modelos con scikit-learn."
+        },
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Agente y RAG de este portafolio con FastAPI."
+        }
+      ]
+    },
+    {
+      "id": "javascript",
+      "name": "JavaScript",
+      "aliases": [
+        "JS"
+      ],
+      "kind": "language",
+      "domains": [
+        "frontend",
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.dest.plataforma",
+          "note": "Módulos de accesibilidad personalizados."
+        },
+        {
+          "level": "experiencia",
+          "node": "experiencia.dgti.hermes",
+          "note": "Capa en JavaScript entre el backend en C# y MySQL, a modo de gateway."
+        }
+      ]
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript",
+      "aliases": [
+        "TS"
+      ],
+      "kind": "language",
+      "domains": [
+        "frontend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Frontend de este portafolio con TypeScript y Vite."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "cpp",
+      "name": "C++",
+      "aliases": [
+        "C plus plus",
+        "Cpp"
+      ],
+      "kind": "language",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "formacion",
+          "node": "aprendizaje.universidad.fundamentos",
+          "note": "Aprendí a programar en C++ en la carrera."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "go",
+      "name": "Go",
+      "aliases": [
+        "Golang"
+      ],
+      "kind": "language",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Gateway de este portafolio (autenticación, límites y WebSocket)."
+        }
+      ]
+    },
+    {
+      "id": "sql",
+      "name": "SQL",
+      "aliases": [],
+      "kind": "language",
+      "domains": [
+        "data"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.dgti.hermes",
+          "note": "Procedimientos almacenados en MySQL que redujeron los resultados de más de 1M a 100K filas."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.sistema-financiero",
+          "note": "Persistencia en MySQL."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "html",
+      "name": "HTML",
+      "aliases": [],
+      "kind": "language",
+      "domains": [
+        "frontend"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.dest.plataforma",
+          "note": "Plataformas educativas accesibles."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "css",
+      "name": "CSS",
+      "aliases": [],
+      "kind": "language",
+      "domains": [
+        "frontend"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.dest.plataforma",
+          "note": "Plataformas educativas accesibles."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "react",
+      "name": "React",
+      "aliases": [
+        "ReactJS",
+        "React.js"
+      ],
+      "kind": "framework",
+      "domains": [
+        "frontend"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.buscador",
+          "note": "Frontend del buscador industrial."
+        },
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.digital-twin",
+          "note": "Participé en el desarrollo y diseño del frontend."
+        }
+      ]
+    },
+    {
+      "id": "spring_boot",
+      "name": "Spring Boot",
+      "aliases": [],
+      "kind": "framework",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.sistema-financiero",
+          "note": "Backend del sistema de gestión de créditos."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "dotnet",
+      "name": ".NET",
+      "aliases": [
+        "dotnet",
+        "ASP.NET"
+      ],
+      "kind": "framework",
+      "domains": [
+        "backend",
+        "desktop"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.dgti.hermes",
+          "note": "Backend y vistas Razor."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.astralis",
+          "note": "Cliente WPF y servicios WCF."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.sistema-financiero",
+          "note": "Frontend con Avalonia UI."
+        }
+      ]
+    },
+    {
+      "id": "wpf",
+      "name": "WPF",
+      "aliases": [],
+      "kind": "framework",
+      "domains": [
+        "desktop",
+        "frontend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.astralis",
+          "note": "Cliente de escritorio del juego."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "wcf",
+      "name": "WCF",
+      "aliases": [],
+      "kind": "framework",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.astralis",
+          "note": "Comunicación cliente–servidor mediante contratos de servicio."
+        }
+      ]
+    },
+    {
+      "id": "entity_framework",
+      "name": "Entity Framework",
+      "aliases": [],
+      "kind": "library",
+      "domains": [
+        "data",
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.astralis",
+          "note": "Persistencia del sistema y cuentas de jugadores."
+        }
+      ]
+    },
+    {
+      "id": "xunit",
+      "name": "xUnit",
+      "aliases": [],
+      "kind": "library",
+      "domains": [
+        "testing"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.astralis",
+          "note": "Pruebas unitarias."
+        }
+      ]
+    },
+    {
+      "id": "avalonia",
+      "name": "Avalonia UI",
+      "aliases": [],
+      "kind": "framework",
+      "domains": [
+        "frontend",
+        "desktop"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.sistema-financiero",
+          "note": "Interfaz del sistema de gestión de créditos."
+        }
+      ]
+    },
+    {
+      "id": "razor",
+      "name": "Razor (CSHTML)",
+      "aliases": [],
+      "kind": "framework",
+      "domains": [
+        "frontend"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.dgti.hermes",
+          "note": "Vistas del sistema de correspondencia."
+        }
+      ]
+    },
+    {
+      "id": "fastapi",
+      "name": "FastAPI",
+      "aliases": [],
+      "kind": "framework",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.buscador",
+          "note": "API del buscador industrial."
+        },
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.digital-twin",
+          "note": "Endpoints de la API del Digital Twin."
+        },
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Agente de este portafolio."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "langchain",
+      "name": "LangChain",
+      "aliases": [],
+      "kind": "library",
+      "domains": [
+        "ai_ml"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.buscador",
+          "note": "Orquestación de la recuperación semántica."
+        },
+        {
+          "level": "formacion",
+          "node": "aprendizaje.extras.infosys-ia",
+          "note": "Sistema RAG durante la capacitación."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "faiss",
+      "name": "FAISS",
+      "aliases": [],
+      "kind": "library",
+      "domains": [
+        "ai_ml"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.buscador",
+          "note": "Índice vectorial del buscador."
+        },
+        {
+          "level": "experiencia",
+          "node": "experiencia.dest.plataforma",
+          "note": "Recuperación semántica del contenido de los cursos."
+        }
+      ]
+    },
+    {
+      "id": "scikit_learn",
+      "name": "scikit-learn",
+      "aliases": [],
+      "kind": "library",
+      "domains": [
+        "ai_ml"
+      ],
+      "evidence": [
+        {
+          "level": "formacion",
+          "node": "aprendizaje.extras.infosys-ia",
+          "note": "Entrené distintos modelos de ML en la capacitación."
+        }
+      ]
+    },
+    {
+      "id": "isolation_forest",
+      "name": "Isolation Forest",
+      "aliases": [],
+      "kind": "library",
+      "domains": [
+        "ai_ml"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.digital-twin",
+          "note": "Participé en la orquestación de los modelos; no los entrené."
+        }
+      ]
+    },
+    {
+      "id": "gradient_boosting",
+      "name": "Gradient Boosting",
+      "aliases": [],
+      "kind": "library",
+      "domains": [
+        "ai_ml"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.digital-twin",
+          "note": "Participé en la orquestación de los modelos; no los entrené."
+        }
+      ]
+    },
+    {
+      "id": "flutter",
+      "name": "Flutter",
+      "aliases": [],
+      "kind": "framework",
+      "domains": [
+        "mobile",
+        "frontend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.fitness-app",
+          "note": "App multiplataforma de fitness social."
+        }
+      ]
+    },
+    {
+      "id": "grpc",
+      "name": "gRPC",
+      "aliases": [],
+      "kind": "tool",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.fitness-app",
+          "note": "Transmisión (streaming) de los videos de los ejercicios."
+        }
+      ]
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js",
+      "aliases": [
+        "Node"
+      ],
+      "kind": "platform",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "nestjs",
+      "name": "NestJS",
+      "aliases": [],
+      "kind": "framework",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "mysql",
+      "name": "MySQL",
+      "aliases": [],
+      "kind": "database",
+      "domains": [
+        "data"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.dgti.hermes",
+          "note": "Base de datos de HERMES."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.sistema-financiero",
+          "note": "Base de datos del sistema de créditos."
+        }
+      ]
+    },
+    {
+      "id": "mssql",
+      "name": "MSSQL",
+      "aliases": [
+        "SQL Server"
+      ],
+      "kind": "database",
+      "domains": [
+        "data"
+      ],
+      "evidence": [
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "postgresql",
+      "name": "PostgreSQL",
+      "aliases": [
+        "Postgres"
+      ],
+      "kind": "database",
+      "domains": [
+        "data"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.digital-twin",
+          "note": "Hice el mapeo y la creación de la base de datos."
+        },
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Base de datos de este portafolio, con pgvector."
+        }
+      ]
+    },
+    {
+      "id": "pgvector",
+      "name": "pgvector",
+      "aliases": [],
+      "kind": "database",
+      "domains": [
+        "data",
+        "ai_ml"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Búsqueda por significado en PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "redis",
+      "name": "Redis",
+      "aliases": [],
+      "kind": "database",
+      "domains": [
+        "backend",
+        "data"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Sesiones, límites de uso y mensajería en tiempo real."
+        }
+      ]
+    },
+    {
+      "id": "aws",
+      "name": "AWS",
+      "aliases": [
+        "Amazon Web Services"
+      ],
+      "kind": "platform",
+      "domains": [
+        "cloud"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.digital-twin",
+          "note": "El Digital Twin se desplegó en AWS."
+        },
+        {
+          "level": "formacion",
+          "node": "aprendizaje.extras.infosys-aws",
+          "note": "Capacitación en EC2, S3, Lambda, Bedrock y SageMaker."
+        },
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV (Lambda, S3, RDS)."
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "name": "Docker",
+      "aliases": [],
+      "kind": "tool",
+      "domains": [
+        "devops"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Todo el sistema corre con Docker Compose."
+        }
+      ]
+    },
+    {
+      "id": "traefik",
+      "name": "Traefik",
+      "aliases": [],
+      "kind": "tool",
+      "domains": [
+        "devops"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Punto de entrada, HTTPS y enrutamiento de este portafolio."
+        }
+      ]
+    },
+    {
+      "id": "n8n",
+      "name": "n8n",
+      "aliases": [],
+      "kind": "tool",
+      "domains": [
+        "devops",
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Orquesta los flujos largos de este portafolio."
+        }
+      ]
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "aliases": [],
+      "kind": "tool",
+      "domains": [
+        "devops"
+      ],
+      "evidence": [
+        {
+          "level": "mencion",
+          "node": "personal",
+          "note": "Listado en el CV."
+        }
+      ]
+    },
+    {
+      "id": "ci_cd",
+      "name": "CI/CD",
+      "aliases": [],
+      "kind": "practice",
+      "domains": [
+        "devops"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.fitness-app",
+          "note": "Diseñé los pipelines de despliegue."
+        }
+      ]
+    },
+    {
+      "id": "jwt_2fa",
+      "name": "JWT y 2FA",
+      "aliases": [],
+      "kind": "practice",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.sistema-financiero",
+          "note": "Autenticación con JWT y verificación en dos pasos."
+        }
+      ]
+    },
+    {
+      "id": "paseto",
+      "name": "PASETO",
+      "aliases": [],
+      "kind": "practice",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Tokens de sesión de este portafolio."
+        }
+      ]
+    },
+    {
+      "id": "rest_apis",
+      "name": "APIs REST",
+      "aliases": [
+        "REST"
+      ],
+      "kind": "practice",
+      "domains": [
+        "backend"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.buscador",
+          "note": "API del buscador con FastAPI."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.fitness-app",
+          "note": "Diseñé las APIs RESTful."
+        }
+      ]
+    },
+    {
+      "id": "rag",
+      "name": "RAG",
+      "aliases": [],
+      "kind": "practice",
+      "domains": [
+        "ai_ml"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.buscador",
+          "note": "Buscador industrial con recuperación semántica."
+        },
+        {
+          "level": "experiencia",
+          "node": "experiencia.dest.plataforma",
+          "note": "Pipeline de RAG para cursos digitales."
+        },
+        {
+          "level": "formacion",
+          "node": "aprendizaje.extras.infosys-ia",
+          "note": "Capacitación en RAG."
+        },
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Agente con RAG sobre pgvector."
+        }
+      ]
+    },
+    {
+      "id": "llm_agents",
+      "name": "LLMs y agentes",
+      "aliases": [
+        "IA agéntica"
+      ],
+      "kind": "practice",
+      "domains": [
+        "ai_ml"
+      ],
+      "evidence": [
+        {
+          "level": "formacion",
+          "node": "aprendizaje.extras.infosys-ia",
+          "note": "Capacitación en IA agéntica y LLMs."
+        },
+        {
+          "level": "proyecto",
+          "node": "proyectos-personales.este-portafolio",
+          "note": "Agente que decide rutas y crea nodos."
+        }
+      ]
+    },
+    {
+      "id": "accessibility",
+      "name": "Accesibilidad web",
+      "aliases": [],
+      "kind": "practice",
+      "domains": [
+        "frontend"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.dest.plataforma",
+          "note": "Módulo completo de accesibilidad; compatibilidad con lectores de pantalla JAWS."
+        }
+      ]
+    },
+    {
+      "id": "scrum",
+      "name": "SCRUM",
+      "aliases": [],
+      "kind": "practice",
+      "domains": [
+        "devops"
+      ],
+      "evidence": [
+        {
+          "level": "experiencia",
+          "node": "experiencia.infosys.digital-twin",
+          "note": "Entorno SCRUM basado en microservicios."
+        }
+      ]
+    },
+    {
+      "id": "uml_iconix",
+      "name": "UML e ICONIX",
+      "aliases": [],
+      "kind": "practice",
+      "domains": [
+        "design"
+      ],
+      "evidence": [
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.sistema-financiero",
+          "note": "Lideré el diseño del sistema con UML siguiendo ICONIX."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.fitness-app",
+          "note": "Arquitectura basada en UML."
+        }
+      ]
+    },
+    {
+      "id": "design_patterns",
+      "name": "Patrones de diseño",
+      "aliases": [],
+      "kind": "practice",
+      "domains": [
+        "design"
+      ],
+      "evidence": [
+        {
+          "level": "formacion",
+          "node": "aprendizaje.universidad.diseno",
+          "note": "Arquitecturas, patrones, antipatrones y metodologías."
+        },
+        {
+          "level": "proyecto",
+          "node": "aprendizaje.proyectos-academicos.astralis",
+          "note": "Singleton y otros patrones."
+        }
+      ]
+    }
+  ]
+}
