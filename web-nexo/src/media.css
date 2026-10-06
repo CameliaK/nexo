@@ -11,3 +11,5 @@
 @media(max-width:650px){.media-viewer-surface{padding:12px}.media-viewer h2{font-size:15px}.media-viewer-image{height:56dvh}.media-viewer-caption{font-size:11px}.media-window-caption{font-size:9px;padding:5px}}
 @media(hover:none){.media-window-caption{opacity:1;transform:none;font-size:8px;padding:4px}}
 @media(prefers-reduced-motion:reduce){.media-window,.media-window img,.media-window-caption{transition:none}.media-window-caption{transform:none}}
+.media-window{backdrop-filter:none;background:#0a141ce8;transition:border-color var(--motion-hover,150ms)}
+.media-window img{transition:opacity var(--motion-panel,245ms)}.media-window-caption{transition:opacity var(--motion-hover,150ms),transform var(--motion-hover,150ms) var(--motion-ease-out,ease-out)}

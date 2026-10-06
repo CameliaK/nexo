@@ -1,0 +1,579 @@
+{
+  "passed": true,
+  "viewports": [
+    {
+      "width": 1366,
+      "height": 768,
+      "lang": "es",
+      "board": {
+        "x": 369.578125,
+        "y": 244.453125,
+        "width": 587.046875,
+        "height": 359.078125
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · negro",
+          "rect": {
+            "x": 369.578125,
+            "y": 192.453125,
+            "width": 121.59375,
+            "height": 38.28125
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "TúTu lado · blanco",
+          "rect": {
+            "x": 369.578125,
+            "y": 615.53125,
+            "width": 128.796875,
+            "height": 38.28125
+          }
+        }
+      ],
+      "aside": {
+        "x": 976.625,
+        "y": 333.75,
+        "width": 220,
+        "height": 311.59375
+      },
+      "minTouch": 24.875,
+      "scroll": false
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "lang": "en",
+      "board": {
+        "x": 369.578125,
+        "y": 244.453125,
+        "width": 587.046875,
+        "height": 359.078125
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · black",
+          "rect": {
+            "x": 369.578125,
+            "y": 192.453125,
+            "width": 120.046875,
+            "height": 38.28125
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "YouYour side · white",
+          "rect": {
+            "x": 369.578125,
+            "y": 615.53125,
+            "width": 131.375,
+            "height": 38.28125
+          }
+        }
+      ],
+      "aside": {
+        "x": 976.625,
+        "y": 333.75,
+        "width": 220,
+        "height": 281.09375
+      },
+      "minTouch": 24.875,
+      "scroll": false
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "lang": "es",
+      "board": {
+        "x": 541.21875,
+        "y": 327.515625,
+        "width": 825.546875,
+        "height": 504.953125
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · negro",
+          "rect": {
+            "x": 541.21875,
+            "y": 275.515625,
+            "width": 121.59375,
+            "height": 38.28125
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "TúTu lado · blanco",
+          "rect": {
+            "x": 541.21875,
+            "y": 844.46875,
+            "width": 128.796875,
+            "height": 38.28125
+          }
+        }
+      ],
+      "aside": {
+        "x": 1386.765625,
+        "y": 433.59375,
+        "width": 220,
+        "height": 311.59375
+      },
+      "minTouch": 34.984375,
+      "scroll": false
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "lang": "en",
+      "board": {
+        "x": 541.21875,
+        "y": 327.515625,
+        "width": 825.546875,
+        "height": 504.953125
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · black",
+          "rect": {
+            "x": 541.21875,
+            "y": 275.515625,
+            "width": 120.046875,
+            "height": 38.28125
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "YouYour side · white",
+          "rect": {
+            "x": 541.21875,
+            "y": 844.46875,
+            "width": 131.375,
+            "height": 38.28125
+          }
+        }
+      ],
+      "aside": {
+        "x": 1386.765625,
+        "y": 433.59375,
+        "width": 220,
+        "height": 281.09375
+      },
+      "minTouch": 34.984375,
+      "scroll": false
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "lang": "es",
+      "board": {
+        "x": 160.34375,
+        "y": 202.796875,
+        "width": 579.296875,
+        "height": 470.390625
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · negro",
+          "rect": {
+            "x": 160.34375,
+            "y": 150.796875,
+            "width": 121.59375,
+            "height": 38.28125
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "TúTu lado · blanco",
+          "rect": {
+            "x": 160.34375,
+            "y": 685.1875,
+            "width": 128.796875,
+            "height": 38.28125
+          }
+        }
+      ],
+      "aside": {
+        "x": 160.34375,
+        "y": 735.1875,
+        "width": 579.296875,
+        "height": 156
+      },
+      "minTouch": 40,
+      "scroll": false
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "lang": "en",
+      "board": {
+        "x": 160.34375,
+        "y": 202.796875,
+        "width": 579.296875,
+        "height": 470.390625
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · black",
+          "rect": {
+            "x": 160.34375,
+            "y": 150.796875,
+            "width": 120.046875,
+            "height": 38.28125
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "YouYour side · white",
+          "rect": {
+            "x": 160.34375,
+            "y": 685.1875,
+            "width": 131.375,
+            "height": 38.28125
+          }
+        }
+      ],
+      "aside": {
+        "x": 160.34375,
+        "y": 735.1875,
+        "width": 579.296875,
+        "height": 156
+      },
+      "minTouch": 40,
+      "scroll": false
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "lang": "es",
+      "board": {
+        "x": 23.5,
+        "y": 222.734375,
+        "width": 343,
+        "height": 278.515625
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · negro",
+          "rect": {
+            "x": 23.5,
+            "y": 170.734375,
+            "width": 115.1875,
+            "height": 34.390625
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "TúTu lado · blanco",
+          "rect": {
+            "x": 23.5,
+            "y": 513.25,
+            "width": 121.59375,
+            "height": 34.390625
+          }
+        }
+      ],
+      "aside": {
+        "x": 23.5,
+        "y": 563.25,
+        "width": 343,
+        "height": 156
+      },
+      "minTouch": 44,
+      "scroll": false
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "lang": "en",
+      "board": {
+        "x": 23.5,
+        "y": 222.734375,
+        "width": 343,
+        "height": 278.515625
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · black",
+          "rect": {
+            "x": 23.5,
+            "y": 170.734375,
+            "width": 113.8125,
+            "height": 34.390625
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "YouYour side · white",
+          "rect": {
+            "x": 23.5,
+            "y": 513.25,
+            "width": 123.890625,
+            "height": 34.390625
+          }
+        }
+      ],
+      "aside": {
+        "x": 23.5,
+        "y": 563.25,
+        "width": 343,
+        "height": 156
+      },
+      "minTouch": 44,
+      "scroll": false
+    },
+    {
+      "width": 375,
+      "height": 667,
+      "lang": "es",
+      "board": {
+        "x": 52.921875,
+        "y": 200.21875,
+        "width": 269.125,
+        "height": 218.53125
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · negro",
+          "rect": {
+            "x": 52.921875,
+            "y": 148.21875,
+            "width": 115.1875,
+            "height": 34.390625
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "TúTu lado · blanco",
+          "rect": {
+            "x": 52.921875,
+            "y": 430.765625,
+            "width": 121.59375,
+            "height": 34.390625
+          }
+        }
+      ],
+      "aside": {
+        "x": 52.921875,
+        "y": 480.765625,
+        "width": 269.125,
+        "height": 98
+      },
+      "minTouch": 44,
+      "scroll": false
+    },
+    {
+      "width": 375,
+      "height": 667,
+      "lang": "en",
+      "board": {
+        "x": 52.921875,
+        "y": 200.21875,
+        "width": 269.125,
+        "height": 218.53125
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · black",
+          "rect": {
+            "x": 52.921875,
+            "y": 148.21875,
+            "width": 113.8125,
+            "height": 34.390625
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "YouYour side · white",
+          "rect": {
+            "x": 52.921875,
+            "y": 430.765625,
+            "width": 123.890625,
+            "height": 34.390625
+          }
+        }
+      ],
+      "aside": {
+        "x": 52.921875,
+        "y": 480.765625,
+        "width": 269.125,
+        "height": 98
+      },
+      "minTouch": 44,
+      "scroll": false
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "lang": "es",
+      "board": {
+        "x": 33.265625,
+        "y": 132.09375,
+        "width": 253.4375,
+        "height": 205.796875
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · negro",
+          "rect": {
+            "x": 30,
+            "y": 96.09375,
+            "width": 108.796875,
+            "height": 28
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "TúTu lado · blanco",
+          "rect": {
+            "x": 30,
+            "y": 345.890625,
+            "width": 114.40625,
+            "height": 28
+          }
+        }
+      ],
+      "aside": {
+        "x": 30,
+        "y": 383.890625,
+        "width": 260,
+        "height": 98
+      },
+      "minTouch": 44,
+      "scroll": false
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "lang": "en",
+      "board": {
+        "x": 33.265625,
+        "y": 132.09375,
+        "width": 253.4375,
+        "height": 205.796875
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · black",
+          "rect": {
+            "x": 30,
+            "y": 96.09375,
+            "width": 107.59375,
+            "height": 28
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "YouYour side · white",
+          "rect": {
+            "x": 30,
+            "y": 345.890625,
+            "width": 116.40625,
+            "height": 28
+          }
+        }
+      ],
+      "aside": {
+        "x": 30,
+        "y": 383.890625,
+        "width": 260,
+        "height": 98
+      },
+      "minTouch": 44,
+      "scroll": false
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "lang": "es",
+      "board": {
+        "x": 262.171875,
+        "y": 131.46875,
+        "width": 237.109375,
+        "height": 145.03125
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · negro",
+          "rect": {
+            "x": 262.171875,
+            "y": 95.46875,
+            "width": 108.796875,
+            "height": 28
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "TúTu lado · blanco",
+          "rect": {
+            "x": 262.171875,
+            "y": 284.515625,
+            "width": 114.40625,
+            "height": 28
+          }
+        }
+      ],
+      "aside": {
+        "x": 519.296875,
+        "y": 212.796875,
+        "width": 174,
+        "height": 80
+      },
+      "minTouch": 44,
+      "scroll": false
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "lang": "en",
+      "board": {
+        "x": 262.171875,
+        "y": 131.46875,
+        "width": 237.109375,
+        "height": 145.03125
+      },
+      "players": [
+        {
+          "avatar": "K",
+          "info": "KirbithKirbith · black",
+          "rect": {
+            "x": 262.171875,
+            "y": 95.46875,
+            "width": 107.59375,
+            "height": 28
+          }
+        },
+        {
+          "avatar": "V",
+          "info": "YouYour side · white",
+          "rect": {
+            "x": 262.171875,
+            "y": 284.515625,
+            "width": 116.40625,
+            "height": 28
+          }
+        }
+      ],
+      "aside": {
+        "x": 519.296875,
+        "y": 212.796875,
+        "width": 174,
+        "height": 80
+      },
+      "minTouch": 44,
+      "scroll": false
+    }
+  ]
+}

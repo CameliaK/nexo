@@ -1,8 +1,9 @@
+import { motion, easeOut, resumeStart } from '../motion';
 import { AccountChess, errorText } from '../auth/session';
 import { t, translateUI } from '../i18n';
 import type { Move, Square, Color, PieceSymbol } from 'chess.js';
 import { ChessGame, type Promotion, type PositionPiece } from './game';
-import { squareAt, squareCoords, subdivideSource, type Triangle, type Point } from './geometry';
+import { squareAt, squareCoords, type Triangle, type Point } from './geometry';
 import { pieceSolids, box, normal, project3D, unprojectBoard, cellPolygon, insideTriangle, type Camera, type Mesh, type Vec3, type Tri3 } from './spatial';
 import { chessLayout, chessBounds, type ChessView } from './layout';
 import './style.css';
@@ -34,9 +35,9 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
       <button class="chess-close" type="button" aria-label="${t('chess.close')}">↙ <span>${t('chess.fold')}</span> <kbd>ESC</kbd></button>
       <div class="chess-layout">
         <div class="chess-play">
-          <div class="chess-player" data-color="b"><span class="chess-avatar chess-avatar-black">K</span><div><strong>Kirbith</strong><span>${t('chess.blackHost')}</span></div><span class="chess-captures" data-captured-by="b" aria-label="${t('chess.capturesOwner')}"></span><span class="chess-turn-dot"></span></div>
+          <div class="chess-player" data-color="b"><span class="chess-avatar chess-avatar-black">K</span><div class="chess-player-info"><strong>Kirbith</strong><span>${t('chess.blackHost')}</span></div><span class="chess-captures" data-captured-by="b" aria-label="${t('chess.capturesOwner')}"></span><span class="chess-turn-dot"></span></div>
           <div class="chess-board" role="grid" aria-label="${t('chess.board')}" aria-rowcount="8" aria-colcount="8"></div>
-          <div class="chess-player" data-color="w"><span class="chess-avatar">V</span><div><strong>${t('common.visitor')}</strong><span>${t('chess.whiteSide')}</span></div><span class="chess-captures" data-captured-by="w" aria-label="${t('chess.capturesVisitor')}"></span><span class="chess-turn-dot"></span></div>
+          <div class="chess-player" data-color="w"><span class="chess-avatar">V</span><div class="chess-player-info"><strong>${t('common.visitor')}</strong><span>${t('chess.whiteSide')}</span></div><span class="chess-captures" data-captured-by="w" aria-label="${t('chess.capturesVisitor')}"></span><span class="chess-turn-dot"></span></div>
         </div>
         <aside class="chess-aside">
           <div class="chess-status"><span class="chess-eyebrow">${t('chess.status')}</span><h2 class="chess-status-title"></h2><p class="chess-status-detail"></p></div>
@@ -61,18 +62,23 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   let focusSquare:Square='e2',returnFocus:HTMLElement|null=null,popoverReturn:HTMLElement|null=null;
   let viewPieces=game.pieces,viewHistory=game.history,viewCheck=game.check,destinations=new Set<Square>();
   let camera:Camera={x:0,y:0,scale:1,tilt:.72,yaw:-.10,distance:22};
+  let systemBounds:{left:number;top:number;width:number;height:number}|undefined;
   let currentView:ChessView={zoom:1,pan:{x:0,y:0}},cachedFaces:Face[]|null=null;
-  let picking:Face[]=[],queuedExit:(()=>void)|null=null;
+  let boardFaces:Face[]|null=null;const pieceCache=new Map<string,Face[]>();
+  let raster:HTMLCanvasElement|null=null,rasterFaces:Face[]|null=null,rasterBounds=chessBounds(camera);
+  let pickSource:Face[]|null=null,picking:Face[]=[],queuedExit:(()=>void)|null=null;
   const buttons=new Map<Square,HTMLButtonElement>();
-  const busy=()=>!!morph||!!animation||!backdrop.hidden||!!remote?.busy;
+  const busy=()=>!!morph&&!morph.opening||!!animation||!backdrop.hidden||!!remote?.busy;
   const announce=(text:string)=>{$('.chess-announcement').textContent=text};
   const legal=()=>selected?game.legal(selected):[];
+  let boardKey='';
   function applyLayout(){
     const layout=chessLayout({width:innerWidth,height:innerHeight},currentView);
-    camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';dialog.dataset.density=layout.compact?'compact':'normal';
+    const changed=JSON.stringify(camera)!==JSON.stringify(layout.camera);camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';dialog.dataset.density=layout.compact?'compact':'normal';
     const {header,close,black,white,help,aside}=layout;
+    if(systemBounds&&!layout.stacked&&aside.left+aside.width>systemBounds.left&&aside.left<systemBounds.left+systemBounds.width){aside.top=Math.max(aside.top,systemBounds.top+systemBounds.height+28);aside.height=Math.max(80,innerHeight-104-aside.top)}
     for(const [prefix,region] of Object.entries({header,close,black:flipped?white:black,white:flipped?black:white,help,aside}))for(const [key,value] of Object.entries(region))dialog.style.setProperty('--chess-'+prefix+'-'+key,value+'px');
-    placeBoard();
+    if(changed||!buttons.size)placeBoard();
   }
   const resize=()=>applyLayout();
   const at=(square:Square):Point=>{const [col,row]=squareCoords(square,flipped);return[col+.5,row+.5]};
@@ -82,18 +88,18 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     return col>=0&&col<8&&row>=0&&row<8?squareAt(row,col,flipped):null;
   };
   function placeBoard(){
-    cachedFaces=null;picking=[];
+    cachedFaces=null;boardFaces=null;pieceCache.clear();picking=[];
     const {left,right,top,bottom}=chessBounds(camera);
     for(const [key,value] of Object.entries({left,right,top,bottom,cx:camera.x,cy:camera.y}))dialog.style.setProperty(`--board-${key}`,value+'px');
     Object.assign(board.style,{left:left+'px',top:top+'px',width:(right-left)+'px',height:(bottom-top)+'px'});
     buttons.forEach((b,square)=>{
       const [col,row]=squareCoords(square,flipped),polygon=cellPolygon(col,row,camera);
       const x=Math.min(...polygon.map(p=>p[0])),y=Math.min(...polygon.map(p=>p[1])),w=Math.max(...polygon.map(p=>p[0]))-x,h=Math.max(...polygon.map(p=>p[1]))-y;
-      Object.assign(b.style,{left:(x-left)+'px',top:(y-top)+'px',width:w+'px',height:h+'px',clipPath:`polygon(${polygon.map(p=>`${(p[0]-x)/w*100}% ${(p[1]-y)/h*100}%`).join(',')})`});
+      Object.assign(b.style,{left:(x-left)+'px',top:(y-top)+'px',width:Math.max(innerWidth<650||innerHeight<600?44:0,w)+'px',height:Math.max(innerWidth<650||innerHeight<600?44:0,h)+'px',clipPath:innerWidth<650||innerHeight<600?'none':`polygon(${polygon.map(p=>`${(p[0]-x)/w*100}% ${(p[1]-y)/h*100}%`).join(',')})`});
     });
   }
   function buildBoard(){
-    buttons.clear();board.replaceChildren();
+    if(buttons.size){for(let row=0;row<8;row++)for(let col=0;col<8;col++){const b=buttons.get(squareAt(row,col,flipped))!;b.setAttribute('aria-rowindex',String(row+1));b.setAttribute('aria-colindex',String(col+1));board.children[row].append(b)}syncBoard();placeBoard();return}
     for(let row=0;row<8;row++){
       const line=document.createElement('div');line.className='chess-row';line.setAttribute('role','row');
       for(let col=0;col<8;col++){
@@ -112,7 +118,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     syncBoard();placeBoard();
   }
   function syncBoard(){
-    cachedFaces=null;
+    const key=[game.fen,flipped,selected,viewPieces.length].join(':');if(key!==boardKey){cachedFaces=null;boardFaces=null;boardKey=key}
     destinations=new Set(legal().map(m=>m.to));const pieces=new Map(viewPieces.map(p=>[p.square,p]));
     buttons.forEach((b,s)=>{
       const p=pieces.get(s),available=destinations.has(s);
@@ -120,13 +126,15 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
       b.setAttribute('aria-selected',String(s===selected));b.tabIndex=s===focusSquare?0:-1;
     });
   }
+  const icons=new Map<string,SVGSVGElement>();
   function icon(type:PieceSymbol,color:Color){
+    const key=type+color,cached=icons.get(key);if(cached)return cached.cloneNode(true) as SVGSVGElement;
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 100 100');svg.setAttribute('aria-hidden','true');
     svg.style.color=rgba(color==='w'?white:black);
     const mesh=pieceSolids[type],iconCamera:Camera={x:50,y:75,scale:52,tilt:.48,yaw:-.35,distance:50};
     const faces=mesh.faces.map(f=>{const vertices=f.map(i=>mesh.vertices[i].map((v,axis)=>v+(axis===1?0:4)) as Vec3) as Tri3;const projected=vertices.map(p=>project3D(p,iconCamera));return{points:projected.map(p=>p.point),depth:projected.reduce((sum,p)=>sum+p.depth,0)/3}}).sort((a,b)=>a.depth-b.depth);
     for(const [i,face] of faces.entries()){const polygon=document.createElementNS('http://www.w3.org/2000/svg','polygon');polygon.setAttribute('points',face.points.map(p=>p.join(',')).join(' '));polygon.setAttribute('fill','currentColor');polygon.setAttribute('fill-opacity',String(.22+(i%5)*.08));polygon.setAttribute('stroke','currentColor');polygon.setAttribute('stroke-width','.3');svg.append(polygon)}
-    return svg;
+    icons.set(key,svg);return svg.cloneNode(true) as SVGSVGElement;
   }
   const online=document.createElement('div');online.className='chess-online';
   const note=$('.chess-local-note'),remoteError=document.createElement('p');remoteError.className='chess-server-error';remoteError.setAttribute('role','status');
@@ -142,7 +150,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     const record=remote.game;
     $('.chess-status-title').textContent=!remote.available?t('auth.soon'):!remote.ready?t('chess.loadingGame'):remote.busy?t('chess.savingMove'):!record?t('chess.choose'):record.status!=='active'?t('chess.ended'):remote.canMove?t('chess.yourTurn'):t(remote.ownerId?'chess.waitingPlayer':'chess.waitingOwner');
     $('.chess-status-detail').textContent=record?.status&&record.status!=='active'?t(('chess.result.'+record.status) as 'chess.result.checkmate'):record&&game.check?t('chess.check'):!record?t('chess.chooseDetail'):'';
-    dialog.classList.toggle('chess-ended',!!record&&record.status!=='active');dialog.setAttribute('aria-busy',String(remote.busy));
+    dialog.classList.toggle('chess-ended',!!record&&record.status!=='active');dialog.setAttribute('aria-busy',String(remote.busy||!remote.ready));
     remoteError.textContent=remote.error?errorText(remote.error):'';remoteError.hidden=!remote.error;
     sessionLine.hidden=remote.me.mode==='guest';sessionText.textContent=t('account.signedAs',{email:remote.me.email_hint||''});accountLink.textContent=t('account.node');
     resign.textContent=t('chess.resign');resign.hidden=!record||record.status!=='active';resign.disabled=remote.busy;
@@ -158,11 +166,11 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
       const history=$('.chess-moves');history.replaceChildren();
       for(let i=0;i<record.moves.length;i+=2){const row=document.createElement('li');for(const value of [String(i/2+1).padStart(2,'0'),record.moves[i].san,record.moves[i+1]?.san||'—']){const span=document.createElement('span');span.textContent=value;row.append(span)}history.append(row)}
       $('.chess-empty').hidden=record.moves.length>0;$('.chess-move-count').textContent=String(record.moves.length).padStart(2,'0');
-      for(const color of ['w','b'] as const){const player=$(`[data-color="${color}"]`),own=color===remote.side;player.querySelector('strong')!.textContent=own?(remote.ownerId?'Kirbith':t('common.you')):(remote.ownerId?t('chess.player'):'Kirbith');player.querySelector('.chess-avatar')!.textContent=own?(remote.ownerId?'K':'V'):(remote.ownerId?'V':'K');player.querySelector('div>span')!.textContent=t(own?'chess.playerSide':remote.ownerId?'chess.opponentSide':'chess.hostSide',{color:t(color==='w'?'chess.white':'chess.black')});}
+      for(const color of ['w','b'] as const){const player=$(`[data-color="${color}"]`),own=color===remote.side;player.querySelector('strong')!.textContent=own?(remote.ownerId?'Kirbith':t('common.you')):(remote.ownerId?t('chess.player'):'Kirbith');player.querySelector('.chess-avatar')!.textContent=own?(remote.ownerId?'K':'V'):(remote.ownerId?'V':'K');player.querySelector('.chess-player-info>span')!.textContent=t(own?'chess.playerSide':remote.ownerId?'chess.opponentSide':'chess.hostSide',{color:t(color==='w'?'chess.white':'chess.black')});}
     }
   }
   function refresh(){
-    viewPieces=game.pieces;viewHistory=game.history;viewCheck=game.check;
+    viewPieces=remote&&!remote.game?[]:game.pieces;viewHistory=game.history;viewCheck=game.check;
     const status=game.status;
     $('.chess-status-title').textContent=status.title;$('.chess-status-detail').textContent=claimMode?t('chess.announceClaim'):status.detail;
     dialog.classList.toggle('chess-ended',status.ended);dialog.classList.toggle('chess-in-check',game.check&&!status.ended);
@@ -203,7 +211,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
       return;
     }
     const before=game.pieces,move=game.move(from,to,promotion);if(!move)return;
-    selected=null;focusSquare=to;animation={move,before,start:performance.now(),duration:reduced.matches?0:520};
+    selected=null;focusSquare=to;animation={move,before,start:performance.now(),duration:reduced.matches?0:motion.chessMove};
     if(remote)void remote.move(from+to+(move.promotion||''));
     board.inert=true;dialog.focus({preventScroll:true});refresh();announce(`${move.san}. ${game.status.title}. ${game.status.detail}`);
   }
@@ -269,10 +277,13 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     });
   }
   function pieceFaces(piece:PositionPiece,x:number,z:number,lift=0,alpha=1):Face[]{
+    const key=[piece.type,piece.color,piece.square,x,z].join(':');
+    if(lift===0&&alpha===1){const cached=pieceCache.get(key);if(cached)return cached;const faces=meshFaces(pieceSolids[piece.type],piece.color==='w'?white:black,[x,lift,z],alpha,piece.square);if(pieceCache.size>128)pieceCache.clear();pieceCache.set(key,faces);return faces}
     return meshFaces(pieceSolids[piece.type],piece.color==='w'?white:black,[x,lift,z],alpha,piece.square);
   }
+  const tiles=Array.from({length:64},(_,i)=>box(i%8+.025,-.18,Math.floor(i/8)+.025,i%8+.975,0,Math.floor(i/8)+.975)),baseMesh=box(-.15,-.34,-.15,8.15,-.20,8.15);
   function targetFaces():Face[]{
-    const faces:Face[]=meshFaces(box(-.15,-.34,-.15,8.15,-.20,8.15),[68,132,119],undefined,.32);
+    const faces:Face[]=meshFaces(baseMesh,[68,132,119],undefined,.32);
     const last=viewHistory.at(-1);
     for(let row=0;row<8;row++)for(let col=0;col<8;col++){
       const square=squareAt(row,col,flipped),check=viewCheck&&viewPieces.some(p=>p.square===square&&p.type==='k'&&p.color===game.turn);
@@ -280,7 +291,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
       if(square===last?.from||square===last?.to)color=blend(color,white,.19);
       if(square===selected)color=blend(color,white,.48);
       if(check)color=blend(color,[236,113,147],.5);
-      faces.push(...meshFaces(box(col+.025,-.18,row+.025,col+.975,0,row+.975),color,undefined,(row+col)%2?.52:.80));
+      faces.push(...meshFaces(tiles[row*8+col],color,undefined,(row+col)%2?.52:.80));
     }
     return faces;
   }
@@ -296,7 +307,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   }
   function renderBoard(now:number):Face[]{
     if(!animation&&!drag?.moved&&cachedFaces)return cachedFaces;
-    const faces=targetFaces(),progress=animation?clamp((now-animation.start)/Math.max(1,animation.duration)):1;
+    const faces=[...(boardFaces ||= targetFaces())],progress=animation?clamp((now-animation.start)/Math.max(1,animation.duration)):1;
     const move=animation?.move,castle=move?.isKingsideCastle()||move?.isQueensideCastle();
     const rookTo=castle?`${move!.isKingsideCastle()?'f':'d'}${move!.to[1]}` as Square:null;
     for(const piece of viewPieces){
@@ -350,46 +361,58 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     if(!morph)return 1;
     const t=clamp((now-morph.start)/Math.max(1,morph.duration));return smooth(morph.opening?t:1-t);
   }
-  function render(context:CanvasRenderingContext2D,now:number,view?:{zoom:number;pan:{x:number;y:number}}){
-    if(!active||disposed)return;
+  function render(context:CanvasRenderingContext2D,now:number,view?:{zoom:number;pan:{x:number;y:number};systemBounds?:{left:number;top:number;width:number;height:number}}){
+    if(disposed)return;
     if(view){
-      const changed=Math.abs(view.zoom-currentView.zoom)+Math.abs(view.pan.x-currentView.pan.x)+Math.abs(view.pan.y-currentView.pan.y)>.001;
-      if(changed){currentView={zoom:view.zoom,pan:{...view.pan}};applyLayout()}
+      const reserveChanged=JSON.stringify(systemBounds)!==JSON.stringify(view.systemBounds);systemBounds=view.systemBounds;
+      const changed=reserveChanged||Math.abs(view.zoom-currentView.zoom)+Math.abs(view.pan.x-currentView.pan.x)+Math.abs(view.pan.y-currentView.pan.y)>.001;
+      if(changed){currentView={zoom:view.zoom,pan:{...view.pan}};if(active)applyLayout()}
     }
+    if(!active)return;
     ctx=context;ctx.save();
+    if(morph&&!morph.opening)ctx.globalAlpha=1-easeOut((now-morph.start)/Math.max(1,morph.duration));
+    const faces=renderBoard(now);if(pickSource!==faces){picking=faces.filter(face=>face.square&&face.alpha>.1);pickSource=faces}
+    if(!animation&&!drag?.moved){
+      if(rasterFaces!==faces){
+        rasterBounds=chessBounds(camera);raster ||= document.createElement('canvas');
+        const ratio=Math.min(devicePixelRatio||1,motion.maxDpr);
+        raster.width=Math.ceil((rasterBounds.right-rasterBounds.left)*ratio);raster.height=Math.ceil((rasterBounds.bottom-rasterBounds.top)*ratio);
+        const layer=raster.getContext('2d')!;layer.setTransform(ratio,0,0,ratio,-rasterBounds.left*ratio,-rasterBounds.top*ratio);
+        const main=ctx;ctx=layer;faces.forEach(paint);ctx=main;rasterFaces=faces;
+      }
+      ctx.drawImage(raster!,rasterBounds.left,rasterBounds.top,raster!.width/(Math.min(devicePixelRatio||1,motion.maxDpr)),raster!.height/(Math.min(devicePixelRatio||1,motion.maxDpr)));
+    }else faces.forEach(paint);
+    drawGuides();
     if(morph){
-      const m=morph,t=clamp((now-m.start)/Math.max(1,m.duration)),u=smooth(m.opening?t:1-t);
-      const targets=renderBoard(now),sources=subdivideSource(m.source,targets.length);
-      picking=[];
-      targets.forEach((face,i)=>{
-        const source=sources[i],a=center(source),b=center(face.points),scatter=Math.sin(Math.PI*u)*(12+i%7*3),angle=i*2.39996;
-        const move=smooth((u-.02)/.93),shape=smooth((u-.22)/.78),cx=lerp(a[0],b[0],move)+Math.cos(angle)*scatter,cy=lerp(a[1],b[1],move)+Math.sin(angle)*scatter;
-        const points=source.map((p,j)=>[cx+lerp(p[0]-a[0],face.points[j][0]-b[0],shape),cy+lerp(p[1]-a[1],face.points[j][1]-b[1],shape)]) as Triangle;
-        paint({...face,points,color:blend(m.color,face.color,u),alpha:lerp(.38,face.alpha,u)});
-      });
-      dialog.style.setProperty('--chess-reveal',String(smooth((u-.72)/.28)));
-      if(t>=1){const opening=m.opening;morph=null;if(opening){dialog.classList.add('is-ready');board.inert=false;buttons.get(focusSquare)?.focus({preventScroll:true});if(queuedExit)close()}else finishClose()}
-    }else{
-      const faces=renderBoard(now);picking=faces.filter(face=>face.square&&face.alpha>.1);
-      faces.forEach(paint);drawGuides();
-      if(queuedExit&&!animation)close();
-    }
+      const m=morph,t=clamp((now-m.start)/Math.max(1,m.duration)),u=easeOut(m.opening?t:1-t);
+      // The complete board is usable now; a small set of wireframe fragments
+      // carries the node's unfolding instead of interpolating ~6,000 faces/frame.
+      ctx.globalAlpha=Math.sin(Math.PI*t)*.24;
+      m.source.forEach((source,i)=>{
+        const target=faces[Math.floor(i*faces.length/m.source.length)];if(!target)return;
+        const points=source.map((p,j)=>[lerp(p[0],target.points[j][0],u),lerp(p[1],target.points[j][1],u)]) as Triangle;
+        paint({...target,points,alpha:.2});
+      });ctx.globalAlpha=1;
+      if(!m.opening)dialog.style.setProperty('--chess-reveal',String(1-easeOut(t)));
+      if(t>=1){const opening=m.opening;morph=null;if(opening){if(document.activeElement===dialog)buttons.get(focusSquare)?.focus({preventScroll:true});if(queuedExit)close()}else finishClose()}
+    }else if(queuedExit&&!animation)close();
     ctx.restore();
   }
-  function open(value:OpeningOrigin,getOrigin?:()=>OpeningOrigin){
+  function open(value:OpeningOrigin,getOrigin?:()=>OpeningOrigin,focusReturn?:HTMLElement){
     if(active||disposed)return;
     remote?.open(true);
     if(remote){flipped=remote.side==='b';focusSquare=flipped?'e7':'e2'}
-    origin=value;originProvider=getOrigin;returnFocus=document.activeElement as HTMLElement;active=true;selected=null;claimMode=false;
-    dialog.hidden=false;document.body.classList.add('is-chess');dialog.classList.remove('is-ready');dialog.style.setProperty('--chess-reveal','0');buildBoard();refresh();resize();board.inert=true;dialog.focus({preventScroll:true});
-    morph={opening:true,start:performance.now(),duration:reduced.matches?0:1550,source:value.faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle),color:white};
+    origin=value;originProvider=getOrigin;returnFocus=focusReturn||document.activeElement as HTMLElement;active=true;selected=null;claimMode=false;
+    dialog.hidden=false;document.body.classList.add('is-chess');dialog.classList.add('is-ready');dialog.style.setProperty('--chess-reveal','1');buildBoard();refresh();resize();board.inert=false;dialog.focus({preventScroll:true});
+    morph={opening:true,start:performance.now(),duration:reduced.matches?0:motion.chessOpen,source:value.faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle),color:white};
   }
   function close(){
-    if(!active||morph||animation)return;
+    if(!active||animation)return;
+    if(morph&&!morph.opening)return;
     if(!backdrop.hidden){hidePopover();return}
     cancelDrag();selected=null;claimMode=false;board.inert=true;dialog.classList.remove('is-ready');
     if(originProvider)origin=originProvider();
-    morph={opening:false,start:performance.now(),duration:reduced.matches?0:1150,source:origin!.faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle),color:white};
+    morph={opening:false,start:performance.now(),duration:reduced.matches?0:motion.chessClose,source:origin!.faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle),color:white};
   }
   function finishClose(){
     active=false;remote?.open(false);dialog.hidden=true;picking=[];document.body.classList.remove('is-chess');onClosed?.();returnFocus?.focus({preventScroll:true});returnFocus=null;
@@ -412,14 +435,15 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     if(record){
       if(animation&&record.fen!==game.fen){animation=null;board.inert=false}
       const previous=game.pieces,previousFen=game.fen,previousLength=game.history.length;
-      game.loadRemote(record.fen,record.moves);
+      if(record.fen!==game.fen||record.moves.length!==game.history.length)game.loadRemote(record.fen,record.moves);
       if(active&&!morph&&!animation&&previousFen!==record.fen&&record.moves.length===previousLength+1){
-        const move=game.history.at(-1);if(move){animation={move,before:previous,start:performance.now(),duration:reduced.matches?0:520};board.inert=true}
+        const move=game.history.at(-1);if(move){animation={move,before:previous,start:performance.now(),duration:reduced.matches?0:motion.chessMove};board.inert=true}
       }
     }else game.reset();
     if(selected&&!remote.canMove)selected=null;
     refresh();
     if(active&&remote.me.mode==='guest'&&remote.available)close();
   });
-  return {refreshLanguage(){refresh();translateUI(dialog);syncBoard()},open,render,progress,isOpen:()=>active,closeForNavigation:(fn:()=>void)=>{queuedExit=fn;close()},setOnClosed:(fn:()=>void)=>{onClosed=fn},dispose(){stopRemote?.();disposed=true;removeEventListener('resize',onResize);removeEventListener('blur',onBlur);removeEventListener('keydown',onEscape);reduced.removeEventListener('change',onMotion);document.body.classList.remove('is-chess');dialog.remove()}};
+  buildBoard();resize();
+  return {refreshLanguage(){refresh();translateUI(dialog);syncBoard()},open,render,progress,isOpen:()=>active,isAnimating:()=>!!morph||!!animation||!!drag?.moved,pauseFor:(ms:number,since=performance.now()-ms)=>{const now=performance.now();if(morph)morph.start=resumeStart(morph.start,since,now);if(animation)animation.start=resumeStart(animation.start,since,now)},closeForNavigation:(fn:()=>void)=>{queuedExit=fn;close()},setOnClosed:(fn:()=>void)=>{onClosed=fn},dispose(){stopRemote?.();disposed=true;removeEventListener('resize',onResize);removeEventListener('blur',onBlur);removeEventListener('keydown',onEscape);reduced.removeEventListener('change',onMotion);document.body.classList.remove('is-chess');dialog.remove()}};
 }

@@ -126,3 +126,20 @@ test('Camera fitting keeps board picking correct and preserves the same perspect
     const point=project3D([col+.5,0,row+.5],fitted).point;const [x,z]=unprojectBoard(point,fitted);assert.ok(Math.abs(x-col-.5)<1e-9&&Math.abs(z-row-.5)<1e-9);
   }
 });
+
+
+test('Desktop chess approaches the requested viewport size and still fits at 50–200% camera zoom',()=>{
+ for(const [width,height] of [[1366,768],[1920,1080],[1440,900]]){
+  const normal=chessBounds(chessLayout({width,height}).camera),desired=Math.min(880,height*.78,width*.7);
+  assert.ok(normal.right-normal.left>=desired*.85,'Board is close to min(78vh, 70vw), including its 3D envelope');
+  for(const zoom of [.5,2]){const layout=chessLayout({width,height},{zoom,pan:{x:width*.5,y:height*.4}}),bounds=chessBounds(layout.camera);assert.ok(contained([bounds.left,bounds.top],layout.area));assert.ok(contained([bounds.right,bounds.bottom],layout.area))}
+ }
+});
+
+
+import { resumeStart } from '../src/motion';
+test('Resuming a hidden tab preserves earlier progress and starts an incoming WS animation now, never in the future',()=>{
+ assert.equal(resumeStart(80,100,1100),1080);
+ assert.equal(resumeStart(900,100,1100),1100);
+ assert.equal(resumeStart(900,0,1100),900);
+});

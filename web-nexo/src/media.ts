@@ -116,5 +116,5 @@ export function createMediaUI(doc:Document=document) {
     }
     return occupied;
   }
-  return {setNode,render,curveObstacles,isOpen:()=>viewer.open,close,dispose(){close();tiles=[];layer.remove();viewer.remove()}};
+  return {hasMedia:()=>tiles.some(tile=>!tile.failed),setNode,render,curveObstacles,isOpen:()=>viewer.open,close,dispose(){close();tiles=[];layer.remove();viewer.remove()}};
 }

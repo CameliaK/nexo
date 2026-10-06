@@ -27,3 +27,7 @@
 @keyframes first-node-pulse{0%,100%{transform:scale(1);opacity:.65}50%{transform:scale(1.13);opacity:.2}}
 @media(max-width:650px){.welcome-help{left:76px;bottom:16px;width:42px;height:42px}.scene-info{margin-left:0}.welcome-overlay{padding:14px}.welcome-card{max-height:calc(100dvh - 28px)}.welcome-content{padding:24px 22px}.welcome-masthead{margin-bottom:20px}.welcome-eyebrow{font-size:8px}.welcome-subtitle{font-size:12px;line-height:1.75}.welcome-steps{gap:19px;margin-top:23px}.welcome-steps li{gap:13px}.welcome-steps h2{font-size:14px}.welcome-steps p{font-size:12px}.welcome-actions{padding:16px 22px max(16px,env(safe-area-inset-bottom));gap:18px}.welcome-enter{font-size:12px;flex:1;padding:12px}.welcome-step-icon{width:34px;height:34px}}
 @media(prefers-reduced-motion:reduce){.welcome-card,.has-first-visit-hint:before{animation:none}.welcome-help svg{transition:none}}
+.welcome-card{animation-duration:var(--motion-panel,245ms);animation-timing-function:var(--motion-ease-out,ease-out)}
+/* Its universe runs at 30 fps under the guide; only this static backdrop is blurred. */
+.welcome-overlay{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.welcome-help svg{transition:opacity var(--motion-hover,150ms)}
