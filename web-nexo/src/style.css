@@ -88,3 +88,5 @@
 .node-label{transition:opacity var(--motion-hover,150ms),color var(--motion-hover,150ms)}
 .is-language-changing .node-label,.is-language-changing .orientation,.is-language-changing .language-node span{animation-duration:var(--motion-language,196ms)}
 .system-aperture .system-caption,.speech-bubble{transition:opacity var(--motion-hover,150ms)}
+
+.privacy-notice{font-size:10px;line-height:1.55;color:#99b0b2;margin:12px 0}.privacy-notice a,.account-privacy{color:#b6d3ca;text-underline-offset:3px}.privacy-footer{position:absolute;right:0;top:9px;pointer-events:auto;color:#89969e;font-size:10px;text-underline-offset:3px}.privacy-footer:focus-visible{outline-offset:3px}

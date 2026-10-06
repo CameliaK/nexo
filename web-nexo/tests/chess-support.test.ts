@@ -130,7 +130,7 @@ test('Real WS contract updates player and owner games in place, including resign
   const globals = {
     localStorage: { getItem: (key: string) => key === AUTH_TOKEN_KEY ? 'account' : null, removeItem() {} },
     location: { host: 'portfolio.test', protocol: 'https:' }, WebSocket: Socket,
-    fetch: async (path: unknown) => { requests++; return Response.json(String(path).endsWith('/auth/me') ? { mode: 'owner', email_hint: 'k***@gmail.com' } : String(path).endsWith('/notifications') ? { chess_email: true } : String(path).endsWith('/games') ? { games: [initial] } : { game: initial }); },
+    fetch: async (path: unknown) => { requests++; if(String(path)==='/api/v1/ws-ticket')return Response.json({ticket:crypto.randomUUID(),expires_in:30}); return Response.json(String(path).endsWith('/auth/me') ? { mode: 'owner', email_hint: 'k***@gmail.com' } : String(path).endsWith('/notifications') ? { chess_email: true } : String(path).endsWith('/games') ? { games: [initial] } : { game: initial }); },
   };
   for (const [key] of originals) Object.defineProperty(globalThis, key, { value: globals[key as keyof typeof globals], configurable: true });
   const backend = new RealBackend(), session = new AccountChess(backend);

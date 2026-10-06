@@ -11,6 +11,7 @@ async function fixture(width,height,lang='en',cold=false){
  await page.routeWebSocket(/\/ws\?/,()=>{});
  await page.route('**/*',async route=>{
   const path=new URL(route.request().url()).pathname;
+   if(path==='/api/v1/ws-ticket')return route.fulfill({json:{ticket:crypto.randomUUID(),expires_in:30}});
   if(path==='/api/v1/auth/me')return route.fulfill({json:{mode:'user',email_hint:'k***@gmail.com'}});
   if(path==='/api/v1/chess/game/move'){const body=route.request().postDataJSON();moves.push(body.uci);return route.fulfill({json:{game:{...game,fen:'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',turn:'owner',moves:[{san:'e4',uci:'e2e4',by:'player',ts:'2026-10-05T18:01:00Z'}],updated_at:'2026-10-05T18:01:00Z'}}})}
   if(path==='/api/v1/chess/game'){if(cold)await gameGate;return route.fulfill({json:{game}})}

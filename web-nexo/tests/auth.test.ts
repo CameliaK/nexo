@@ -76,7 +76,7 @@ async function withFakeBrowser(fn:(env:{storage:ReturnType<typeof memory>;reques
  class Socket {onopen:()=>void=()=>{};onclose:()=>void=()=>{};onmessage:((e:any)=>void)|undefined;onerror:(()=>void)|undefined;constructor(public url:string){queueMicrotask(()=>this.onopen())}close(){queueMicrotask(()=>this.onclose())}}
  const storage=memory(),requests:{path:string;headers:Record<string,string>}[]=[];let handler:(path:string,headers:Record<string,string>,method:string)=>Response=()=>new Response(null,{status:500});
  Object.defineProperty(globalThis,'localStorage',{value:storage,configurable:true});Object.defineProperty(globalThis,'location',{value:{protocol:'https:',host:'portfolio.test'},configurable:true});Object.defineProperty(globalThis,'WebSocket',{value:Socket,configurable:true});
- globalThis.fetch=async(path,options)=>{const headers={...(options?.headers as Record<string,string>|undefined)};requests.push({path:String(path),headers});return handler(String(path),headers,options?.method||'GET')};
+ globalThis.fetch=async(path,options)=>{const headers={...(options?.headers as Record<string,string>|undefined)};requests.push({path:String(path),headers});return String(path)==='/api/v1/ws-ticket'?Response.json({ticket:crypto.randomUUID(),expires_in:30}):handler(String(path),headers,options?.method||'GET')};
  try{await fn({storage,requests,route:h=>{handler=h}})}
  finally{for(const [key,descriptor] of descriptors)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else Reflect.deleteProperty(globalThis,key);}
 }

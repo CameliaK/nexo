@@ -1,3 +1,5 @@
+import { clearLocalSession } from './identity';
+import { MockWsTickets } from './ws-ticket';
 import { MockAccount } from './mock-account';
 import type { ChessGame, Notifications } from './types';
 import { t } from '../i18n';
@@ -12,7 +14,7 @@ export interface Clock {
   cancel(id: unknown): void;
 }
 const clock: Clock = { now: Date.now, schedule: (fn, ms) => setTimeout(fn, ms), cancel: id => clearTimeout(id as ReturnType<typeof setTimeout>) };
-type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
+type StorageLike = Pick<Storage, 'getItem' | 'setItem'> & Partial<Pick<Storage, 'removeItem'>>;
 type Saved = { conversation: string | null; messages: LiveMessage[]; nodes: GeneratedNode[] };
 export const scenarioIds = scenariosFile.scenarios.map(s => s.id);
 
@@ -25,14 +27,28 @@ export class MockBackend implements PortfolioBackend {
   private chatRun: string | null = null;
   private saved: Saved = { conversation: null, messages: [], nodes: [] };
   private account: MockAccount;
+  private tickets: MockWsTickets;
+  private connecting: Promise<void> | null = null;
+  private generation = 0;
   constructor(private time: Clock = clock, private storage?: StorageLike) {
+    this.tickets = new MockWsTickets(() => this.time.now());
     this.account = new MockAccount(time, event => this.events.forEach(handler => handler(event)), storage);
     try { const saved = JSON.parse(storage?.getItem('nexo.mock.session.v2') || 'null'); if (saved && Array.isArray(saved.messages) && Array.isArray(saved.nodes)) this.saved = saved; } catch { /* Storage can be unavailable. */ }
   }
   private persist() { try { this.storage?.setItem('nexo.mock.session.v2', JSON.stringify(this.saved)); } catch { /* In-memory mode remains usable. */ } }
   private change(state: ConnectionState) { this.state = state; this.connections.forEach(handler => handler(state)); }
-  async connect() { if (this.state === 'open') return; this.change('connecting'); this.change('open'); }
-  disconnect() { this.timers.forEach(id => this.time.cancel(id)); this.timers.clear(); this.chatRun = null; this.change('closed'); }
+  connect(): Promise<void> {
+    if (this.state === 'open') return Promise.resolve();
+    if (this.connecting) return this.connecting;
+    const generation = this.generation;
+    this.change('connecting');
+    const pending = this.tickets.request().then(({ ticket }) => {
+      if (generation !== this.generation) return;
+      this.tickets.consume(ticket); this.change('open');
+    }).finally(() => { if (this.connecting === pending) this.connecting = null; });
+    this.connecting = pending; return pending;
+  }
+  disconnect() { ++this.generation; this.connecting = null; this.tickets.clear(); this.timers.forEach(id => this.time.cancel(id)); this.timers.clear(); this.chatRun = null; this.change('closed'); }
   onEvent(handler: (event: BackendEvent) => void) { this.events.add(handler); return () => { this.events.delete(handler); }; }
   onConnectionChange(handler: (state: ConnectionState) => void) { this.connections.add(handler); handler(this.state); return () => { this.connections.delete(handler); }; }
   private later(fn: () => void, delay: number) { const id = this.time.schedule(() => { this.timers.delete(id); fn(); }, delay); this.timers.add(id); }
@@ -67,6 +83,11 @@ export class MockBackend implements PortfolioBackend {
   unsubscribe(token: string) { return this.account.unsubscribe(token); }
   getNotifications() { return this.account.getNotifications(); }
   setNotifications(value: Notifications) { return this.account.setNotifications(value); }
+  async deleteSessionData() {
+    this.disconnect(); this.saved = { conversation: null, messages: [], nodes: [] }; this.persist();
+    await this.account.clearSession();
+    if (this.storage?.removeItem) clearLocalSession({ removeItem: key => this.storage!.removeItem!(key) });
+  }
   async deleteAccount() { await this.account.deleteAccount(); this.saved = { conversation: null, messages: [], nodes: [] }; this.persist(); }
   chessGetGame() { return this.account.chessGetGame(); }
   chessNewGame(color: ChessGame['color']) { return this.account.chessNewGame(color); }

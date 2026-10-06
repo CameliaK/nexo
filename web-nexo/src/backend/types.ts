@@ -387,6 +387,7 @@ export interface PortfolioBackend {
   getNotifications(): Promise<Notifications>;
   setNotifications(settings: Notifications): Promise<Notifications>;
   deleteAccount(): Promise<void>;
+  deleteSessionData(): Promise<void>;
   chessGetGame(): Promise<ChessGame | null>;
   chessNewGame(color: ChessGame['color']): Promise<ChessGame>;
   chessMove(uci: string): Promise<ChessGame>;
@@ -395,7 +396,7 @@ export interface PortfolioBackend {
   ownerChessMove(id: string, uci: string): Promise<OwnerChessGame>;
   ownerChessResign(id: string): Promise<OwnerChessGame>;
 
-  /** Obtiene el token de invitado y abre el WebSocket. Idempotente. */
+  /** Obtiene un ticket de un solo uso y abre el WebSocket. Idempotente. */
   connect(): Promise<void>;
   disconnect(): void;
 

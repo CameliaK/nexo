@@ -14,7 +14,7 @@ function browser(){
  let now=1_800_000_000_000,serial=0,autoOpen=true;
  const values=new Map<string,string>([['nexo.visitor_id','visitor-a']]);
  const storage={getItem:(key:string)=>values.get(key)||null,setItem:(key:string,value:string)=>{values.set(key,value)},removeItem:(key:string)=>{values.delete(key)}};
- const tasks=new Map<number,{at:number;fn:()=>void}>(),requests:{path:string;headers:Headers;at:number}[]=[],sockets:Socket[]=[];
+ const tasks=new Map<number,{at:number;fn:()=>void}>(),requests:{path:string;headers:Headers;at:number;method:string}[]=[],sockets:Socket[]=[];
  class Socket{
   closed=false;
   onopen:(()=>void)|null=null;onclose:((event:{code:number})=>void)|null=null;onerror:(()=>void)|null=null;onmessage:((event:unknown)=>void)|null=null;
@@ -22,7 +22,7 @@ function browser(){
   close(code=1000){this.closed=true;this.onclose?.({code})}
  }
  let route:(path:string,headers:Headers)=>Response|Promise<Response>=path=>path==='/auth/guest'?Response.json({token:'opaque-guest'}):Response.json(path.endsWith('/auth/me')?{mode:'guest'}:{run_id:'run',message_id:'message'});
- const globals={fetch:async(input:unknown,options?:RequestInit)=>{const path=String(input),headers=new Headers(options?.headers);requests.push({path,headers,at:now});return route(path,headers)},localStorage:storage,location:{protocol:'https:',host:'portfolio.test'},WebSocket:Socket,setTimeout:(fn:()=>void,delay:number)=>{const id=++serial;tasks.set(id,{at:now+delay,fn});return id},clearTimeout:(id:number)=>{tasks.delete(id)}};
+ const globals={fetch:async(input:unknown,options?:RequestInit)=>{const path=String(input),headers=new Headers(options?.headers);requests.push({path,headers,at:now,method:options?.method||'GET'});if(path==='/api/v1/ws-ticket'){const response=await route(path,headers);if(!response.ok)return response;return Response.json({ticket:'ticket-'+requests.length,expires_in:30})}return route(path,headers)},localStorage:storage,location:{protocol:'https:',host:'portfolio.test'},WebSocket:Socket,setTimeout:(fn:()=>void,delay:number)=>{const id=++serial;tasks.set(id,{at:now+delay,fn});return id},clearTimeout:(id:number)=>{tasks.delete(id)}};
  for(const key of keys)Object.defineProperty(globalThis,key,{value:globals[key],configurable:true,writable:true});
  Date.now=()=>now;Math.random=()=>.5;
  const backends:RealBackend[]=[];
@@ -38,8 +38,10 @@ test('Five automatic WS reconnections plus both chats and a reload reuse one per
   await real.connect();
   for(let i=0;i<5;i++){b.sockets.at(-1)!.close();await b.advance(1000);await real.sendMessage('Hola');await real.sendLiveMessage('Mensaje')}
   assert.equal(b.sockets.length,6);assert.equal(b.guests().length,1);
+  assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,6);
+  assert.equal(new Set(b.sockets.map(socket=>new URL(socket.url).searchParams.get('ticket'))).size,6);
   assert.ok(b.requests.filter(r=>r.path!=='/auth/guest').every(r=>r.headers.get('Authorization')==='Bearer opaque-guest'));
-  assert.ok(b.sockets.every(socket=>new URL(socket.url).searchParams.get('token')==='opaque-guest'));
+  assert.ok(b.sockets.every(socket=>new URL(socket.url).searchParams.has('ticket')&&!new URL(socket.url).searchParams.has('token')));
   real.disconnect();const reloaded=b.backend();await reloaded.connect();assert.equal(b.guests().length,1);
   assert.deepEqual(JSON.parse(b.storage.getItem(GUEST_TOKEN_KEY)!),{token:'opaque-guest',visitorId:'visitor-a',expiresAt:null});
   assert.ok(b.requests.every(r=>!r.path.includes('opaque-guest')),'HTTP credentials only use headers');
@@ -56,17 +58,17 @@ test('WS, agent and live chat concurrent consumers share a single in-flight gues
 });
 test('Three concurrent HTTP 401 responses renew a rejected guest token once and retry each operation once',async()=>{
  const b=browser(),real=b.backend();let count=0;
- b.setRoute((path,headers)=>path==='/auth/guest'?Response.json({token:++count===1?'old-token':'renewed-token'}):headers.get('Authorization')==='Bearer old-token'?Response.json({error:{code:'unauthorized',message:'expired'}},{status:401}):Response.json({run_id:'run',message_id:'message',mode:'guest'}));
+ b.setRoute((path,headers)=>path==='/auth/guest'?Response.json({token:++count===1?'old-token':'renewed-token'}):path!=='/api/v1/ws-ticket'&&headers.get('Authorization')==='Bearer old-token'?Response.json({error:{code:'unauthorized',message:'expired'}},{status:401}):Response.json({run_id:'run',message_id:'message',mode:'guest'}));
  try{
   await real.connect();await Promise.all([real.sendMessage('Hola'),real.sendLiveMessage('Mensaje'),real.authMe()]);
-  assert.equal(b.guests().length,2);assert.equal(b.requests.filter(r=>r.headers.get('Authorization')==='Bearer old-token').length,3);assert.equal(b.requests.filter(r=>r.headers.get('Authorization')==='Bearer renewed-token').length,3);
+  assert.equal(b.guests().length,2);assert.equal(b.requests.filter(r=>r.path!=='/api/v1/ws-ticket'&&r.headers.get('Authorization')==='Bearer old-token').length,3);assert.equal(b.requests.filter(r=>r.headers.get('Authorization')==='Bearer renewed-token').length,3);
   assert.equal(JSON.parse(b.storage.getItem(GUEST_TOKEN_KEY)!).token,'renewed-token');
  }finally{await b.dispose()}
 });
 test('A WS handshake rejection verifies the cached guest over HTTP and renews only on a real 401',async()=>{
  const b=browser(),real=b.backend();let count=0;
- b.setRoute((path,headers)=>path==='/auth/guest'?Response.json({token:++count===1?'old-token':'renewed-token'}):headers.get('Authorization')==='Bearer old-token'?new Response(null,{status:401}):Response.json({mode:'guest'}));
- try{await real.connect();b.sockets.at(-1)!.close(1006);await flush();assert.equal(b.guests().length,2);await b.advance(1000);assert.equal(b.sockets.length,2);assert.equal(new URL(b.sockets.at(-1)!.url).searchParams.get('token'),'renewed-token');assert.equal(b.guests().length,2)}
+ b.setRoute((path,headers)=>path==='/auth/guest'?Response.json({token:++count===1?'old-token':'renewed-token'}):path!=='/api/v1/ws-ticket'&&headers.get('Authorization')==='Bearer old-token'?new Response(null,{status:401}):Response.json({mode:'guest'}));
+ try{await real.connect();b.sockets.at(-1)!.close(1006);await flush();assert.equal(b.guests().length,2);await b.advance(1000);assert.equal(b.sockets.length,2);assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').at(-1)!.headers.get('Authorization'),'Bearer renewed-token');assert.equal(b.guests().length,2)}
  finally{await b.dispose()}
 });
 test('Guest 429 obeys Retry-After across consumers/reloads and shows a localized nonblocking offline notice',async()=>{
@@ -105,7 +107,7 @@ test('Email/Google sign-in discard the guest cache and use the account token; lo
   b.setRoute(path=>path==='/auth/guest'?Response.json({token:'guest-'+ ++count}):path==='/auth/logout'?new Response(null,{status:204}):Response.json({token:'opaque-account',visitor_id:'canonical-user'}));
   try{
    await real.connect();const old=JSON.parse(b.storage.getItem(GUEST_TOKEN_KEY)!);if(method==='email')await real.verifyEmailLogin('link');else await real.exchangeCode('code');await flush();
-   assert.equal(b.storage.getItem(GUEST_TOKEN_KEY),null);assert.equal(b.storage.getItem(AUTH_TOKEN_KEY),'opaque-account');assert.equal(b.guests().length,1);assert.equal(new URL(b.sockets.at(-1)!.url).searchParams.get('token'),'opaque-account');
+   assert.equal(b.storage.getItem(GUEST_TOKEN_KEY),null);assert.equal(b.storage.getItem(AUTH_TOKEN_KEY),'opaque-account');assert.equal(b.guests().length,1);assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').at(-1)!.headers.get('Authorization'),'Bearer opaque-account');
    await real.logout();await flush();assert.equal(b.storage.getItem(AUTH_TOKEN_KEY),null);const fresh=JSON.parse(b.storage.getItem(GUEST_TOKEN_KEY)!);assert.notEqual(fresh.visitorId,old.visitorId);assert.notEqual(fresh.token,old.token);assert.equal(b.guests().length,2);
   }finally{await b.dispose()}
  }
@@ -133,7 +135,7 @@ test('Repeated failed WS handshakes keep the cached token when HTTP authorizatio
 });
 test('A second guest 401 is propagated after one renewal, discards the rejected cache and never changes visitor_id',async()=>{
  const b=browser(),real=b.backend();let count=0;
- b.setRoute(path=>path==='/auth/guest'?Response.json({token:'rejected-'+ ++count}):Response.json({error:{code:'unauthorized',message:'rejected'}},{status:401}));
+ b.setRoute(path=>path==='/auth/guest'?Response.json({token:'rejected-'+ ++count}):path==='/api/v1/ws-ticket'?Response.json({ticket:'valid-ticket',expires_in:30}):Response.json({error:{code:'unauthorized',message:'rejected'}},{status:401}));
  try{await real.connect();await assert.rejects(()=>real.authMe(),{status:401});assert.equal(b.guests().length,2);assert.equal(b.storage.getItem(GUEST_TOKEN_KEY),null);assert.equal(b.storage.getItem('nexo.visitor_id'),'visitor-a');assert.equal(b.tasks.size,0)}
  finally{await b.dispose()}
 });
@@ -154,4 +156,47 @@ test('A rate-limited renewal closes the old WS before retrying after explicit to
   await b.advance(19999);assert.equal(b.guests().length,2);assert.equal(b.sockets.length,1);
   await b.advance(1);assert.equal(b.guests().length,3);assert.equal(b.sockets.length,2);assert.equal(b.sockets[1].closed,false);assert.equal(b.tasks.size,0);
  }finally{await b.dispose()}
+});
+
+test('WS ticket 401 renews the opaque guest once, retries the ticket once and opens one socket',async()=>{
+ const b=browser(),real=b.backend();let guests=0;
+ b.setRoute((path,headers)=>path==='/auth/guest'?Response.json({token:++guests===1?'expired':'fresh'}):headers.get('Authorization')==='Bearer expired'?Response.json({error:{code:'unauthorized',message:'expired'}},{status:401}):Response.json({ticket:'single-use',expires_in:30}));
+ try{
+  await Promise.all([real.connect(),real.connect(),real.connect()]);
+  assert.equal(b.guests().length,2);assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,2);assert.equal(b.sockets.length,1);
+  assert.equal(b.requests.at(-1)!.headers.get('Authorization'),'Bearer fresh');assert.equal(new URL(b.sockets[0].url).searchParams.has('token'),false);
+ }finally{await b.dispose()}
+});
+test('WS ticket 429 respects Retry-After for guest and account, manual connect cannot bypass it, and notice localizes',async()=>{
+ for(const account of [false,true]){
+  const b=browser();if(account)b.storage.setItem(AUTH_TOKEN_KEY,'account-token');const real=b.backend();let tickets=0;
+  b.setRoute(path=>path==='/auth/guest'?Response.json({token:'guest'}):path==='/api/v1/ws-ticket'&&++tickets===1?new Response(null,{status:429,headers:{'Retry-After':'20'}}):Response.json({ticket:'retry-ticket',expires_in:30}));
+  const label={hidden:true,textContent:'',className:'',setAttribute(){},remove(){}},doc={createElement:()=>label,querySelector:()=>({append(){}})};
+  const notice=createConnectionNotice(doc as unknown as Document),stop=real.onConnectionChange(state=>notice.update(state));
+  try{
+   languageStore.set('es');await assert.rejects(()=>real.connect(),{status:429});assert.equal(label.textContent,'Sin conexión, reintentando');
+   await assert.rejects(()=>real.connect(),{status:429});assert.equal(tickets,1);await b.advance(19999);assert.equal(b.sockets.length,0);assert.equal(tickets,1);
+   languageStore.set('en');assert.equal(label.textContent,'Offline, retrying');await b.advance(1);assert.equal(tickets,2);assert.equal(b.sockets.length,1);assert.equal(label.hidden,true);
+   assert.equal(b.guests().length,account?0:1);
+  }finally{stop();notice.dispose();await b.dispose()}
+ }
+});
+test('DELETE session/data uses the existing Bearer, keeps identity on 429, and clears local credentials only after 204',async()=>{
+ for(const account of [false,true]){
+  const b=browser();if(account)b.storage.setItem(AUTH_TOKEN_KEY,'account-token');const real=b.backend();let limit=true;
+  b.storage.setItem('nexo.live.name','Personal name');b.storage.setItem('nexo.language','en');
+  b.setRoute(path=>path==='/auth/guest'?Response.json({token:'guest-token'}):path==='/api/v1/session/data'?(limit?new Response(null,{status:429,headers:{'Retry-After':'9'}}):new Response(null,{status:204})):Response.json({ticket:'ticket',expires_in:30}));
+  try{
+   await real.connect();await assert.rejects(()=>real.deleteSessionData(),{status:429,retryAfterSec:9});assert.equal(b.storage.getItem('nexo.visitor_id'),'visitor-a');assert.equal(b.sockets[0].closed,false);
+   limit=false;await real.deleteSessionData();assert.equal(b.storage.getItem('nexo.visitor_id'),null);assert.equal(b.storage.getItem(AUTH_TOKEN_KEY),null);assert.equal(b.storage.getItem(GUEST_TOKEN_KEY),null);assert.equal(b.storage.getItem('nexo.live.name'),null);assert.equal(b.storage.getItem('nexo.language'),'en');assert.equal(b.sockets[0].closed,true);
+   assert.ok(b.requests.filter(r=>r.path==='/api/v1/session/data').every(r=>r.method==='DELETE'&&r.headers.get('Authorization')==='Bearer '+(account?'account-token':'guest-token')));
+   await real.connect();assert.notEqual(b.storage.getItem('nexo.visitor_id'),'visitor-a');assert.equal(b.guests().length,account?1:2);
+  }finally{await b.dispose()}
+ }
+});
+
+test('A ticket Retry-After of zero retains the normal reconnect backoff instead of inventing a 30-second limit',async()=>{
+ const b=browser(),real=b.backend();let attempts=0;
+ b.setRoute(path=>path==='/auth/guest'?Response.json({token:'guest'}):++attempts===1?new Response(null,{status:429,headers:{'Retry-After':'0'}}):Response.json({ticket:'after-backoff',expires_in:30}));
+ try{await assert.rejects(()=>real.connect(),{status:429,retryAfterSec:0});assert.equal([...b.tasks.values()][0].at-b.now,1000);await b.advance(1000);assert.equal(b.sockets.length,1);assert.equal(b.guests().length,1)}finally{await b.dispose()}
 });
