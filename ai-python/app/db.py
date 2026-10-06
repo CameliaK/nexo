@@ -17,6 +17,14 @@ _STATEMENTS = [
       embedding vector(384) NOT NULL
     )
     """,
+    # What the stored fragments were embedded with (model, revision, text
+    # version): the agent re-ingests at startup when it does not match.
+    """
+    CREATE TABLE IF NOT EXISTS rag_meta (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+    """,
     # HNSW index works on empty tables; no need to pre-populate like IVFFlat
     """
     CREATE INDEX IF NOT EXISTS rag_fragments_emb_idx

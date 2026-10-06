@@ -19,6 +19,7 @@ from . import node_builder
 from . import chess_api
 from . import chess_game
 from . import retention
+from .skills import SkillsIndex, to_hits
 from .events import EventPublisher
 from .logsafe import install as install_log_filters, mask_id, redact
 from .llm.budget import BudgetedLLM, LLMBudgetExceeded
@@ -34,6 +35,7 @@ _llm: BudgetedLLM | None = None
 _rdb: aioredis.Redis | None = None
 _db_pool: asyncpg.Pool | None = None
 _rag_model: rag_mod.EmbeddingModel | None = None
+_skills: SkillsIndex | None = None
 
 
 def _now_iso() -> str:
@@ -42,11 +44,12 @@ def _now_iso() -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _portfolio, _llm, _rdb, _db_pool, _rag_model
+    global _portfolio, _llm, _rdb, _db_pool, _rag_model, _skills
 
     from .portfolio import load_portfolio
     _portfolio = load_portfolio(cfg.portfolio_path)
     log.info("portfolio loaded (%d nodes)", len(_portfolio))
+    _skills = SkillsIndex(cfg.skills_path)
 
     _rdb = aioredis.Redis.from_url(cfg.redis_url, decode_responses=True)
     log.info("redis connected")
@@ -63,10 +66,12 @@ async def lifespan(app: FastAPI):
     _rag_model = rag_mod.EmbeddingModel()
 
     fragment_count = await db_mod.count_fragments(_db_pool)
-    if fragment_count == 0:
-        log.info("rag_fragments is empty — running auto-ingestion")
+    stamp = await rag_mod.stored_stamp(_db_pool)
+    if fragment_count == 0 or stamp != rag_mod.ingestion_stamp():
+        log.warning("rag: re-ingesting (%d fragments stored with %s, now %s)",
+                    fragment_count, stamp, rag_mod.ingestion_stamp())
         count = await rag_mod.ingest(cfg.portfolio_path, _rag_model, _db_pool)
-        log.info("auto-ingested %d fragments", count)
+        log.warning("rag: ingested %d fragments", count)
     else:
         log.info("rag_fragments has %d fragments", fragment_count)
 
@@ -119,11 +124,12 @@ class _ChatRequest(BaseModel):
     visitor_id: str
     input: str
     seq_start: int
+    lang: str | None = None  # visitor's preference; the question's language wins
 
 
 @app.post("/internal/chat", status_code=202)
 async def internal_chat(body: _ChatRequest, background_tasks: BackgroundTasks):
-    if _rdb is None or _llm is None or _db_pool is None or _rag_model is None:
+    if _rdb is None or _llm is None or _db_pool is None or _rag_model is None or _skills is None:
         raise HTTPException(status_code=503, detail="service not ready")
 
     background_tasks.add_task(
@@ -139,6 +145,8 @@ async def internal_chat(body: _ChatRequest, background_tasks: BackgroundTasks):
         rag_model=_rag_model,
         route_threshold=cfg.route_confidence_threshold,
         n8n_webhook_url=cfg.n8n_webhook_url,
+        skills=_skills,
+        lang=body.lang if body.lang in ("es", "en") else None,
     )
     return {"status": "accepted"}
 
@@ -223,40 +231,55 @@ async def internal_events(body: _EventsRequest):
     return {"published": len(body.events)}
 
 
+class _SkillsQuery(BaseModel):
+    domains: list[str] = []
+    kinds: list[str] = []
+    techs: list[str] = []
+
+
 class _RagSearchRequest(BaseModel):
     run_id: str
     visitor_id: str
     query: str
+    intent: str = "query"
+    lang: str = "es"
+    skills: _SkillsQuery = _SkillsQuery()
+    terms: list[str] = []
 
 
 @app.post("/internal/rag_search")
 async def internal_rag_search(body: _RagSearchRequest):
-    """Semantic search via pgvector.  Checks visitor node cap; returns used=False if at limit."""
-    if _db_pool is None or _rag_model is None:
+    """Evidence for the deep route: first the skills index (facts, source
+    "skills"), then the RAG. used=False when there is no evidence or the
+    visitor is at the node cap (limit_reached). missing_terms: what the
+    visitor named that the index does not know."""
+    if _db_pool is None or _rag_model is None or _skills is None:
         raise HTTPException(status_code=503, detail="service not ready")
 
-    hits = await rag_mod.search(body.query, _rag_model, _db_pool, threshold=cfg.rag_similarity_threshold)
-    used = len(hits) > 0
+    lookup = _skills.lookup(techs=body.skills.techs, domains=body.skills.domains,
+                            kinds=body.skills.kinds, terms=body.terms[:6])
+    labels = {nid: n.get("label", nid) for nid, n in _portfolio.items()}
+    skill_hits = to_hits(lookup, labels, body.lang if body.lang in ("es", "en") else "es")
 
+    rag_hits = await rag_mod.search(body.query, _rag_model, _db_pool, threshold=cfg.rag_similarity_threshold)
+    hits = skill_hits + [
+        {"node_id": h.node_id, "title": h.title, "score": round(h.score, 3), "source": h.source, "body": h.body}
+        for h in rag_hits
+    ]
+    used = len(hits) > 0
+    if body.terms and not lookup.matched_terms and not body.skills.techs:
+        # Every tech the visitor named is unknown: nothing supports the request,
+        # whatever loosely related fragments the RAG found. No node design.
+        used = False
+    limit_reached = False
     if used:
         count = await node_builder.count_visitor_nodes(body.visitor_id, _db_pool)
         if count >= node_builder.NODES_PER_VISITOR:
             log.info("visitor %s at node limit (%d), used=False", mask_id(body.visitor_id), count)
-            used = False
+            used, limit_reached = False, True
 
-    return {
-        "hits": [
-            {
-                "node_id": h.node_id,
-                "title": h.title,
-                "score": round(h.score, 3),
-                "source": h.source,
-                "body": h.body,
-            }
-            for h in hits
-        ],
-        "used": used,
-    }
+    return {"hits": hits, "used": used, "limit_reached": limit_reached,
+            "missing_terms": lookup.unmatched_terms, "found_terms": lookup.matched_terms}
 
 
 class _DesignNodeRequest(BaseModel):
@@ -264,31 +287,28 @@ class _DesignNodeRequest(BaseModel):
     visitor_id: str
     question: str
     hits: list[dict]
+    lang: str = "es"
+    intent: str = "query"
+    missing_terms: list[str] = []
 
 
 @app.post("/internal/design_node")
 async def internal_design_node(body: _DesignNodeRequest):
-    """Ask the LLM to design a GeneratedNode from RAG hits.  Returns node or null."""
+    """Ask the LLM to design a GeneratedNode from the evidence, then keep
+    only what the evidence supports (grounding). Returns the node or null
+    with what was missing, and — when NODE_FORMING_EVENT is on — the portfolio
+    ids the node forms from, for the node.forming event."""
     if _llm is None:
         raise HTTPException(status_code=503, detail="service not ready")
 
-    rag_hits = [
-        rag_mod.RagHit(
-            node_id=h.get("node_id", ""),
-            title=h.get("title", ""),
-            score=float(h.get("score", 0.0)),
-            source=h.get("source", ""),
-            body=h.get("body", ""),
-        )
-        for h in body.hits
-    ]
-
+    lang = body.lang if body.lang in ("es", "en") else "es"
     try:
-        node = await node_builder.design_node(body.question, rag_hits, _llm)
+        node = await node_builder.design_node(body.question, body.hits, _llm, lang=lang)
     except LLMBudgetExceeded:
         # n8n's flow fails on this; the agent then reports the spent budget.
         raise HTTPException(status_code=503, detail="llm daily budget spent")
-    return {"node": node}
+    forming = [s["ref"] for s in node["sources"]] if node and cfg.node_forming_event else None
+    return {"node": node, "missing": body.missing_terms[:6], "forming": forming}
 
 
 class _SaveNodeRequest(BaseModel):

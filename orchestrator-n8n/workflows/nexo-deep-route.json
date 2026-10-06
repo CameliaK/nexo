@@ -43,7 +43,7 @@
         "url": "http://agent:8000/internal/rag_search",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'query': $('Webhook Trigger').first().json.body.query } }}",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'query': $('Webhook Trigger').first().json.body.query, 'intent': $('Webhook Trigger').first().json.body.intent || 'query', 'lang': $('Webhook Trigger').first().json.body.lang || 'es', 'skills': $('Webhook Trigger').first().json.body.skills || {}, 'terms': $('Webhook Trigger').first().json.body.terms || [] } }}",
         "options": {}
       }
     },
@@ -118,7 +118,7 @@
         "url": "http://agent:8000/internal/design_node",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'question': $('Webhook Trigger').first().json.body.question, 'hits': $('RAG Search').first().json.hits } }}",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'question': $('Webhook Trigger').first().json.body.question, 'hits': $('RAG Search').first().json.hits, 'lang': $('Webhook Trigger').first().json.body.lang || 'es', 'intent': $('Webhook Trigger').first().json.body.intent || 'query', 'missing_terms': $('RAG Search').first().json.missing_terms || [] } }}",
         "options": {}
       }
     },
@@ -178,7 +178,7 @@
         "url": "http://agent:8000/internal/events",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'events': [{'type': 'process.step', 'data': {'step': 'create_node', 'status': 'active', 'label': 'Creando el nodo'} }, {'type': 'trace.hop', 'data': {'hop_id': 'h7', 'from': 'n8n', 'to': 'postgres', 'phase': 'start', 'label': 'Guarda el nodo para este visitante'} }] } }}",
+        "jsonBody": "={{ { 'visitor_id': $('Webhook Trigger').first().json.body.visitor_id, 'run_id': $('Webhook Trigger').first().json.body.run_id, 'events': [{'type': 'process.step', 'data': {'step': 'create_node', 'status': 'active', 'label': 'Creando el nodo'} }, {'type': 'trace.hop', 'data': {'hop_id': 'h7', 'from': 'n8n', 'to': 'postgres', 'phase': 'start', 'label': 'Guarda el nodo para este visitante'} }].concat($('Design Node').first().json.forming ? [{'type': 'node.forming', 'data': {'sources': $('Design Node').first().json.forming} }] : []) } }}",
         "options": {}
       }
     },
@@ -220,7 +220,7 @@
       "position": [2720, 100],
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { 'outcome': 'generated', 'node': $('Design Node').first().json.node } }}",
+        "responseBody": "={{ { 'outcome': 'generated', 'node': $('Design Node').first().json.node, 'missing': $('RAG Search').first().json.missing_terms || [] } }}",
         "options": {}
       }
     },
@@ -232,7 +232,7 @@
       "position": [2060, 320],
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { 'outcome': 'unknown', 'node': null } }}",
+        "responseBody": "={{ { 'outcome': 'unknown', 'node': null, 'reason': 'insufficient', 'missing': $('Design Node').first().json.missing || [], 'found': $('RAG Search').first().json.found_terms || [] } }}",
         "options": {}
       }
     },
@@ -244,7 +244,7 @@
       "position": [1180, 440],
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { 'outcome': 'unknown', 'node': null } }}",
+        "responseBody": "={{ { 'outcome': 'unknown', 'node': null, 'reason': $('RAG Search').first().json.limit_reached ? 'limit' : 'no_evidence', 'missing': $('RAG Search').first().json.missing_terms || [], 'found': $('RAG Search').first().json.found_terms || [] } }}",
         "options": {}
       }
     }

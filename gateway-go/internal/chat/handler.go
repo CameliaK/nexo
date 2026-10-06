@@ -74,6 +74,9 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	// Parse body: {"message": "..."}
 	var body struct {
 		Message string `json:"message"`
+		// Optional answer-language preference ("es" | "en"); anything else
+		// is ignored and the agent uses the language of the question.
+		Lang string `json:"lang"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeErr(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
@@ -156,16 +159,21 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"run_id": runID})
 
 	// Fire and forget: call agent in goroutine
-	go h.callAgent(visitorID, runID, body.Message, seq)
+	lang := ""
+	if body.Lang == "es" || body.Lang == "en" {
+		lang = body.Lang
+	}
+	go h.callAgent(visitorID, runID, body.Message, lang, seq)
 }
 
-func (h *handler) callAgent(visitorID, runID, message string, seqStart int) {
+func (h *handler) callAgent(visitorID, runID, message, lang string, seqStart int) {
 	ctx := context.Background()
 
 	payload, _ := json.Marshal(map[string]any{
 		"run_id":     runID,
 		"visitor_id": visitorID,
 		"input":      message,
+		"lang":       lang,
 		"seq_start":  seqStart,
 	})
 

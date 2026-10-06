@@ -7,10 +7,10 @@
 # n8n password, the "nexo" Postgres password, an ephemeral PASETO key).
 #
 # Memory limits are calculated for an 8 GB VPS (Hetzner CX32):
-#   OS + Docker overhead ≈ 1.5 GB; total limits ≈ 2.8 GB → ~3.7 GB headroom.
-#   Measurements from docker stats on the dev stack (2026-10-05): traefik 44 MiB,
-#   web-nexo 8, gateway 10, agent 391 idle / 809 peak, redis 18, postgres 35,
-#   n8n 257.
+#   OS + Docker overhead ≈ 1.5 GB; total limits ≈ 3.6 GB → ~2.9 GB headroom.
+#   Measurements from docker stats on the dev stack: traefik 44 MiB, web-nexo 8,
+#   gateway 10, agent 1060 idle / 1250 peak (2026-10-06), redis 18,
+#   postgres 35, n8n 257.
 
 services:
 
@@ -108,10 +108,11 @@ services:
 
   # ── Agent ──────────────────────────────────────────────────────────────────
   # No Traefik labels — accessible only from the Docker-internal network.
-  # Measured 2026-10-05 (docker stats, CPU PyTorch + all-MiniLM-L6-v2):
-  # 391 MiB idle, 662 MiB after 60 RAG searches (6 parallel) and 809 MiB peak
-  # after 400 long searches (16 parallel) — PyTorch keeps its buffers, so the
-  # usage stays near the peak. 1280 MB ≈ 1.6× the measured peak.
+  # Measured with docker stats (CPU PyTorch). 2026-10-06, after switching to
+  # paraphrase-multilingual-MiniLM-L12-v2 (docs/eval/resultados.md):
+  # 1.06 GiB idle and 1.22 GiB peak after 400 long RAG searches (16 parallel);
+  # PyTorch keeps its buffers, so usage stays near the peak. (Before, with
+  # all-MiniLM-L6-v2: 391 MiB idle, 809 MiB peak.) 2048 MB ≈ 1.6× the peak.
   agent:
     environment:
       - POSTGRES_URL=postgresql://nexo:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/nexo
@@ -122,7 +123,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1280M
+          memory: 2048M
 
   # ── Redis ──────────────────────────────────────────────────────────────────
   redis:

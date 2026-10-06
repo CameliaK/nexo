@@ -9,8 +9,9 @@ TLS automático con Let's Encrypt (ACME HTTP-01).
 
 ### Hardware
 Hetzner **CX32** (4 vCPU, 8 GB RAM, 80 GB SSD NVMe) o superior.
-Los límites de memoria del stack suman ~2.8 GB (el agente, con PyTorch, llega a ~810 MiB
-con carga; su límite es 1280 MB). El resto es para el SO y margen.
+Los límites de memoria del stack suman ~3.6 GB. El agente, con PyTorch y el modelo de
+embeddings multilingüe, usa ~1.06 GiB en reposo y llega a ~1.22 GiB con carga; su límite es
+2048 MB. El resto es para el SO y margen.
 
 ### Software en el VPS
 - Ubuntu 24.04 LTS

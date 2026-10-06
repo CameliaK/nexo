@@ -9,8 +9,15 @@ from sentence_transformers import SentenceTransformer
 
 log = logging.getLogger(__name__)
 
-_MODEL_NAME = "all-MiniLM-L6-v2"
-_SIMILARITY_THRESHOLD_DEFAULT = 0.75
+# Multilingual since the 2026-10-06 calibration (docs/eval/resultados.md):
+# all-MiniLM-L6-v2 scored by language rather than meaning on this Spanish
+# content. Same dimension (384), so rag_fragments.embedding is unchanged.
+# Pinned to a commit; the Dockerfile bakes this exact revision.
+MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+MODEL_REVISION = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
+# Bump when build_fragments changes the stored text: forces a re-ingestion.
+FRAGMENTS_VERSION = "2"
+_SIMILARITY_THRESHOLD_DEFAULT = 0.35
 _TOP_K = 5
 
 
@@ -25,8 +32,8 @@ class RagHit:
 
 class EmbeddingModel:
     def __init__(self) -> None:
-        log.info("loading embedding model %s", _MODEL_NAME)
-        self._model = SentenceTransformer(_MODEL_NAME)
+        log.info("loading embedding model %s", MODEL_NAME)
+        self._model = SentenceTransformer(MODEL_NAME, revision=MODEL_REVISION)
         log.info("embedding model ready")
 
     def embed(self, text: str) -> np.ndarray:
@@ -75,26 +82,68 @@ async def search(
     return hits
 
 
-async def ingest(portfolio_path: str, model: EmbeddingModel, pool: asyncpg.Pool) -> int:
-    """Embed portfolio nodes and store in rag_fragments. Truncates and re-inserts (idempotent)."""
-    with open(portfolio_path, encoding="utf-8") as f:
-        data = json.load(f)
+def _content_text(content) -> str:
+    """Flattens a node's content (body, items, entries…) into plain text."""
+    out: list[str] = []
 
+    def walk(v):
+        if isinstance(v, str):
+            out.append(v.strip())
+        elif isinstance(v, dict):
+            for x in v.values():
+                walk(x)
+        elif isinstance(v, list):
+            for x in v:
+                walk(x)
+
+    walk(content)
+    return " ".join(x for x in out if x)
+
+
+def build_fragments(data: dict, with_content: bool = True) -> list[dict]:
+    """One fragment per portfolio node with something to say: label, summary,
+    keywords and (with_content) the node's own content text. Shared by the
+    ingestion and docs/eval, so both embed exactly the same text; the content
+    was added after the 2026-10-06 calibration (docs/eval/resultados.md)."""
     fragments = []
     for node in data.get("nodes", []):
-        summary = node.get("summary", "").strip()
-        keywords = node.get("keywords", [])
+        summary = (node.get("summary") or "").strip()
+        keywords = node.get("keywords") or []
         if not summary and len(keywords) < 2:
             continue
         body_parts = [f"{node['label']}: {summary}."]
         if keywords:
             body_parts.append(f"Palabras clave: {', '.join(keywords)}.")
+        if with_content:
+            extra = _content_text(node.get("content"))
+            if extra:
+                body_parts.append(extra)
         fragments.append({
             "node_id": node["id"],
             "source": "portfolio",
             "title": node.get("label", node["id"]),
             "body": " ".join(body_parts),
         })
+    return fragments
+
+
+def ingestion_stamp() -> str:
+    """What the stored fragments were built with; a mismatch at startup means
+    they must be re-embedded."""
+    return f"{MODEL_NAME}@{MODEL_REVISION[:12]}#fragments-v{FRAGMENTS_VERSION}"
+
+
+async def stored_stamp(pool: asyncpg.Pool) -> str | None:
+    async with pool.acquire() as conn:
+        return await conn.fetchval("SELECT value FROM rag_meta WHERE key = 'ingestion'")
+
+
+async def ingest(portfolio_path: str, model: EmbeddingModel, pool: asyncpg.Pool) -> int:
+    """Embed portfolio nodes and store in rag_fragments. Truncates and re-inserts (idempotent)."""
+    with open(portfolio_path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    fragments = build_fragments(data)
 
     if not fragments:
         log.warning("no fragments to ingest from %s", portfolio_path)
@@ -105,7 +154,7 @@ async def ingest(portfolio_path: str, model: EmbeddingModel, pool: asyncpg.Pool)
     # CPU-bound; OK to block here since this only runs before the app accepts requests
     embeddings = model.embed_many(texts)
 
-    async with pool.acquire() as conn:
+    async with pool.acquire() as conn, conn.transaction():
         await conn.execute("TRUNCATE rag_fragments RESTART IDENTITY")
         await conn.executemany(
             """
@@ -116,6 +165,11 @@ async def ingest(portfolio_path: str, model: EmbeddingModel, pool: asyncpg.Pool)
                 (f["node_id"], f["source"], f["title"], f["body"], emb)
                 for f, emb in zip(fragments, embeddings)
             ],
+        )
+        await conn.execute(
+            """INSERT INTO rag_meta (key, value) VALUES ('ingestion', $1)
+               ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value""",
+            ingestion_stamp(),
         )
 
     log.info("ingested %d fragments", len(fragments))

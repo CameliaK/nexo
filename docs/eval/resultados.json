@@ -1,0 +1,5410 @@
+{
+ "questions": 33,
+ "fragments": 54,
+ "results": [
+  {
+   "model": "sentence-transformers/all-MiniLM-L6-v2",
+   "dim": 384,
+   "variant": "sin_contenido",
+   "stats": {
+    "relevant": {
+     "mean": 0.415,
+     "min": 0.1945,
+     "max": 0.5732
+    },
+    "irrelevant": {
+     "mean": 0.322,
+     "min": 0.0915,
+     "max": 0.5041
+    },
+    "ambiguous": {
+     "mean": 0.303,
+     "min": 0.1078,
+     "max": 0.4847
+    },
+    "mean_gap": 0.093,
+    "overlap": 0.3096,
+    "auc": 0.742
+   },
+   "sweep": {
+    "best_bal_acc": 0.732,
+    "tied_range": [
+     0.47,
+     0.47
+    ],
+    "chosen": 0.47,
+    "rows": [
+     {
+      "t": 0.1,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.11,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.12,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.13,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.14,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.15,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.16,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.17,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.18,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.19,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.2,
+      "tpr": 0.944,
+      "fpr": 0.545,
+      "bal_acc": 0.699
+     },
+     {
+      "t": 0.21,
+      "tpr": 0.944,
+      "fpr": 0.545,
+      "bal_acc": 0.699
+     },
+     {
+      "t": 0.22,
+      "tpr": 0.944,
+      "fpr": 0.545,
+      "bal_acc": 0.699
+     },
+     {
+      "t": 0.23,
+      "tpr": 0.889,
+      "fpr": 0.545,
+      "bal_acc": 0.672
+     },
+     {
+      "t": 0.24,
+      "tpr": 0.778,
+      "fpr": 0.545,
+      "bal_acc": 0.616
+     },
+     {
+      "t": 0.25,
+      "tpr": 0.778,
+      "fpr": 0.545,
+      "bal_acc": 0.616
+     },
+     {
+      "t": 0.26,
+      "tpr": 0.778,
+      "fpr": 0.545,
+      "bal_acc": 0.616
+     },
+     {
+      "t": 0.27,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.28,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.29,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.3,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.31,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.32,
+      "tpr": 0.667,
+      "fpr": 0.545,
+      "bal_acc": 0.561
+     },
+     {
+      "t": 0.33,
+      "tpr": 0.667,
+      "fpr": 0.545,
+      "bal_acc": 0.561
+     },
+     {
+      "t": 0.34,
+      "tpr": 0.667,
+      "fpr": 0.545,
+      "bal_acc": 0.561
+     },
+     {
+      "t": 0.35,
+      "tpr": 0.667,
+      "fpr": 0.545,
+      "bal_acc": 0.561
+     },
+     {
+      "t": 0.36,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.37,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.38,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.39,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.4,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.41,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.42,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.43,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.44,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.45,
+      "tpr": 0.556,
+      "fpr": 0.364,
+      "bal_acc": 0.596
+     },
+     {
+      "t": 0.46,
+      "tpr": 0.556,
+      "fpr": 0.273,
+      "bal_acc": 0.641
+     },
+     {
+      "t": 0.47,
+      "tpr": 0.556,
+      "fpr": 0.091,
+      "bal_acc": 0.732
+     },
+     {
+      "t": 0.48,
+      "tpr": 0.444,
+      "fpr": 0.091,
+      "bal_acc": 0.677
+     },
+     {
+      "t": 0.49,
+      "tpr": 0.444,
+      "fpr": 0.091,
+      "bal_acc": 0.677
+     },
+     {
+      "t": 0.5,
+      "tpr": 0.444,
+      "fpr": 0.091,
+      "bal_acc": 0.677
+     },
+     {
+      "t": 0.51,
+      "tpr": 0.389,
+      "fpr": 0.0,
+      "bal_acc": 0.694
+     },
+     {
+      "t": 0.52,
+      "tpr": 0.333,
+      "fpr": 0.0,
+      "bal_acc": 0.667
+     },
+     {
+      "t": 0.53,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.54,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.55,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.56,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.57,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.58,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.59,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.6,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.61,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.62,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.63,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.64,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.65,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.66,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.67,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.68,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.69,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.7,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.71,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.72,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.73,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.74,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.75,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.76,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.77,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.78,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.79,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.8,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.81,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.82,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.83,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.84,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.85,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.86,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.87,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.88,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.89,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.9,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.91,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.92,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.93,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.94,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.95,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     }
+    ]
+   },
+   "consulta": {
+    "stats": {
+     "auc": 0.823,
+     "portafolio_min": 0.2275,
+     "fuera_max": 0.5041,
+     "mean_gap": 0.14
+    },
+    "sweep": {
+     "best_bal_acc": 0.771,
+     "tied_range": [
+      0.47,
+      0.47
+     ],
+     "chosen": 0.47,
+     "rows": [
+      {
+       "t": 0.1,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.11,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.12,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.13,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.14,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.15,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.16,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.17,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.18,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.19,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.2,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.21,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.22,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.23,
+       "tpr": 0.917,
+       "fpr": 0.5,
+       "bal_acc": 0.708
+      },
+      {
+       "t": 0.24,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.25,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.26,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.27,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.28,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.29,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.3,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.31,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.32,
+       "tpr": 0.75,
+       "fpr": 0.5,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.33,
+       "tpr": 0.75,
+       "fpr": 0.5,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.34,
+       "tpr": 0.75,
+       "fpr": 0.5,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.35,
+       "tpr": 0.75,
+       "fpr": 0.5,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.36,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.37,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.38,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.39,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.4,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.41,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.42,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.43,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.44,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.45,
+       "tpr": 0.667,
+       "fpr": 0.375,
+       "bal_acc": 0.646
+      },
+      {
+       "t": 0.46,
+       "tpr": 0.667,
+       "fpr": 0.375,
+       "bal_acc": 0.646
+      },
+      {
+       "t": 0.47,
+       "tpr": 0.667,
+       "fpr": 0.125,
+       "bal_acc": 0.771
+      },
+      {
+       "t": 0.48,
+       "tpr": 0.583,
+       "fpr": 0.125,
+       "bal_acc": 0.729
+      },
+      {
+       "t": 0.49,
+       "tpr": 0.583,
+       "fpr": 0.125,
+       "bal_acc": 0.729
+      },
+      {
+       "t": 0.5,
+       "tpr": 0.583,
+       "fpr": 0.125,
+       "bal_acc": 0.729
+      },
+      {
+       "t": 0.51,
+       "tpr": 0.5,
+       "fpr": 0.0,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.52,
+       "tpr": 0.5,
+       "fpr": 0.0,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.53,
+       "tpr": 0.25,
+       "fpr": 0.0,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.54,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.55,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.56,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.57,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.58,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.59,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.6,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.61,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.62,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.63,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.64,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.65,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.66,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.67,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.68,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.69,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.7,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.71,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.72,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.73,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.74,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.75,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.76,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.77,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.78,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.79,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.8,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.81,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.82,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.83,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.84,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.85,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.86,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.87,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.88,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.89,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.9,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.91,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.92,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.93,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.94,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.95,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      }
+     ]
+    }
+   },
+   "per_question": [
+    {
+     "id": "p01",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4752,
+     "top": "personal"
+    },
+    {
+     "id": "p02",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5091,
+     "top": "experiencia.dgti.hermes"
+    },
+    {
+     "id": "p03",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5296,
+     "top": "experiencia.dest.plataforma"
+    },
+    {
+     "id": "p04",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5732,
+     "top": "aprendizaje"
+    },
+    {
+     "id": "p05",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5267,
+     "top": "experiencia"
+    },
+    {
+     "id": "p06",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5449,
+     "top": "hobbies.deportes.natacion"
+    },
+    {
+     "id": "p07",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5317,
+     "top": "hobbies.deportes.natacion"
+    },
+    {
+     "id": "p08",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2275,
+     "top": "experiencia.infosys.digital-twin"
+    },
+    {
+     "id": "p09",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.3136,
+     "top": "experiencia.dgti"
+    },
+    {
+     "id": "p10",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.3589,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "p11",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.239,
+     "top": "personal.contacto.correo"
+    },
+    {
+     "id": "p12",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.5207,
+     "top": "aprendizaje.proyectos-academicos.sistema-financiero"
+    },
+    {
+     "id": "n01",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5105,
+     "top": "hobbies.deportes.natacion"
+    },
+    {
+     "id": "n02",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4452,
+     "top": "aprendizaje.proyectos-academicos"
+    },
+    {
+     "id": "n03",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4735,
+     "top": "hobbies.deportes.natacion"
+    },
+    {
+     "id": "n04",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.1945,
+     "top": "experiencia.dgti"
+    },
+    {
+     "id": "n05",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2341,
+     "top": "experiencia"
+    },
+    {
+     "id": "n06",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2659,
+     "top": "aprendizaje.universidad"
+    },
+    {
+     "id": "f01",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.46,
+     "top": "personal.contacto.correo"
+    },
+    {
+     "id": "f02",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.5041,
+     "top": "personal.datos.origen"
+    },
+    {
+     "id": "f03",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4606,
+     "top": "hobbies.deportes.natacion"
+    },
+    {
+     "id": "f04",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4407,
+     "top": "hobbies.deportes.voleibol"
+    },
+    {
+     "id": "f05",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.1992,
+     "top": "aprendizaje.extras"
+    },
+    {
+     "id": "f06",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.0931,
+     "top": "personal.datos.edad"
+    },
+    {
+     "id": "f07",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.0915,
+     "top": "experiencia.infosys.digital-twin"
+    },
+    {
+     "id": "f08",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.1969,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "a01",
+     "label": "ambigua",
+     "lang": "es",
+     "relevant": null,
+     "score": 0.4847,
+     "top": "proyectos-personales"
+    },
+    {
+     "id": "a02",
+     "label": "ambigua",
+     "lang": "es",
+     "relevant": null,
+     "score": 0.47,
+     "top": "proyectos-personales"
+    },
+    {
+     "id": "a03",
+     "label": "ambigua",
+     "lang": "en",
+     "relevant": null,
+     "score": 0.1507,
+     "top": "experiencia"
+    },
+    {
+     "id": "a04",
+     "label": "ambigua",
+     "lang": "en",
+     "relevant": null,
+     "score": 0.1078,
+     "top": "aprendizaje.extras"
+    },
+    {
+     "id": "i01",
+     "label": "inyeccion",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4419,
+     "top": "hobbies.deportes.natacion"
+    },
+    {
+     "id": "i02",
+     "label": "inyeccion",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.1962,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "i03",
+     "label": "inyeccion",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4563,
+     "top": "hobbies.deportes.natacion"
+    }
+   ]
+  },
+  {
+   "model": "sentence-transformers/all-MiniLM-L6-v2",
+   "dim": 384,
+   "variant": "con_contenido",
+   "stats": {
+    "relevant": {
+     "mean": 0.426,
+     "min": 0.2301,
+     "max": 0.6267
+    },
+    "irrelevant": {
+     "mean": 0.321,
+     "min": 0.1116,
+     "max": 0.4831
+    },
+    "ambiguous": {
+     "mean": 0.303,
+     "min": 0.1078,
+     "max": 0.4847
+    },
+    "mean_gap": 0.105,
+    "overlap": 0.253,
+    "auc": 0.737
+   },
+   "sweep": {
+    "best_bal_acc": 0.727,
+    "tied_range": [
+     0.22,
+     0.23
+    ],
+    "chosen": 0.23,
+    "rows": [
+     {
+      "t": 0.1,
+      "tpr": 1.0,
+      "fpr": 1.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.11,
+      "tpr": 1.0,
+      "fpr": 1.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.12,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.13,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.14,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.15,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.16,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.17,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.18,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.19,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.2,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.21,
+      "tpr": 1.0,
+      "fpr": 0.636,
+      "bal_acc": 0.682
+     },
+     {
+      "t": 0.22,
+      "tpr": 1.0,
+      "fpr": 0.545,
+      "bal_acc": 0.727
+     },
+     {
+      "t": 0.23,
+      "tpr": 1.0,
+      "fpr": 0.545,
+      "bal_acc": 0.727
+     },
+     {
+      "t": 0.24,
+      "tpr": 0.833,
+      "fpr": 0.545,
+      "bal_acc": 0.644
+     },
+     {
+      "t": 0.25,
+      "tpr": 0.778,
+      "fpr": 0.545,
+      "bal_acc": 0.616
+     },
+     {
+      "t": 0.26,
+      "tpr": 0.778,
+      "fpr": 0.545,
+      "bal_acc": 0.616
+     },
+     {
+      "t": 0.27,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.28,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.29,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.3,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.31,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.32,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.33,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.34,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.35,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.36,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.37,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.38,
+      "tpr": 0.722,
+      "fpr": 0.545,
+      "bal_acc": 0.588
+     },
+     {
+      "t": 0.39,
+      "tpr": 0.667,
+      "fpr": 0.545,
+      "bal_acc": 0.561
+     },
+     {
+      "t": 0.4,
+      "tpr": 0.611,
+      "fpr": 0.545,
+      "bal_acc": 0.533
+     },
+     {
+      "t": 0.41,
+      "tpr": 0.611,
+      "fpr": 0.455,
+      "bal_acc": 0.578
+     },
+     {
+      "t": 0.42,
+      "tpr": 0.611,
+      "fpr": 0.455,
+      "bal_acc": 0.578
+     },
+     {
+      "t": 0.43,
+      "tpr": 0.611,
+      "fpr": 0.455,
+      "bal_acc": 0.578
+     },
+     {
+      "t": 0.44,
+      "tpr": 0.5,
+      "fpr": 0.364,
+      "bal_acc": 0.568
+     },
+     {
+      "t": 0.45,
+      "tpr": 0.5,
+      "fpr": 0.182,
+      "bal_acc": 0.659
+     },
+     {
+      "t": 0.46,
+      "tpr": 0.444,
+      "fpr": 0.091,
+      "bal_acc": 0.677
+     },
+     {
+      "t": 0.47,
+      "tpr": 0.444,
+      "fpr": 0.091,
+      "bal_acc": 0.677
+     },
+     {
+      "t": 0.48,
+      "tpr": 0.389,
+      "fpr": 0.091,
+      "bal_acc": 0.649
+     },
+     {
+      "t": 0.49,
+      "tpr": 0.389,
+      "fpr": 0.0,
+      "bal_acc": 0.694
+     },
+     {
+      "t": 0.5,
+      "tpr": 0.389,
+      "fpr": 0.0,
+      "bal_acc": 0.694
+     },
+     {
+      "t": 0.51,
+      "tpr": 0.389,
+      "fpr": 0.0,
+      "bal_acc": 0.694
+     },
+     {
+      "t": 0.52,
+      "tpr": 0.389,
+      "fpr": 0.0,
+      "bal_acc": 0.694
+     },
+     {
+      "t": 0.53,
+      "tpr": 0.222,
+      "fpr": 0.0,
+      "bal_acc": 0.611
+     },
+     {
+      "t": 0.54,
+      "tpr": 0.222,
+      "fpr": 0.0,
+      "bal_acc": 0.611
+     },
+     {
+      "t": 0.55,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.56,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.57,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.58,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.59,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.6,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.61,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.62,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.63,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.64,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.65,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.66,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.67,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.68,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.69,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.7,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.71,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.72,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.73,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.74,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.75,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.76,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.77,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.78,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.79,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.8,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.81,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.82,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.83,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.84,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.85,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.86,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.87,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.88,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.89,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.9,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.91,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.92,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.93,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.94,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.95,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     }
+    ]
+   },
+   "consulta": {
+    "stats": {
+     "auc": 0.823,
+     "portafolio_min": 0.2386,
+     "fuera_max": 0.4831,
+     "mean_gap": 0.159
+    },
+    "sweep": {
+     "best_bal_acc": 0.792,
+     "tied_range": [
+      0.49,
+      0.52
+     ],
+     "chosen": 0.51,
+     "rows": [
+      {
+       "t": 0.1,
+       "tpr": 1.0,
+       "fpr": 1.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.11,
+       "tpr": 1.0,
+       "fpr": 1.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.12,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.13,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.14,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.15,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.16,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.17,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.18,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.19,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.2,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.21,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.22,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.23,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.24,
+       "tpr": 0.917,
+       "fpr": 0.5,
+       "bal_acc": 0.708
+      },
+      {
+       "t": 0.25,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.26,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.27,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.28,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.29,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.3,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.31,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.32,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.33,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.34,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.35,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.36,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.37,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.38,
+       "tpr": 0.833,
+       "fpr": 0.5,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.39,
+       "tpr": 0.75,
+       "fpr": 0.5,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.4,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.41,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.42,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.43,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.44,
+       "tpr": 0.667,
+       "fpr": 0.5,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.45,
+       "tpr": 0.667,
+       "fpr": 0.25,
+       "bal_acc": 0.708
+      },
+      {
+       "t": 0.46,
+       "tpr": 0.667,
+       "fpr": 0.125,
+       "bal_acc": 0.771
+      },
+      {
+       "t": 0.47,
+       "tpr": 0.667,
+       "fpr": 0.125,
+       "bal_acc": 0.771
+      },
+      {
+       "t": 0.48,
+       "tpr": 0.583,
+       "fpr": 0.125,
+       "bal_acc": 0.729
+      },
+      {
+       "t": 0.49,
+       "tpr": 0.583,
+       "fpr": 0.0,
+       "bal_acc": 0.792
+      },
+      {
+       "t": 0.5,
+       "tpr": 0.583,
+       "fpr": 0.0,
+       "bal_acc": 0.792
+      },
+      {
+       "t": 0.51,
+       "tpr": 0.583,
+       "fpr": 0.0,
+       "bal_acc": 0.792
+      },
+      {
+       "t": 0.52,
+       "tpr": 0.583,
+       "fpr": 0.0,
+       "bal_acc": 0.792
+      },
+      {
+       "t": 0.53,
+       "tpr": 0.333,
+       "fpr": 0.0,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.54,
+       "tpr": 0.333,
+       "fpr": 0.0,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.55,
+       "tpr": 0.25,
+       "fpr": 0.0,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.56,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.57,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.58,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.59,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.6,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.61,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.62,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.63,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.64,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.65,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.66,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.67,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.68,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.69,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.7,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.71,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.72,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.73,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.74,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.75,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.76,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.77,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.78,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.79,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.8,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.81,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.82,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.83,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.84,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.85,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.86,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.87,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.88,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.89,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.9,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.91,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.92,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.93,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.94,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.95,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      }
+     ]
+    }
+   },
+   "per_question": [
+    {
+     "id": "p01",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4752,
+     "top": "personal"
+    },
+    {
+     "id": "p02",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5556,
+     "top": "experiencia.dgti.hermes"
+    },
+    {
+     "id": "p03",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5296,
+     "top": "experiencia.dest.plataforma"
+    },
+    {
+     "id": "p04",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5732,
+     "top": "aprendizaje"
+    },
+    {
+     "id": "p05",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5267,
+     "top": "experiencia"
+    },
+    {
+     "id": "p06",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.5414,
+     "top": "proyectos-personales"
+    },
+    {
+     "id": "p07",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.6267,
+     "top": "aprendizaje.proyectos-academicos.astralis"
+    },
+    {
+     "id": "p08",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.24,
+     "top": "experiencia.dest"
+    },
+    {
+     "id": "p09",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.3979,
+     "top": "experiencia.dgti"
+    },
+    {
+     "id": "p10",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.386,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "p11",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2386,
+     "top": "experiencia.dest"
+    },
+    {
+     "id": "p12",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.5207,
+     "top": "aprendizaje.proyectos-academicos.sistema-financiero"
+    },
+    {
+     "id": "n01",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4377,
+     "top": "hobbies.deportes.natacion"
+    },
+    {
+     "id": "n02",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4512,
+     "top": "aprendizaje.extras.infosys-ia"
+    },
+    {
+     "id": "n03",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4382,
+     "top": "hobbies.deportes.natacion"
+    },
+    {
+     "id": "n04",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2301,
+     "top": "personal.contacto.linkedin"
+    },
+    {
+     "id": "n05",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2341,
+     "top": "experiencia"
+    },
+    {
+     "id": "n06",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2659,
+     "top": "aprendizaje.universidad"
+    },
+    {
+     "id": "f01",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4509,
+     "top": "personal.contacto"
+    },
+    {
+     "id": "f02",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4831,
+     "top": "personal"
+    },
+    {
+     "id": "f03",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4477,
+     "top": "proyectos-personales"
+    },
+    {
+     "id": "f04",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.442,
+     "top": "hobbies.deportes.voleibol"
+    },
+    {
+     "id": "f05",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.1992,
+     "top": "aprendizaje.extras"
+    },
+    {
+     "id": "f06",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.1116,
+     "top": "experiencia.infosys"
+    },
+    {
+     "id": "f07",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.1366,
+     "top": "experiencia.infosys.digital-twin"
+    },
+    {
+     "id": "f08",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.2009,
+     "top": "experiencia.dest"
+    },
+    {
+     "id": "a01",
+     "label": "ambigua",
+     "lang": "es",
+     "relevant": null,
+     "score": 0.4847,
+     "top": "proyectos-personales"
+    },
+    {
+     "id": "a02",
+     "label": "ambigua",
+     "lang": "es",
+     "relevant": null,
+     "score": 0.47,
+     "top": "proyectos-personales"
+    },
+    {
+     "id": "a03",
+     "label": "ambigua",
+     "lang": "en",
+     "relevant": null,
+     "score": 0.1507,
+     "top": "experiencia"
+    },
+    {
+     "id": "a04",
+     "label": "ambigua",
+     "lang": "en",
+     "relevant": null,
+     "score": 0.1078,
+     "top": "aprendizaje.extras"
+    },
+    {
+     "id": "i01",
+     "label": "inyeccion",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4053,
+     "top": "proyectos-personales"
+    },
+    {
+     "id": "i02",
+     "label": "inyeccion",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.2183,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "i03",
+     "label": "inyeccion",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4317,
+     "top": "hobbies.deportes.natacion"
+    }
+   ]
+  },
+  {
+   "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+   "dim": 384,
+   "variant": "sin_contenido",
+   "stats": {
+    "relevant": {
+     "mean": 0.425,
+     "min": 0.2784,
+     "max": 0.7256
+    },
+    "irrelevant": {
+     "mean": 0.298,
+     "min": 0.0959,
+     "max": 0.445
+    },
+    "ambiguous": {
+     "mean": 0.312,
+     "min": 0.1155,
+     "max": 0.4801
+    },
+    "mean_gap": 0.127,
+    "overlap": 0.1666,
+    "auc": 0.798
+   },
+   "sweep": {
+    "best_bal_acc": 0.798,
+    "tied_range": [
+     0.36,
+     0.37
+    ],
+    "chosen": 0.36,
+    "rows": [
+     {
+      "t": 0.1,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.11,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.12,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.13,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.14,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.15,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.16,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.17,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.18,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.19,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.2,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.21,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.22,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.23,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.24,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.25,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.26,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.27,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.28,
+      "tpr": 0.944,
+      "fpr": 0.727,
+      "bal_acc": 0.609
+     },
+     {
+      "t": 0.29,
+      "tpr": 0.889,
+      "fpr": 0.636,
+      "bal_acc": 0.626
+     },
+     {
+      "t": 0.3,
+      "tpr": 0.833,
+      "fpr": 0.636,
+      "bal_acc": 0.598
+     },
+     {
+      "t": 0.31,
+      "tpr": 0.833,
+      "fpr": 0.545,
+      "bal_acc": 0.644
+     },
+     {
+      "t": 0.32,
+      "tpr": 0.833,
+      "fpr": 0.545,
+      "bal_acc": 0.644
+     },
+     {
+      "t": 0.33,
+      "tpr": 0.833,
+      "fpr": 0.455,
+      "bal_acc": 0.689
+     },
+     {
+      "t": 0.34,
+      "tpr": 0.778,
+      "fpr": 0.455,
+      "bal_acc": 0.662
+     },
+     {
+      "t": 0.35,
+      "tpr": 0.778,
+      "fpr": 0.273,
+      "bal_acc": 0.753
+     },
+     {
+      "t": 0.36,
+      "tpr": 0.778,
+      "fpr": 0.182,
+      "bal_acc": 0.798
+     },
+     {
+      "t": 0.37,
+      "tpr": 0.778,
+      "fpr": 0.182,
+      "bal_acc": 0.798
+     },
+     {
+      "t": 0.38,
+      "tpr": 0.722,
+      "fpr": 0.182,
+      "bal_acc": 0.77
+     },
+     {
+      "t": 0.39,
+      "tpr": 0.667,
+      "fpr": 0.182,
+      "bal_acc": 0.742
+     },
+     {
+      "t": 0.4,
+      "tpr": 0.611,
+      "fpr": 0.182,
+      "bal_acc": 0.715
+     },
+     {
+      "t": 0.41,
+      "tpr": 0.611,
+      "fpr": 0.182,
+      "bal_acc": 0.715
+     },
+     {
+      "t": 0.42,
+      "tpr": 0.5,
+      "fpr": 0.182,
+      "bal_acc": 0.659
+     },
+     {
+      "t": 0.43,
+      "tpr": 0.444,
+      "fpr": 0.091,
+      "bal_acc": 0.677
+     },
+     {
+      "t": 0.44,
+      "tpr": 0.389,
+      "fpr": 0.091,
+      "bal_acc": 0.649
+     },
+     {
+      "t": 0.45,
+      "tpr": 0.389,
+      "fpr": 0.0,
+      "bal_acc": 0.694
+     },
+     {
+      "t": 0.46,
+      "tpr": 0.278,
+      "fpr": 0.0,
+      "bal_acc": 0.639
+     },
+     {
+      "t": 0.47,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.48,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.49,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.5,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.51,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.52,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.53,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.54,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.55,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.56,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.57,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.58,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.59,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.6,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.61,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.62,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.63,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.64,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.65,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.66,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.67,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.68,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.69,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.7,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.71,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.72,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.73,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.74,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.75,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.76,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.77,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.78,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.79,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.8,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.81,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.82,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.83,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.84,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.85,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.86,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.87,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.88,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.89,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.9,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.91,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.92,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.93,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.94,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.95,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     }
+    ]
+   },
+   "consulta": {
+    "stats": {
+     "auc": 0.927,
+     "portafolio_min": 0.2903,
+     "fuera_max": 0.3579,
+     "mean_gap": 0.18
+    },
+    "sweep": {
+     "best_bal_acc": 0.917,
+     "tied_range": [
+      0.36,
+      0.38
+     ],
+     "chosen": 0.37,
+     "rows": [
+      {
+       "t": 0.1,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.11,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.12,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.13,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.14,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.15,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.16,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.17,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.18,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.19,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.2,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.21,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.22,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.23,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.24,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.25,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.26,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.27,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.28,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.29,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.3,
+       "tpr": 0.917,
+       "fpr": 0.5,
+       "bal_acc": 0.708
+      },
+      {
+       "t": 0.31,
+       "tpr": 0.917,
+       "fpr": 0.5,
+       "bal_acc": 0.708
+      },
+      {
+       "t": 0.32,
+       "tpr": 0.917,
+       "fpr": 0.5,
+       "bal_acc": 0.708
+      },
+      {
+       "t": 0.33,
+       "tpr": 0.917,
+       "fpr": 0.375,
+       "bal_acc": 0.771
+      },
+      {
+       "t": 0.34,
+       "tpr": 0.833,
+       "fpr": 0.375,
+       "bal_acc": 0.729
+      },
+      {
+       "t": 0.35,
+       "tpr": 0.833,
+       "fpr": 0.125,
+       "bal_acc": 0.854
+      },
+      {
+       "t": 0.36,
+       "tpr": 0.833,
+       "fpr": 0.0,
+       "bal_acc": 0.917
+      },
+      {
+       "t": 0.37,
+       "tpr": 0.833,
+       "fpr": 0.0,
+       "bal_acc": 0.917
+      },
+      {
+       "t": 0.38,
+       "tpr": 0.833,
+       "fpr": 0.0,
+       "bal_acc": 0.917
+      },
+      {
+       "t": 0.39,
+       "tpr": 0.75,
+       "fpr": 0.0,
+       "bal_acc": 0.875
+      },
+      {
+       "t": 0.4,
+       "tpr": 0.667,
+       "fpr": 0.0,
+       "bal_acc": 0.833
+      },
+      {
+       "t": 0.41,
+       "tpr": 0.667,
+       "fpr": 0.0,
+       "bal_acc": 0.833
+      },
+      {
+       "t": 0.42,
+       "tpr": 0.5,
+       "fpr": 0.0,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.43,
+       "tpr": 0.5,
+       "fpr": 0.0,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.44,
+       "tpr": 0.5,
+       "fpr": 0.0,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.45,
+       "tpr": 0.5,
+       "fpr": 0.0,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.46,
+       "tpr": 0.333,
+       "fpr": 0.0,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.47,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.48,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.49,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.5,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.51,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.52,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.53,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.54,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.55,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.56,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.57,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.58,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.59,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.6,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.61,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.62,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.63,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.64,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.65,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.66,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.67,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.68,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.69,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.7,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.71,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.72,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.73,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.74,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.75,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.76,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.77,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.78,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.79,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.8,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.81,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.82,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.83,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.84,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.85,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.86,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.87,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.88,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.89,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.9,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.91,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.92,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.93,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.94,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.95,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      }
+     ]
+    }
+   },
+   "per_question": [
+    {
+     "id": "p01",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4579,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "p02",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4549,
+     "top": "aprendizaje.universidad.carrera"
+    },
+    {
+     "id": "p03",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4183,
+     "top": "proyectos-personales.este-portafolio"
+    },
+    {
+     "id": "p04",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4603,
+     "top": "aprendizaje"
+    },
+    {
+     "id": "p05",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4163,
+     "top": "experiencia.dest.plataforma"
+    },
+    {
+     "id": "p06",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.7256,
+     "top": "hobbies.videojuegos"
+    },
+    {
+     "id": "p07",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.3891,
+     "top": "aprendizaje.proyectos-academicos.astralis"
+    },
+    {
+     "id": "p08",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.3928,
+     "top": "experiencia.infosys.digital-twin"
+    },
+    {
+     "id": "p09",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2903,
+     "top": "experiencia"
+    },
+    {
+     "id": "p10",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.4674,
+     "top": "hobbies.deportes.voleibol"
+    },
+    {
+     "id": "p11",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.3343,
+     "top": "personal.datos.idiomas"
+    },
+    {
+     "id": "p12",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.5005,
+     "top": "aprendizaje.proyectos-academicos.sistema-financiero"
+    },
+    {
+     "id": "n01",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4359,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "n02",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4228,
+     "top": "aprendizaje.universidad.carrera"
+    },
+    {
+     "id": "n03",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.3731,
+     "top": "proyectos-personales.este-portafolio"
+    },
+    {
+     "id": "n04",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2819,
+     "top": "aprendizaje.universidad.fundamentos"
+    },
+    {
+     "id": "n05",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.5447,
+     "top": "experiencia"
+    },
+    {
+     "id": "n06",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2784,
+     "top": "experiencia.infosys.buscador"
+    },
+    {
+     "id": "f01",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.2804,
+     "top": "proyectos-personales.este-portafolio"
+    },
+    {
+     "id": "f02",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.345,
+     "top": "personal.datos.origen"
+    },
+    {
+     "id": "f03",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.1406,
+     "top": "personal.contacto.correo"
+    },
+    {
+     "id": "f04",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.341,
+     "top": "personal.contacto.correo"
+    },
+    {
+     "id": "f05",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.3234,
+     "top": "experiencia"
+    },
+    {
+     "id": "f06",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.0959,
+     "top": "personal.contacto.celular"
+    },
+    {
+     "id": "f07",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.2118,
+     "top": "personal.contacto.celular"
+    },
+    {
+     "id": "f08",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.3579,
+     "top": "hobbies.deportes.futbol"
+    },
+    {
+     "id": "a01",
+     "label": "ambigua",
+     "lang": "es",
+     "relevant": null,
+     "score": 0.4801,
+     "top": "personal.contacto.correo"
+    },
+    {
+     "id": "a02",
+     "label": "ambigua",
+     "lang": "es",
+     "relevant": null,
+     "score": 0.3103,
+     "top": "hobbies.deportes.voleibol"
+    },
+    {
+     "id": "a03",
+     "label": "ambigua",
+     "lang": "en",
+     "relevant": null,
+     "score": 0.1155,
+     "top": "hobbies.videojuegos.r6"
+    },
+    {
+     "id": "a04",
+     "label": "ambigua",
+     "lang": "en",
+     "relevant": null,
+     "score": 0.3426,
+     "top": "hobbies"
+    },
+    {
+     "id": "i01",
+     "label": "inyeccion",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.3077,
+     "top": "hobbies.videojuegos.smite"
+    },
+    {
+     "id": "i02",
+     "label": "inyeccion",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.4258,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "i03",
+     "label": "inyeccion",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.445,
+     "top": "aprendizaje.extras.infosys-aws"
+    }
+   ]
+  },
+  {
+   "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+   "dim": 384,
+   "variant": "con_contenido",
+   "stats": {
+    "relevant": {
+     "mean": 0.432,
+     "min": 0.2858,
+     "max": 0.7256
+    },
+    "irrelevant": {
+     "mean": 0.283,
+     "min": 0.0857,
+     "max": 0.4436
+    },
+    "ambiguous": {
+     "mean": 0.311,
+     "min": 0.2241,
+     "max": 0.3875
+    },
+    "mean_gap": 0.15,
+    "overlap": 0.1578,
+    "auc": 0.818
+   },
+   "sweep": {
+    "best_bal_acc": 0.826,
+    "tied_range": [
+     0.34,
+     0.37
+    ],
+    "chosen": 0.35,
+    "rows": [
+     {
+      "t": 0.1,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.11,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.12,
+      "tpr": 1.0,
+      "fpr": 0.909,
+      "bal_acc": 0.545
+     },
+     {
+      "t": 0.13,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.14,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.15,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.16,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.17,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.18,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.19,
+      "tpr": 1.0,
+      "fpr": 0.818,
+      "bal_acc": 0.591
+     },
+     {
+      "t": 0.2,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.21,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.22,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.23,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.24,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.25,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.26,
+      "tpr": 1.0,
+      "fpr": 0.727,
+      "bal_acc": 0.636
+     },
+     {
+      "t": 0.27,
+      "tpr": 1.0,
+      "fpr": 0.636,
+      "bal_acc": 0.682
+     },
+     {
+      "t": 0.28,
+      "tpr": 1.0,
+      "fpr": 0.636,
+      "bal_acc": 0.682
+     },
+     {
+      "t": 0.29,
+      "tpr": 0.944,
+      "fpr": 0.636,
+      "bal_acc": 0.654
+     },
+     {
+      "t": 0.3,
+      "tpr": 0.889,
+      "fpr": 0.636,
+      "bal_acc": 0.626
+     },
+     {
+      "t": 0.31,
+      "tpr": 0.833,
+      "fpr": 0.364,
+      "bal_acc": 0.735
+     },
+     {
+      "t": 0.32,
+      "tpr": 0.833,
+      "fpr": 0.364,
+      "bal_acc": 0.735
+     },
+     {
+      "t": 0.33,
+      "tpr": 0.833,
+      "fpr": 0.273,
+      "bal_acc": 0.78
+     },
+     {
+      "t": 0.34,
+      "tpr": 0.833,
+      "fpr": 0.182,
+      "bal_acc": 0.826
+     },
+     {
+      "t": 0.35,
+      "tpr": 0.833,
+      "fpr": 0.182,
+      "bal_acc": 0.826
+     },
+     {
+      "t": 0.36,
+      "tpr": 0.833,
+      "fpr": 0.182,
+      "bal_acc": 0.826
+     },
+     {
+      "t": 0.37,
+      "tpr": 0.833,
+      "fpr": 0.182,
+      "bal_acc": 0.826
+     },
+     {
+      "t": 0.38,
+      "tpr": 0.778,
+      "fpr": 0.182,
+      "bal_acc": 0.798
+     },
+     {
+      "t": 0.39,
+      "tpr": 0.778,
+      "fpr": 0.182,
+      "bal_acc": 0.798
+     },
+     {
+      "t": 0.4,
+      "tpr": 0.778,
+      "fpr": 0.182,
+      "bal_acc": 0.798
+     },
+     {
+      "t": 0.41,
+      "tpr": 0.778,
+      "fpr": 0.182,
+      "bal_acc": 0.798
+     },
+     {
+      "t": 0.42,
+      "tpr": 0.556,
+      "fpr": 0.182,
+      "bal_acc": 0.687
+     },
+     {
+      "t": 0.43,
+      "tpr": 0.5,
+      "fpr": 0.091,
+      "bal_acc": 0.705
+     },
+     {
+      "t": 0.44,
+      "tpr": 0.333,
+      "fpr": 0.091,
+      "bal_acc": 0.621
+     },
+     {
+      "t": 0.45,
+      "tpr": 0.333,
+      "fpr": 0.0,
+      "bal_acc": 0.667
+     },
+     {
+      "t": 0.46,
+      "tpr": 0.278,
+      "fpr": 0.0,
+      "bal_acc": 0.639
+     },
+     {
+      "t": 0.47,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.48,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.49,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.5,
+      "tpr": 0.167,
+      "fpr": 0.0,
+      "bal_acc": 0.583
+     },
+     {
+      "t": 0.51,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.52,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.53,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.54,
+      "tpr": 0.111,
+      "fpr": 0.0,
+      "bal_acc": 0.556
+     },
+     {
+      "t": 0.55,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.56,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.57,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.58,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.59,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.6,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.61,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.62,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.63,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.64,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.65,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.66,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.67,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.68,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.69,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.7,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.71,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.72,
+      "tpr": 0.056,
+      "fpr": 0.0,
+      "bal_acc": 0.528
+     },
+     {
+      "t": 0.73,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.74,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.75,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.76,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.77,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.78,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.79,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.8,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.81,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.82,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.83,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.84,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.85,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.86,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.87,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.88,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.89,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.9,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.91,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.92,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.93,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.94,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     },
+     {
+      "t": 0.95,
+      "tpr": 0.0,
+      "fpr": 0.0,
+      "bal_acc": 0.5
+     }
+    ]
+   },
+   "consulta": {
+    "stats": {
+     "auc": 0.958,
+     "portafolio_min": 0.2967,
+     "fuera_max": 0.3234,
+     "mean_gap": 0.209
+    },
+    "sweep": {
+     "best_bal_acc": 0.958,
+     "tied_range": [
+      0.33,
+      0.37
+     ],
+     "chosen": 0.35,
+     "rows": [
+      {
+       "t": 0.1,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.11,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.12,
+       "tpr": 1.0,
+       "fpr": 0.875,
+       "bal_acc": 0.562
+      },
+      {
+       "t": 0.13,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.14,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.15,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.16,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.17,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.18,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.19,
+       "tpr": 1.0,
+       "fpr": 0.75,
+       "bal_acc": 0.625
+      },
+      {
+       "t": 0.2,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.21,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.22,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.23,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.24,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.25,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.26,
+       "tpr": 1.0,
+       "fpr": 0.625,
+       "bal_acc": 0.688
+      },
+      {
+       "t": 0.27,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.28,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.29,
+       "tpr": 1.0,
+       "fpr": 0.5,
+       "bal_acc": 0.75
+      },
+      {
+       "t": 0.3,
+       "tpr": 0.917,
+       "fpr": 0.5,
+       "bal_acc": 0.708
+      },
+      {
+       "t": 0.31,
+       "tpr": 0.917,
+       "fpr": 0.125,
+       "bal_acc": 0.896
+      },
+      {
+       "t": 0.32,
+       "tpr": 0.917,
+       "fpr": 0.125,
+       "bal_acc": 0.896
+      },
+      {
+       "t": 0.33,
+       "tpr": 0.917,
+       "fpr": 0.0,
+       "bal_acc": 0.958
+      },
+      {
+       "t": 0.34,
+       "tpr": 0.917,
+       "fpr": 0.0,
+       "bal_acc": 0.958
+      },
+      {
+       "t": 0.35,
+       "tpr": 0.917,
+       "fpr": 0.0,
+       "bal_acc": 0.958
+      },
+      {
+       "t": 0.36,
+       "tpr": 0.917,
+       "fpr": 0.0,
+       "bal_acc": 0.958
+      },
+      {
+       "t": 0.37,
+       "tpr": 0.917,
+       "fpr": 0.0,
+       "bal_acc": 0.958
+      },
+      {
+       "t": 0.38,
+       "tpr": 0.833,
+       "fpr": 0.0,
+       "bal_acc": 0.917
+      },
+      {
+       "t": 0.39,
+       "tpr": 0.833,
+       "fpr": 0.0,
+       "bal_acc": 0.917
+      },
+      {
+       "t": 0.4,
+       "tpr": 0.833,
+       "fpr": 0.0,
+       "bal_acc": 0.917
+      },
+      {
+       "t": 0.41,
+       "tpr": 0.833,
+       "fpr": 0.0,
+       "bal_acc": 0.917
+      },
+      {
+       "t": 0.42,
+       "tpr": 0.583,
+       "fpr": 0.0,
+       "bal_acc": 0.792
+      },
+      {
+       "t": 0.43,
+       "tpr": 0.583,
+       "fpr": 0.0,
+       "bal_acc": 0.792
+      },
+      {
+       "t": 0.44,
+       "tpr": 0.333,
+       "fpr": 0.0,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.45,
+       "tpr": 0.333,
+       "fpr": 0.0,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.46,
+       "tpr": 0.333,
+       "fpr": 0.0,
+       "bal_acc": 0.667
+      },
+      {
+       "t": 0.47,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.48,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.49,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.5,
+       "tpr": 0.167,
+       "fpr": 0.0,
+       "bal_acc": 0.583
+      },
+      {
+       "t": 0.51,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.52,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.53,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.54,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.55,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.56,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.57,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.58,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.59,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.6,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.61,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.62,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.63,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.64,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.65,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.66,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.67,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.68,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.69,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.7,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.71,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.72,
+       "tpr": 0.083,
+       "fpr": 0.0,
+       "bal_acc": 0.542
+      },
+      {
+       "t": 0.73,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.74,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.75,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.76,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.77,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.78,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.79,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.8,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.81,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.82,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.83,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.84,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.85,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.86,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.87,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.88,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.89,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.9,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.91,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.92,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.93,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.94,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      },
+      {
+       "t": 0.95,
+       "tpr": 0.0,
+       "fpr": 0.0,
+       "bal_acc": 0.5
+      }
+     ]
+    }
+   },
+   "per_question": [
+    {
+     "id": "p01",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4324,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "p02",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4356,
+     "top": "aprendizaje.universidad.carrera"
+    },
+    {
+     "id": "p03",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4168,
+     "top": "proyectos-personales.este-portafolio"
+    },
+    {
+     "id": "p04",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4603,
+     "top": "aprendizaje"
+    },
+    {
+     "id": "p05",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4172,
+     "top": "aprendizaje.universidad.diseno"
+    },
+    {
+     "id": "p06",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.7256,
+     "top": "hobbies.videojuegos"
+    },
+    {
+     "id": "p07",
+     "label": "portafolio",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4356,
+     "top": "aprendizaje.proyectos-academicos.astralis"
+    },
+    {
+     "id": "p08",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.4178,
+     "top": "experiencia.infosys.digital-twin"
+    },
+    {
+     "id": "p09",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2967,
+     "top": "experiencia.dgti"
+    },
+    {
+     "id": "p10",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.4608,
+     "top": "hobbies.deportes.voleibol"
+    },
+    {
+     "id": "p11",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.3708,
+     "top": "personal.datos.idiomas"
+    },
+    {
+     "id": "p12",
+     "label": "portafolio",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.5005,
+     "top": "aprendizaje.proyectos-academicos.sistema-financiero"
+    },
+    {
+     "id": "n01",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4511,
+     "top": "personal.contacto.correo"
+    },
+    {
+     "id": "n02",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4205,
+     "top": "aprendizaje.universidad.carrera"
+    },
+    {
+     "id": "n03",
+     "label": "peticion_nodo",
+     "lang": "es",
+     "relevant": true,
+     "score": 0.4102,
+     "top": "experiencia.dgti.hermes"
+    },
+    {
+     "id": "n04",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.3018,
+     "top": "personal.contacto.correo"
+    },
+    {
+     "id": "n05",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.5447,
+     "top": "experiencia"
+    },
+    {
+     "id": "n06",
+     "label": "peticion_nodo",
+     "lang": "en",
+     "relevant": true,
+     "score": 0.2858,
+     "top": "experiencia.dgti.hermes"
+    },
+    {
+     "id": "f01",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.2657,
+     "top": "proyectos-personales.este-portafolio"
+    },
+    {
+     "id": "f02",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.305,
+     "top": "personal.datos.origen"
+    },
+    {
+     "id": "f03",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.1249,
+     "top": "experiencia.infosys.digital-twin"
+    },
+    {
+     "id": "f04",
+     "label": "fuera_de_alcance",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.3076,
+     "top": "hobbies.videojuegos.smite"
+    },
+    {
+     "id": "f05",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.3234,
+     "top": "experiencia"
+    },
+    {
+     "id": "f06",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.0857,
+     "top": "personal.datos.edad"
+    },
+    {
+     "id": "f07",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.1941,
+     "top": "personal.contacto.celular"
+    },
+    {
+     "id": "f08",
+     "label": "fuera_de_alcance",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.3031,
+     "top": "hobbies.videojuegos.rocket-league"
+    },
+    {
+     "id": "a01",
+     "label": "ambigua",
+     "lang": "es",
+     "relevant": null,
+     "score": 0.3875,
+     "top": "personal"
+    },
+    {
+     "id": "a02",
+     "label": "ambigua",
+     "lang": "es",
+     "relevant": null,
+     "score": 0.2881,
+     "top": "hobbies.videojuegos.smite"
+    },
+    {
+     "id": "a03",
+     "label": "ambigua",
+     "lang": "en",
+     "relevant": null,
+     "score": 0.2241,
+     "top": "personal.contacto.linkedin"
+    },
+    {
+     "id": "a04",
+     "label": "ambigua",
+     "lang": "en",
+     "relevant": null,
+     "score": 0.3426,
+     "top": "hobbies"
+    },
+    {
+     "id": "i01",
+     "label": "inyeccion",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.3361,
+     "top": "hobbies.videojuegos.smite"
+    },
+    {
+     "id": "i02",
+     "label": "inyeccion",
+     "lang": "en",
+     "relevant": false,
+     "score": 0.4216,
+     "top": "personal.datos.nombre"
+    },
+    {
+     "id": "i03",
+     "label": "inyeccion",
+     "lang": "es",
+     "relevant": false,
+     "score": 0.4436,
+     "top": "aprendizaje.universidad.diseno"
+    }
+   ]
+  }
+ ]
+}
