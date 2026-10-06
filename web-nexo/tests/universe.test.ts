@@ -1,4 +1,5 @@
 // @ts-nocheck -- This lightweight DOM fixture exercises the unchanged Canvas renderer.
+import { motion as MOTION, easeOut, resumeStart } from '../src/motion';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -37,13 +38,13 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  const listeners={},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
  if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
- const sandbox={t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:(k,f)=>listeners[k]=f,document:{getElementById:el,querySelector:el,createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener(){},body:el('body'),hidden:false,get activeElement(){return activeElement}}};
+ const sandbox={t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:(k,f)=>listeners[k]=f,document:{getElementById:el,querySelector:el,createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listeners['document:'+key]=fn,body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let mediaFrame;
  if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
- let source=fs.readFileSync('src/universe.js','utf8').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
+ let source=fs.readFileSync('src/universe.js','utf8').replace("import { motion as MOTION, easeOut, resumeStart } from './motion';",'').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
  source=source.replace("import { LivePreview, placeSatellite, satelliteFootprint } from './live-satellite.js';",'');
- source=source.replace('return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){');
+ source=source.replace('return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getClock:()=>clock,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){');
  source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);Object.assign(sandbox.api,sandbox.universe);
  const frames=(ms=2700)=>{const end=now+ms;while(now<end){now=Math.min(end,now+50);raf(now)}};
  const enter=id=>{el('node-targets').children.find(e=>e.dataset.node===id).click();frames()};
@@ -410,4 +411,11 @@ test('Owner links wait for pending private data and return from a deeper level o
   for(let i=0;i<30;i++){frames(200);timers.splice(0).forEach(fn=>fn())}
   assert.equal(await opening,true);assert.equal(api.getLevel().id,'private_owner_games');assert.equal(selected,'linked');api.dispose();
  }
+});
+
+
+test('Hidden tabs stop canvas work and resume the shared clock without jumping through a camera transition',()=>{
+ const {api,frames,sandbox,listeners}=fixture();frames(100);const clock=api.getClock();
+ sandbox.document.hidden=true;listeners['document:visibilitychange']();frames(2000);assert.equal(api.getClock(),clock);
+ sandbox.document.hidden=false;listeners['document:visibilitychange']();frames(100);assert.ok(api.getClock()>clock);assert.ok(api.getClock()-clock<.2);api.dispose();
 });

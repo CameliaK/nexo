@@ -82,3 +82,9 @@
 
 .connection-notice{max-width:180px;line-height:1.4;text-align:right;color:#ddca9f;font-size:11px}.connection-notice[hidden]{display:none}.system-status:has(.connection-notice:not([hidden])) #motion-status{display:none}
 @media(max-width:650px){.connection-notice{max-width:150px;font-size:10px}}
+/* Opaque glass avoids repeated blur passes over the animated canvas. */
+.tools{backdrop-filter:none;background:#10161df5}.floating-live-chat,.floating-live-chat:hover,.speech-bubble,.content-card,.companion-panel,.live-panel{filter:none}
+.language-node svg{transition:opacity var(--motion-hover,150ms)}.language-node:hover svg,.language-node:focus-visible svg{filter:none}
+.node-label{transition:opacity var(--motion-hover,150ms),color var(--motion-hover,150ms)}
+.is-language-changing .node-label,.is-language-changing .orientation,.is-language-changing .language-node span{animation-duration:var(--motion-language,196ms)}
+.system-aperture .system-caption,.speech-bubble{transition:opacity var(--motion-hover,150ms)}

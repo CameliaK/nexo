@@ -21,21 +21,22 @@ export function fitChessCamera(camera:Camera,area:Rect):Camera{
 
 export function chessLayout({width,height}:ChessViewport,view:ChessView={zoom:1,pan:{x:0,y:0}}){
   const short=height<600,stacked=width<960&&!(width>=700&&height<650);
-  const margin=width<650?18:28,footer=short?78:width<650?height<720?86:100:118;
-  const headerTop=short?76:stacked?194:142,headerHeight=short?42:stacked?56:64;
-  const playerHeight=short?30:stacked?height<720?32:40:44,helpHeight=short||stacked?0:34;
+  const margin=width<650?12:28,footer=short?84:width<650?height<720?86:100:104;
+  const headerTop=short?64:stacked?82:108,headerHeight=short?26:56;
+  const playerHeight=short?28:40,helpHeight=0;
   const asideWidth=short?174:220,asideHeight=height<720?98:156;
   const asideLeft=stacked?margin:width-margin-asideWidth;
-  const left=stacked?margin:Math.min(280,width*.22);
+  const left=stacked?margin:Math.min(260,width*.17);
   const right=stacked?width-margin:asideLeft-24;
   const playerGap=short?8:12,headingGap=short?4:8;
   const top=headerTop+headerHeight+playerHeight+playerGap+headingGap;
   const bottom=height-footer-playerHeight-helpHeight-(stacked?asideHeight+playerGap+10:0);
   // Extremely short viewports still get a finite board and a scrollable control rail.
   const area={left:left+8,right:right-8,top,bottom:Math.max(top+24,bottom)};
-  const projection={x:0,y:0,scale:1,tilt:stacked?.62:.72,yaw:stacked?-.045:-.10,distance:22};
+  const projection={x:0,y:0,scale:1,tilt:stacked?.62:1.0,yaw:stacked?-.045:-.10,distance:22};
   const unit=chessBounds(projection);
-  const scale=Math.min((area.right-area.left)/(unit.right-unit.left),(area.bottom-area.top)/(unit.bottom-unit.top))*.9;
+  const desired=Math.min(880,height*.78,width*.70);
+  const scale=Math.min((area.right-area.left)/(unit.right-unit.left),(area.bottom-area.top)/(unit.bottom-unit.top),stacked?Infinity:desired/(unit.right-unit.left))*.98;
   const base={...projection,scale,x:(area.left+area.right)/2-(unit.left+unit.right)*scale/2,y:(area.top+area.bottom)/2-(unit.top+unit.bottom)*scale/2};
   const camera=fitChessCamera({...base,x:width/2+(base.x-width/2)*view.zoom+view.pan.x,y:height*.53+(base.y-height*.53)*view.zoom+view.pan.y,scale:base.scale*view.zoom},area);
   // Anchor information to the fitted silhouette, including its pieces and labels.

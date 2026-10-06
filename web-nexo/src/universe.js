@@ -1,3 +1,4 @@
+import { motion as MOTION, easeOut, resumeStart } from './motion';
 import { t, translateText, translateUI } from './i18n';
 import { portfolio } from './i18n/content';
 import { LivePreview, placeSatellite, satelliteFootprint } from './live-satellite.js';
@@ -71,7 +72,7 @@ function buildScene(id){
 const root=buildScene(portfolio.root.id);
 
 // The scene uses one shared clock; a transition freezes its two endpoint meshes.
-const MOTION = { rotation: .085, enter: 2450, exit: 2250, faceAlphaTop: .48, faceAlphaBottom: .58 };
+let frameId=null,lastPaint=0,hiddenAt=0;
 let width=innerWidth, height=innerHeight, dpr=1, clock=0, last=0,occupiedNodeBounds=[],occupiedMediaBounds=[];
 let zoom=1, targetZoom=1, hoverId=null, focusedId=null;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -158,6 +159,7 @@ if(chessTarget){
   chessTarget.addEventListener('pointerenter',()=>chessHover=true);chessTarget.addEventListener('pointerleave',()=>chessHover=false);
   chessTarget.addEventListener('focus',()=>chessHover=true);chessTarget.addEventListener('blur',()=>chessHover=false);
   chessTarget.addEventListener('click',openChess);
+  chessTarget.addEventListener('pointerenter',()=>system.chess.preload?.());chessTarget.addEventListener('focus',()=>system.chess.preload?.());
   system.chess.setOnClosed(()=>{chessTarget.setAttribute('aria-expanded','false');chessTarget.hidden=level!==root||!system.chessNodeVisible;last=performance.now()});
 }
 function openChess(){
@@ -209,7 +211,10 @@ function chessOrbit(population=nodes,view=camera()){
 }
 function chessFootprint(){return width<650?{left:-55,right:55,top:-45,bottom:75}:{left:-80,right:80,top:-60,bottom:95}}
 const satelliteBox=(position,shape)=>({left:position.x+shape.left,right:position.x+shape.right,top:position.y+shape.top,bottom:position.y+shape.bottom});
+let fixedCache=null,fixedCacheAt=-Infinity;
 function fixedObstacles(){
+  const now=performance.now();
+  if(fixedCache&&now-fixedCacheAt<100)return fixedCache;
   const obstacles=[];
   const add=rect=>{if(rect?.width>0&&rect?.height>0)obstacles.push({left:rect.left,right:rect.left+rect.width,top:rect.top,bottom:rect.top+rect.height})};
   for(const element of document.querySelectorAll?.('.topbar, .orientation, .level-mark, footer, .language-node, .welcome-help, .account-node, .scene-info, .development-panel, .generated-inventory, .route-notice, .chess-heading, .chess-close, .chess-aside, .chess-player, .chess-help, .chess-popover-backdrop, .owner-pagination')||[]){
@@ -217,7 +222,7 @@ function fixedObstacles(){
     add(element.getBoundingClientRect());
   }
   for(const id of ['companion-panel','content-card']){const element=$(id);if(element&&!element.hidden)add(element.getBoundingClientRect())}
-  return obstacles;
+  fixedCache=obstacles;fixedCacheAt=now;return obstacles;
 }
 function drawChessSatellite(){
   if(!chessTarget)return;
@@ -229,7 +234,7 @@ function drawChessSatellite(){
     chessTarget.querySelector('small').textContent=state.label;
     chessTarget.setAttribute('aria-label',t('chess.node')+' · '+state.label);
   }
-  const node=chessOrbit();drawNode(node,.92);chessTarget.style.left=node.sx+'px';chessTarget.style.top=node.sy+'px';
+  const node=chessOrbit();drawNode(node,.92);chessTarget.style.transform=`translate(${node.sx}px,${node.sy}px) translate(-50%,-50%)`;
   chessTarget.style.width=chessTarget.style.height=node.sr*2+16*zoom+'px';chessTarget.style.setProperty('--node-label-zoom',zoom);chessTarget.style.setProperty('--caption-gap',10*zoom+'px');
 }
 function chatObstacles(includeCompanion=false){
@@ -239,9 +244,8 @@ function chatObstacles(includeCompanion=false){
     if(!Number.isFinite(n.sx)||!Number.isFinite(n.sy))continue;
     const reach=Math.max(24,n.sr*1.65);
     obstacles.push({left:n.sx-reach,right:n.sx+reach,top:n.sy-reach,bottom:n.sy+reach});
-    const label=n.el?.querySelector?.('.node-label');
-    if(label)add(label.getBoundingClientRect());
-    else obstacles.push({left:n.sx-90,right:n.sx+90,top:n.sy+n.sr+9,bottom:n.sy+n.sr+70});
+    const z=level===root?zoom:1,half=(width<650?(n.privatePanel?67.5:n.generated?38:72.5):(n.privatePanel?75:80))*z;
+    obstacles.push({left:n.sx-half,right:n.sx+half,top:n.sy+n.sr+(width<650?12:19)*z,bottom:n.sy+n.sr+(width<650?12:19)*z+Math.max(n.labelHeight||0,n.generated&&width<650?32:55)*z});
   }
   if(!level.system&&!systemTravel){const b=distantSystemBounds();add({...b,height:b.height+20})}
   // The moving companion yields to chat; media still avoids its body and speech.
@@ -283,7 +287,7 @@ function syncMediaLevel(){
 let openContentNode=null;
 function closeContent(){ openContentNode=null; $('content-card').hidden=true;syncMediaLevel() }
 function renderMedia(now){
-  if(!system.media)return;
+  if(!system.media||system.media.hasMedia&&!system.media.hasMedia())return;
   const obstacles=chatObstacles(true);
   if(chatPosition&&!livePanelOpen&&!chatMorph){
     const shape=satelliteFootprint(width<650?17:21,chatPosition.caption);
@@ -323,7 +327,7 @@ function morphLivePanel(panel,opening,complete){
   if(!bounds.width||!bounds.height||!morphCtx){panel.style.opacity='';panel.style.pointerEvents='';complete();return}
   const faces=meshFaces({type:'ico',seed:4.9,sx:origin.x,sy:origin.y,sr:origin.r}).sort((a,b)=>Math.atan2(a.center[1],a.center[0])-Math.atan2(b.center[1],b.center[0]));
   const targets=panelTriangles(bounds);
-  chatMorph={opening,complete,panel,origin,faces,targets,start:performance.now(),duration:720};
+  chatMorph={opening,complete,panel,origin,faces,targets,start:performance.now(),duration:MOTION.livePanel};
   panel.style.pointerEvents='none';panel.style.opacity=opening?'0':'1';chatTarget.hidden=true;
   morphCanvas.hidden=false;
 }
@@ -422,7 +426,7 @@ function enterSystem(){
 function exitSystem(){if(systemTravel||!systemReturn)return;beginSystemTravel('out',{level,nodes,camera:camera(),targetZoom})}
 function beginSystemTravel(kind,state){
   drag=null;
-  systemTravel={kind,state,start:performance.now(),duration:reduced.matches?180:2200,switched:false,aperture:distantSystemBounds(kind==='out'?systemReturn.camera:camera())};
+  systemTravel={kind,state,start:performance.now(),duration:reduced.matches?MOTION.reduced:MOTION.system,switched:false,aperture:distantSystemBounds(kind==='out'?systemReturn.camera:camera())};
   document.body.classList.add('is-traveling');$('node-targets').inert=true;$('edge-targets').inert=true;$('back').disabled=true;$('content-card').hidden=true;hoverId=null;focusedId=null;hoverEdge=null;
   say(kind==='in'?t('system.title'):systemReturn.level.title,kind==='in'?systemScene.intro:t('nav.returnPoint'),'system-travel',0);
 }
@@ -432,7 +436,7 @@ function switchSystem(){
   stack=transition.kind==='in'?[]:[...systemReturn.stack];transition.switched=true;bindNodes();updateUI();
 }
 function renderSystemTravel(now){
-  const t=systemTravel,p=clamp((now-t.start)/t.duration),u=smooth(t.kind==='in'?p:1-p);
+  const t=systemTravel,p=clamp((now-t.start)/t.duration),u=t.kind==='in'?easeOut(p):1-easeOut(p);
   if(p>=.5&&!t.switched)switchSystem();
   drawBackground();project(systemReturn);project(t.state);
   const bounds=t.aperture;
@@ -453,7 +457,8 @@ for(const flow of system.architecture.flows){const item=document.createElement('
 document.body.append(flowLegend);
 
 function resize(){
-  width=innerWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,2);
+  fixedCache=null;
+  width=innerWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,MOTION.maxDpr);
   if(ownerMode){ownerSignature='';setOwnerGames(ownerMode,ownerKnownGames)}
   canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+'px';canvas.style.height=height+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
   companion.x=clamp(companion.x,30,width-30);companion.y=clamp(companion.y,30,height-30);
@@ -479,7 +484,7 @@ function project(state){
     if(state.level===root&&(n.generated||n.privatePanel)){
       const position=projectWorld(rootWorldLayout(state.nodes).get(n.id),state.camera,n.seed);n.sx=position.x;n.sy=position.y;
     }
-    if(n.generated&&n.birthOrigin){const u=smooth((performance.now()-n.born)/1200);n.sx=lerp(n.birthOrigin.x,n.sx,u);n.sy=lerp(n.birthOrigin.y,n.sy,u);n.sr*=.15+.85*u;if(u>=1)n.birthOrigin=null}
+    if(n.generated&&n.birthOrigin){const u=smooth((performance.now()-n.born)/MOTION.generated);n.sx=lerp(n.birthOrigin.x,n.sx,u);n.sy=lerp(n.birthOrigin.y,n.sy,u);n.sr*=.15+.85*u;if(u>=1)n.birthOrigin=null}
   }
 }
 function bindNodes(){
@@ -524,7 +529,7 @@ function goBack(){
 }
 function goBackTo(depth){if(travel)return;returnTarget=depth;goBack()}
 function beginTravel(kind,parent,child,entry,keyboard){
-  travel={kind,parent,child,entry,keyboard,start:performance.now(),duration:reduced.matches?180:kind==='in'?MOTION.enter:MOTION.exit,switched:false};
+  travel={kind,parent,child,entry,keyboard,start:performance.now(),duration:reduced.matches?MOTION.reduced:kind==='in'?MOTION.enter:MOTION.exit,switched:false};
   $('content-card').hidden=true;refreshTravelGeometry(travel);document.body.classList.add('is-traveling');$('node-targets').inert=true;$('edge-targets').inert=true;$('back').disabled=true;hoverId=null;focusedId=null;hoverEdge=null;
   say(kind==='in'?child.level.title:parent.level.title,kind==='in'?child.level.intro:t('nav.return',{title:parent.level.title}),'travel',0);
 }
@@ -571,7 +576,7 @@ function drawNode(n,alpha=1,obstacle=true){
   }
   if(n.generated)alpha*=.62;
   if(n.system){const state=system.traces.light(n.id).state;n={...n,color:state==='error'?[240,115,125]:state==='done'?colors.mint:state==='active'?colors.cyan:n.color,active:state==='active',hover:state==='active'?Math.max(.7,n.hover):n.hover};alpha*=state==='idle'?(n.miniature?(n.hover>.1?.9:.7):(n.hover>.1?.85:.35)):1}
-  if(alpha<.003||n.sr<.5)return;
+  if(alpha<.003||n.sr<.5||n.sx+n.sr*3<0||n.sx-n.sr*3>width||n.sy+n.sr*3<0||n.sy-n.sr*3>height)return;
   if(obstacle){const reach=Math.max(24,n.sr*1.65);occupiedNodeBounds.push({left:n.sx-reach,right:n.sx+reach,top:n.sy-reach,bottom:n.sy+reach})}
   drawGlow(n.sx,n.sy,n.sr,n.color,alpha,n.hover);
   for(const f of meshFaces(n).sort((a,b)=>a.z-b.z))paintFace(f,n.color,n.sx,n.sy,n.sr,alpha,1,n.hover);
@@ -671,9 +676,9 @@ function drawEdges(scene,items,alpha=1){
     if(!a.pending&&!b.pending&&!note?.related&&scene.confidence!=='low'){const q=bezier(a,b,(clock*.055+i*.173)%1,bend),pulse=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,8);pulse.addColorStop(0,rgba(c,.7));pulse.addColorStop(.14,rgba(c,.6));pulse.addColorStop(.4,rgba(c,.15));pulse.addColorStop(1,rgba(c,0));ctx.fillStyle=pulse;ctx.fillRect(q.x-8,q.y-8,16,16)}ctx.restore();
   }
 }
-function placeTargets(alpha){for(const n of nodes){const opacity=alpha*(hoverId&&hoverId!==n.id?.55:1)*(n.ownerGame?(n.ownerGame.status!=='active'?.45:n.ownerGame.turn==='owner'?1:.65):1);n.el.style.transform=`translate(${n.sx}px,${n.sy}px) translate(-50%,-50%)`;n.el.style.width=n.el.style.height=Math.max(48,n.sr*2)+'px';n.el.style.setProperty('--radius',n.sr+'px');n.el.style.setProperty('--node-label-zoom',level===root?zoom:1);n.el.style.setProperty('--label-gap',(width<650?12:19)*(level===root?zoom:1)+'px');n.el.style.opacity=opacity;n.el.style.visibility=opacity<.02?'hidden':'visible'}}
+function placeTargets(alpha){for(const n of nodes){const opacity=alpha*(hoverId&&hoverId!==n.id?.55:1)*(n.ownerGame?(n.ownerGame.status!=='active'?.45:n.ownerGame.turn==='owner'?1:.65):1);n.el.style.transform=`translate(${n.sx}px,${n.sy}px) translate(-50%,-50%)`;const size=Math.max(48,n.sr*2)+'px';if(n.el.style.width!==size)n.el.style.width=n.el.style.height=size;n.el.style.setProperty('--radius',n.sr+'px');n.el.style.setProperty('--node-label-zoom',level===root?zoom:1);n.el.style.setProperty('--label-gap',(width<650?12:19)*(level===root?zoom:1)+'px');n.el.style.opacity=opacity;n.el.style.visibility=opacity<.02?'hidden':'visible'}}
 function renderTravel(now){
-  const t=travel,p=clamp((now-t.start)/t.duration),u=t.kind==='in'?p:1-p;
+  const t=travel,p=clamp((now-t.start)/t.duration),u=t.kind==='in'?easeOut(p):1-easeOut(p);
   if(p>=.55&&!t.switched)switchLevel();
   drawBackground(mix(colors[t.parent.level.tint],colors[t.child.level.tint],smooth(u)));
   if(reduced.matches){const state=t.switched?(t.kind==='in'?t.child:t.parent):(t.kind==='in'?t.parent:t.child),alpha=t.switched?smooth((p-.55)/.45):1-smooth(p/.55);drawEdges(state.level,state.nodes,alpha);for(const n of state.nodes)drawNode(n,alpha);placeTargets(alpha)}
@@ -803,6 +808,14 @@ function drawChatSatellite(now){
   if(morphCanvas&&!morphCanvas.hidden)morphCanvas.hidden=true;
 }
 function render(now){
+  frameId=null;
+  if(disposed||document.hidden)return;
+  const obscured=(document.querySelectorAll?.('.welcome-overlay:not([hidden]), .access-overlay:not([hidden]), .account-overlay:not([hidden])')||[]).length>0;
+  const restingChess=system.chess?.isOpen()&&!system.chess?.isAnimating?.();
+  const interval=obscured||restingChess?1000/MOTION.idleFps:0;
+  const cadence=interval?'30':'60';if(document.body.dataset.canvasFps!==cadence)document.body.dataset.canvasFps=cadence;
+  if(now-lastPaint<interval-.5){frameId=requestAnimationFrame(render);return}
+  lastPaint=now;
   if(pendingOwner&&!travel&&!systemTravel){const next=pendingOwner;pendingOwner=null;setOwnerGames(...next)}
   syncOwnerPagination();
   if(disposed)return;
@@ -821,7 +834,7 @@ function render(now){
     for(const n of[...nodes].sort((a,b)=>a.r-b.r))drawNode(n,(hoverId&&hoverId!==n.id?.55:1)*(1-chessReveal*.25));
     placeTargets(1);
   }
-  placePanel();drawCompanion(dt);drawChessSatellite();renderGuide();system.chess?.render?.(ctx,now,{zoom,pan,paused});renderMedia(now);drawChatSatellite(now);drawLiveMorph(now);requestAnimationFrame(render);
+  placePanel();drawCompanion(dt);drawChessSatellite();renderGuide();system.chess?.render?.(ctx,now,{zoom,pan,paused,systemBounds:!level.system?distantSystemBounds():undefined});renderMedia(now);drawChatSatellite(now);drawLiveMorph(now);frameId=requestAnimationFrame(render);
 }
 function setPaused(value){paused=value;$('pause').setAttribute('aria-pressed',String(value));$('pause').setAttribute('aria-label',value?t('motion.resume'):t('motion.pause'));$('pause').title=value?t('motion.resume'):t('motion.pause');$('pause').innerHTML=value?'<svg viewBox="0 0 24 24"><path d="m9 5 10 7-10 7Z"/></svg>':'<svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg>';$('motion-status').textContent=value?t('motion.paused'):t('motion.running');document.querySelector('.live-dot').style.background=value?'#7d8790':'var(--mint)'}
 function changeZoom(amount){if(travel||systemTravel)return;targetZoom=clamp(targetZoom+amount,.5,2);syncZoomUI()}
@@ -836,7 +849,13 @@ const endDrag=()=>{drag=null;canvas.style.cursor='default'};canvas.addEventListe
 document.addEventListener('mouseleave',()=>{pointer={x:0,y:0};companion.present=false});addEventListener('blur',()=>{endDrag();panelDrag=null;companion.present=false});
 canvas.addEventListener('wheel',e=>{e.preventDefault();changeZoom(-Math.sign(e.deltaY)*.05)},{passive:false});
 addEventListener('keydown',e=>{if(system.media?.isOpen()||system.chess?.isOpen())return;if(e.key==='Escape'){if(system.onEscape?.())return;e.preventDefault();if(panelOpen){closePanel(true);return}if(!$('content-card').hidden){closeContent();return}navigationQueue=[];returnTarget=null;goBack()}if(e.target.closest('button,a,input,textarea,[contenteditable]'))return;if(e.code==='Space'){e.preventDefault();setPaused(!paused)}if(e.key==='+'||e.key==='=')changeZoom(.1);if(e.key==='-')changeZoom(-.1)});
-addEventListener('resize',resize);document.addEventListener('visibilitychange',()=>{last=performance.now()});reduced.addEventListener('change',e=>setPaused(e.matches));
+addEventListener('resize',resize);document.addEventListener('visibilitychange',()=>{
+  const now=performance.now();
+  if(document.hidden){hiddenAt=now;if(typeof cancelAnimationFrame==='function')cancelAnimationFrame(frameId);frameId=null;return}
+  const since=hiddenAt,elapsed=hiddenAt?now-hiddenAt:0;hiddenAt=0;last=now;lastPaint=0;
+  if(travel)travel.start=resumeStart(travel.start,since,now);if(systemTravel)systemTravel.start=resumeStart(systemTravel.start,since,now);if(chatMorph)chatMorph.start=resumeStart(chatMorph.start,since,now);
+  system.chess?.pauseFor?.(elapsed,since);if(frameId===null&&!disposed)frameId=requestAnimationFrame(render);
+});reduced.addEventListener('change',e=>setPaused(e.matches));
 function ageValue(item,today=new Date()){
   if(!item.computed_age_from)return item.value;
   const [year,month,day]=item.computed_age_from.split('-').map(Number);
@@ -897,6 +916,7 @@ handle.addEventListener('keydown',event=>{const step=event.shiftKey?30:10,delta=
 // Relabel the existing scene objects. Geometry, camera, travel endpoints and
 // open panel state keep their identity throughout a locale change.
 function refreshLanguage(){
+  fixedCache=null;
   ownerScene.title=t('owner.games');ownerScene.description=ownerScene.intro=ownerKnownGames.some(g=>g.status==='active')?t('owner.description'):t('owner.empty');
   syncOwnerPagination();
   const seen=new Set();
@@ -1010,6 +1030,6 @@ function openOwnerGame(id,isCurrent=()=>true){return new Promise(resolve=>{
 })}
 
 $('companion-target').setAttribute('aria-label',t('guide.open'));
-$('level-title').setAttribute('tabindex','-1');resize();nodes=instantiate(root);bindNodes();updateUI();setPaused(paused);say(t('guide.journey'),root.intro,'welcome',12000);requestAnimationFrame(render);
-return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){disposed=true;ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
+$('level-title').setAttribute('tabindex','-1');resize();nodes=instantiate(root);bindNodes();updateUI();setPaused(paused);say(t('guide.journey'),root.intro,'welcome',12000);frameId=requestAnimationFrame(render);
+return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){disposed=true;if(typeof cancelAnimationFrame==='function')cancelAnimationFrame(frameId);ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id};
 }

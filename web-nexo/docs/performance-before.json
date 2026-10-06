@@ -1,0 +1,91 @@
+{
+  "at": "2026-10-06T01:54:19.910Z",
+  "url": "http://127.0.0.1:4186",
+  "browser": "154.0.8037.98",
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M2",
+    "cores": 8
+  },
+  "viewport": "1366x768",
+  "dpr": 2,
+  "generatedNodes": 12,
+  "openingWindowMs": 1800,
+  "summary": {
+    "interactiveMs": 1651.2666666656733,
+    "cameraFps": 59.67418345014507,
+    "lostFrames": 43,
+    "longTasks": 5
+  },
+  "results": [
+    {
+      "run": 1,
+      "interactiveMs": 1669.7999999970198,
+      "cameraFps": 59.66440956733292,
+      "lostFrames": 25,
+      "frameIntervals": 68,
+      "longTasks": [
+        {
+          "start": 9825.5,
+          "duration": 53
+        },
+        {
+          "start": 9987.29999999702,
+          "duration": 53
+        }
+      ],
+      "maxFrameMs": 55.20000000298023,
+      "board": {
+        "x": 505.6875,
+        "y": 270,
+        "width": 341.03125,
+        "height": 271.796875
+      }
+    },
+    {
+      "run": 2,
+      "interactiveMs": 1659,
+      "cameraFps": 59.20403464529634,
+      "lostFrames": 54,
+      "frameIntervals": 54,
+      "longTasks": [
+        {
+          "start": 10280.800000011921,
+          "duration": 53
+        },
+        {
+          "start": 10336.20000000298,
+          "duration": 53
+        }
+      ],
+      "maxFrameMs": 55.5,
+      "board": {
+        "x": 505.6875,
+        "y": 270,
+        "width": 341.03125,
+        "height": 271.796875
+      }
+    },
+    {
+      "run": 3,
+      "interactiveMs": 1625,
+      "cameraFps": 60.154106137805954,
+      "lostFrames": 50,
+      "frameIntervals": 60,
+      "longTasks": [
+        {
+          "start": 10469.29999999702,
+          "duration": 60
+        }
+      ],
+      "maxFrameMs": 61,
+      "board": {
+        "x": 505.6875,
+        "y": 270,
+        "width": 341.03125,
+        "height": 271.796875
+      }
+    }
+  ]
+}

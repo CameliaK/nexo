@@ -19,10 +19,12 @@ import { TracePlayer } from './system/traces';
 import { createSystemWindow, systemPositions } from './system/window';
 import createUniverse from './universe.js';
 import { Chats } from './chat';
-import { createChessUI, CHESS_NODE_VISIBLE } from './chess';
+import { createLazyChess, CHESS_NODE_VISIBLE } from './chess/lazy';
+import { applyMotionTokens, motion } from './motion';
 import { createMediaUI } from './media';
 
 async function start() {
+  applyMotionTokens();
   const translations=import.meta.glob('./data/*.en.json',{eager:true,import:'default'});
   registerTranslations(translations['./data/portfolio-content.en.json'],translations['./data/backend-architecture.en.json']);
   const stopPersistence=initializeLanguage();applyContent(languageStore.language);
@@ -40,7 +42,7 @@ async function start() {
   let accountNode:ReturnType<typeof createAccountNode>;
   let storage:Storage|undefined;try{storage=localStorage}catch{/* In-memory continuation. */}
   const continuation=new LoginContinuation(storage);
-  const chess = createChessUI(account,()=>accountNode.open());
+  const chess = createLazyChess(account,()=>accountNode.open());
   const media = createMediaUI();
   const universe = createUniverse({ architecture, simulated: setup.simulated, traces, portal, positions: systemPositions(architecture), connection: () => connection,
     chess,
@@ -61,7 +63,7 @@ async function start() {
     document.documentElement.lang=languageStore.language;
     traces.refreshLanguage();universe.refreshLanguage();chats.refreshLanguage();chess.refreshLanguage();portal.connection(connection);translateUI();
     document.body.classList.remove('is-language-changing');void document.body.offsetWidth;document.body.classList.add('is-language-changing');
-    clearTimeout(transitionTimer);transitionTimer=setTimeout(()=>document.body.classList.remove('is-language-changing'),280);
+    clearTimeout(transitionTimer);transitionTimer=setTimeout(()=>document.body.classList.remove('is-language-changing'),motion.language);
     document.getElementById('announcement')!.textContent=t('language.changed');
   });
   const stopEvents = backend.onEvent(event => {if(event.type!=='chess.move'&&event.type!=='owner.chess'){traces.receive(event);chats.receive(event)}});
