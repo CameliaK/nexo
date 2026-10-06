@@ -87,12 +87,32 @@ Los dos lados deben usar la misma versión del contenido: `run.start` trae `cont
 ## 5. El agente y sus dos rutas
 
 **Cómo decide:**
-1. Recibe la pregunta y el mapa compacto del portafolio (id, padre, `label`, `summary`, `keywords`, `links`).
-2. Responde con un JSON estructurado y valida que todos los ids existan.
-3. Con confianza de 0.7 o más: **`route`**.
-4. Si no, busca en pgvector. Con similitud de 0.75 o más: **`generated`**. Si no: **`unknown`**.
+1. Recibe la pregunta, el mapa compacto del portafolio (id, padre, `label`, `summary`, `keywords`, `links`)
+   y el catálogo del índice de tecnologías (`knowledge/skills.json`).
+2. En la misma llamada al LLM ("entender") obtiene un JSON con:
+   - `intent`: `query` o `create_node` (el visitante pide explícitamente un nodo: "créame un nodo
+     con…", "create a node with…");
+   - `lang`: idioma en que está escrito el mensaje;
+   - la ruta (`path`, `confidence`);
+   - qué pide del índice (dominios, tipos, ids) y los términos que nombra (`terms`).
 
-Los umbrales son valores iniciales que se ajustan con pruebas. Todo lo que diga un nodo generado sale de resultados del RAG y muestra sus fuentes; el agente nunca inventa.
+   El mensaje se trata como datos: lo que intente cambiar las reglas no se obedece.
+3. `intent: query` con confianza de 0.7 o más: **`route`**.
+4. Si no, o si `intent: create_node` (que se salta el umbral de ruta), **ruta profunda**:
+   - primero el índice de tecnologías, después pgvector con similitud de **0.35** o más;
+   - con evidencia: **`generated`**; sin ella, o si no alcanza para un nodo: **`unknown`**,
+     explicando qué falta.
+
+`ROUTE_CONFIDENCE_THRESHOLD` (0.7) y `RAG_SIMILARITY_THRESHOLD` viven en `docker-compose.yml`.
+El de similitud (0.35) se calibró con el modelo `paraphrase-multilingual-MiniLM-L12-v2` y un
+conjunto de preguntas etiquetadas: ver `docs/eval/resultados.md`. No se cambia sin repetir la
+evaluación.
+
+**El agente nunca inventa.** Todo lo que dice un nodo generado sale del índice o de los
+fragmentos recuperados y se **verifica por código**: lo que no está sustentado se descarta (§10).
+
+**Idioma:** la respuesta va en el idioma del mensaje. `lang` del cuerpo de `POST /api/v1/chat`
+es la preferencia cuando el mensaje no deja claro el idioma.
 
 **Ruta rápida (`route`):** el gateway pasa la pregunta al agente y este responde directo. **No pasa por n8n**, porque solo sumaría latencia.
 
@@ -201,7 +221,7 @@ Un nodo (`live_chat`, dentro de Contacto) abre un panel de chat. Lo que el visit
 | `POST /api/v1/ws-ticket` | Bearer (invitado, usuario o dueño). Devuelve `200 { "ticket", "expires_in": 30 }` con `Cache-Control: no-store`: un código aleatorio de un solo uso, válido 30 s, ligado al visitante y al modo del token |
 | `GET /ws?ticket=…` | Abre el WebSocket con un ticket recién pedido. El servidor hace ping cada 30 s |
 | `GET /ws?token=…` | **Obsoleto, respaldo temporal.** Sigue funcionando, pero el gateway registra un aviso de deprecación (con el id enmascarado) y se quitará cuando el frontend use tickets |
-| `POST /api/v1/chat` | Body `{ "message" }`. Responde `202 { "run_id" }`; los eventos llegan por el WebSocket |
+| `POST /api/v1/chat` | Body `{ "message", "lang"? }` (`lang`: `"es"` o `"en"`, preferencia de idioma; otro valor se ignora). Responde `202 { "run_id" }`; los eventos llegan por el WebSocket |
 | `GET /api/v1/session/nodes` | `{ "nodes": [GeneratedNode] }` del visitante |
 | `DELETE /api/v1/session/nodes/{id}` | Descarta un nodo generado (`204`) |
 | `DELETE /api/v1/session/data` | Bearer de invitado o de cuenta. Borra los nodos generados, los mensajes del chat en vivo y la sesión de ese visitante (`204`). Límite: 5/h por visitante y 20/h por IP (`429` con `Retry-After`). La cuenta, si la hay, sigue existiendo (para borrarla: `DELETE /api/v1/account`) |
@@ -240,6 +260,7 @@ Todos los mensajes tienen el mismo sobre:
 | `route.step` | `node_id`, `index` | La cámara viaja a ese nodo y lo ilumina |
 | `rag.search` | `query` | Muestra "buscando en la base" |
 | `rag.result` | `hits[]`, `used` | Muestra las fuentes encontradas (o que no hubo) |
+| `node.forming` | `sources` (ids de nodos del portafolio) | **Opcional, detrás de `NODE_FORMING_EVENT`** (ver abajo). Llega justo antes de `node.spawn`: anima la formación del nodo a partir de esos nodos |
 | `node.spawn` | `anchor`, `node` | Nace un nodo generado |
 | `answer.chunk` | `text` | Añade texto al chat del agente (streaming) |
 | `live.message` | `conversation_id`, `message` | Añade una burbuja al chat en vivo |
@@ -248,6 +269,16 @@ Todos los mensajes tienen el mismo sobre:
 | `run.error` | `code`, `message`, `retryable` | Muestra el error y libera el envío |
 
 `outcome`: `route`, `generated`, `unknown`, `delivered` (mensaje entregado a mi teléfono) o `received` (llegó mi respuesta).
+
+**`node.forming`** va dentro de la ejecución, con su `seq`, entre `design_node` y `node.spawn`.
+`sources` son los ids del portafolio de los que sale el nodo: los mismos que sus `sources[].ref`.
+
+El backend solo lo publica con `NODE_FORMING_EVENT=true` (por defecto `false`). Un frontend
+que no conoce el tipo lo descarta y deja un hueco de `seq`, y como reproduce en orden, la
+ejecución se congela. Por eso se activa solo cuando el frontend desplegado lo soporte:
+1. agregarlo a `EVENT_TYPES`;
+2. animar la formación;
+3. tolerar que no llegue, porque es opcional.
 
 **Pasos del panel de proceso** (solo ejecuciones `chat`), en este orden. Los que no se usan llegan como `skipped`:
 
@@ -288,7 +319,16 @@ Forma exacta en `backend-types.ts` (`GeneratedNode`).
 
 - **Hijos:** hasta 4, sin nietos.
 - **Límites:** `label` 40 caracteres, `summary` 160, `body` 600, listas y entradas de 6 a 12 elementos según el layout (`LIMITS` en `backend-types.ts`).
-- **Fuentes (`sources`):** de dónde salió la información. Una `ref` es el id de un nodo del portafolio (enlace interno) o una URL `https`.
+- **Fuentes (`sources`):** de dónde salió la información. Una `ref` es el id de un nodo del portafolio (enlace interno) o una URL `https`. Solo aparecen las fuentes que sustentan algún elemento del nodo; los hijos traen las suyas.
+- **Verificación por código:** cada elemento (tag, ítem, entrada, cifra, frase del `body`, `label`
+  y `summary`) debe aparecer en las fuentes recuperadas: hechos del índice de tecnologías o
+  fragmentos del RAG. Lo que el modelo agregue sin sustento se descarta. Si no quedan al menos
+  2 elementos (o una frase en `text`), no hay nodo y el agente explica qué falta.
+- **Reglas del índice** (`knowledge/skills.json`, `meta.rules`), aplicadas en código:
+  - una evidencia con `needs_review` no se afirma;
+  - el nivel `mencion` se presenta como "listado en el CV, sin proyecto asociado", nunca como
+    dominio (por eso no puede ser un tag suelto);
+  - no se escriben años de experiencia ni niveles de dominio.
 - **Tope por visitante:** 12 nodos generados (propuesta).
 
 **Cómo mostrarlos:** más pequeños y translúcidos, con la etiqueta "generado para ti", **solo texto plano** (nada de HTML ni markdown, porque lo escribe un modelo de lenguaje), con botón para descartarlos. Si un nodo no cumple el esquema o los límites, el frontend lo descarta en vez de mostrarlo roto.

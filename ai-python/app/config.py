@@ -21,6 +21,8 @@ class Config:
     chess_expire_days: int = 30
     chess_empty_expire_hours: int = 48
     chess_notify_minutes: int = 10
+    skills_path: str = "/knowledge/skills.json"
+    node_forming_event: bool = False
     nodes_retention_days: int = 90
     live_retention_days: int = 180
 
@@ -54,6 +56,8 @@ def load() -> Config:
         chess_expire_days=int(os.environ.get("CHESS_EXPIRE_DAYS", "30")),
         chess_empty_expire_hours=int(os.environ.get("CHESS_EMPTY_EXPIRE_HOURS", "48")),
         chess_notify_minutes=int(os.environ.get("CHESS_NOTIFY_MINUTES", "10")),
+        skills_path=os.environ.get("SKILLS_PATH", "/knowledge/skills.json"),
+        node_forming_event=os.environ.get("NODE_FORMING_EVENT", "false").strip().lower() == "true",
         nodes_retention_days=int(os.environ.get("NODES_RETENTION_DAYS", "90")),
         live_retention_days=int(os.environ.get("LIVE_RETENTION_DAYS", "180")),
     )

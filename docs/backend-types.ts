@@ -214,6 +214,8 @@ export type RoutePlanEvent = Envelope<
   { path: string[]; confidence: number; reason?: string }
 >;
 export type RouteStepEvent = Envelope<"route.step", { node_id: string; index: number }>;
+/** Opcional (NODE_FORMING_EVENT): justo antes de node.spawn, dentro de la ejecución. */
+export type NodeFormingEvent = Envelope<"node.forming", { sources: string[] }>;
 export type RagSearchEvent = Envelope<"rag.search", { query: string }>;
 export type RagResultEvent = Envelope<"rag.result", { hits: RagHit[]; used: boolean }>;
 export type NodeSpawnEvent = Envelope<
@@ -246,6 +248,7 @@ export type BackendEvent =
   | RouteStepEvent
   | RagSearchEvent
   | RagResultEvent
+  | NodeFormingEvent
   | NodeSpawnEvent
   | AnswerChunkEvent
   | LiveMessageEvent
@@ -261,6 +264,7 @@ export const EVENT_TYPES = [
   "route.step",
   "rag.search",
   "rag.result",
+  "node.forming",
   "node.spawn",
   "answer.chunk",
   "live.message",
@@ -294,6 +298,8 @@ export interface GuestTokenResponse {
 /** POST /api/v1/chat */
 export interface ChatRequest {
   message: string;
+  /** Preferencia de idioma de la respuesta; el idioma del mensaje manda. */
+  lang?: "es" | "en";
 }
 export interface ChatAccepted {
   run_id: string;
