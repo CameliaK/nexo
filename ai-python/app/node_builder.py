@@ -51,7 +51,14 @@ async def save_node(node: dict, visitor_id: str, pool: asyncpg.Pool) -> None:
 
 
 async def list_nodes(visitor_id: str, pool: asyncpg.Pool) -> list[dict]:
+    """The visitor's nodes. Loading them is activity: it resets the retention
+    clock (at most one write per visitor per hour)."""
     async with pool.acquire() as conn:
+        await conn.execute(
+            """UPDATE generated_nodes SET last_seen_at = now()
+               WHERE visitor_id = $1 AND last_seen_at < now() - interval '1 hour'""",
+            visitor_id,
+        )
         rows = await conn.fetch(
             "SELECT node FROM generated_nodes WHERE visitor_id = $1 ORDER BY created_at",
             visitor_id,

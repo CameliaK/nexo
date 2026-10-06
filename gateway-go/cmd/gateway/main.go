@@ -21,6 +21,7 @@ import (
 	"nexo/gateway/internal/mask"
 	"nexo/gateway/internal/owner"
 	"nexo/gateway/internal/presence"
+	"nexo/gateway/internal/privacy"
 	"nexo/gateway/internal/ratelimit"
 	"nexo/gateway/internal/session"
 	"nexo/gateway/internal/ws"
@@ -98,13 +99,18 @@ func main() {
 	mux.HandleFunc("GET /health", health.Handler)
 	mux.HandleFunc("GET /auth/guest", auth.NewHandler(tokens, sessions, limiter, ips, cfg.AuthGuestPerIPHour))
 	presenceStore := presence.New(rdb, ws.PresenceTTL)
-	mux.HandleFunc("GET /ws", ws.NewHandler(tokens, rdb, presenceStore))
+	wsTickets := ws.NewTickets(rdb, tokens)
+	mux.HandleFunc("POST /api/v1/ws-ticket", tokens.RequireAuth(wsTickets.Issue))
+	mux.HandleFunc("GET /ws", ws.NewHandler(tokens, wsTickets, rdb, presenceStore))
 	mux.HandleFunc("POST /api/v1/chat", chat.NewHandler(tokens, rdb, cfg.AgentURL, chat.Limits{
 		Limiter: limiter, IPs: ips,
 		PerHour: cfg.ChatRatePerHour, PerIPHour: cfg.ChatRatePerIPHour, ActiveTTL: cfg.ChatActiveTTL,
 	}))
 	mux.HandleFunc("GET /api/v1/session/nodes", session.NewListNodesHandler(tokens.Verify, cfg.AgentURL))
 	mux.HandleFunc("DELETE /api/v1/session/nodes/{id}", session.NewDeleteNodeHandler(tokens.Verify, cfg.AgentURL))
+	sessionData := &privacy.DataHandler{Redis: rdb, Limiter: limiter, IPs: ips, AgentURL: cfg.AgentURL,
+		PerHour: cfg.SessionDataPerHour, PerIPHour: cfg.SessionDataPerIPHour}
+	mux.HandleFunc("DELETE /api/v1/session/data", tokens.RequireAuth(sessionData.Delete))
 
 	liveH := live.NewHandler(tokens, rdb, cfg.AgentURL)
 	mux.HandleFunc("POST /api/v1/live/messages", liveH.Post)
@@ -144,6 +150,7 @@ func main() {
 	log.Printf("limits: chat %d/h per visitor, %d/h per IP, active TTL %s; guest %d/h per IP; trusted proxies %q",
 		cfg.ChatRatePerHour, cfg.ChatRatePerIPHour, cfg.ChatActiveTTL, cfg.AuthGuestPerIPHour, cfg.TrustedProxies)
 	log.Printf("limits: chess %d moves/h per account, email cooldown %s per game", cfg.ChessMovesPerHour, cfg.ChessEmailCooldown)
+	log.Printf("limits: session data erase %d/h per visitor, %d/h per IP", cfg.SessionDataPerHour, cfg.SessionDataPerIPHour)
 	log.Printf("gateway listening on :%s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
 		log.Fatalf("server: %v", err)

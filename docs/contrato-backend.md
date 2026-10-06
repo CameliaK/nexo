@@ -198,10 +198,13 @@ Un nodo (`live_chat`, dentro de Contacto) abre un panel de chat. Lo que el visit
 |---|---|
 | `GET /health` | Estado del gateway |
 | `GET /auth/guest` | Con `X-Visitor-Id`. Devuelve `{ "token": "v4.local...." }` (invitado, PASETO v4). El token expira |
-| `GET /ws?token=…` | Abre el WebSocket. El servidor hace ping cada 30 s |
+| `POST /api/v1/ws-ticket` | Bearer (invitado, usuario o dueño). Devuelve `200 { "ticket", "expires_in": 30 }` con `Cache-Control: no-store`: un código aleatorio de un solo uso, válido 30 s, ligado al visitante y al modo del token |
+| `GET /ws?ticket=…` | Abre el WebSocket con un ticket recién pedido. El servidor hace ping cada 30 s |
+| `GET /ws?token=…` | **Obsoleto, respaldo temporal.** Sigue funcionando, pero el gateway registra un aviso de deprecación (con el id enmascarado) y se quitará cuando el frontend use tickets |
 | `POST /api/v1/chat` | Body `{ "message" }`. Responde `202 { "run_id" }`; los eventos llegan por el WebSocket |
 | `GET /api/v1/session/nodes` | `{ "nodes": [GeneratedNode] }` del visitante |
 | `DELETE /api/v1/session/nodes/{id}` | Descarta un nodo generado (`204`) |
+| `DELETE /api/v1/session/data` | Bearer de invitado o de cuenta. Borra los nodos generados, los mensajes del chat en vivo y la sesión de ese visitante (`204`). Límite: 5/h por visitante y 20/h por IP (`429` con `Retry-After`). La cuenta, si la hay, sigue existiendo (para borrarla: `DELETE /api/v1/account`) |
 | `POST /api/v1/live/messages` | Body `{ "text", "name"? }`. Responde `202 { "message_id", "run_id" }` |
 | `GET /api/v1/live/messages` | `{ "conversation_id", "messages": [LiveMessage] }` (`conversation_id` es `null` si aún no hay) |
 
@@ -297,6 +300,15 @@ Forma exacta en `backend-types.ts` (`GeneratedNode`).
 - El **token** de invitado expira. El **`visitor_id`** (UUID en `localStorage`) no.
 - Los nodos generados y la conversación del chat en vivo se guardan en Postgres por `visitor_id`, con Redis como caché.
 - Al cargar la página, el frontend llama a `GET /api/v1/session/nodes` y `GET /api/v1/live/messages`.
+- **Retención** (tarea periódica en el agente, cada hora y al arrancar):
+  - Nodos generados: se borran tras `NODES_RETENTION_DAYS` (90) días sin actividad. Actividad =
+    que el visitante cargue sus nodos (`GET /api/v1/session/nodes`), lo que reinicia el plazo.
+  - Mensajes del chat en vivo: cada mensaje se borra `LIVE_RETENTION_DAYS` (180) días después
+    de enviado.
+  - El visitante puede borrar todo antes con `DELETE /api/v1/session/data`.
+- Los logs nunca guardan tokens, correos ni ids completos (ids: primeros 8 caracteres). Docker
+  rota los logs de cada servicio (3 × 10 MB). n8n no guarda las ejecuciones correctas y purga
+  las fallidas a los 7 días.
 - **Si el backend no responde**, el portafolio funciona normal. El chat y el chat en vivo se muestran como no disponibles.
 
 ---
@@ -308,7 +320,27 @@ Forma exacta en `backend-types.ts` (`GeneratedNode`).
 - Tope de gasto diario en el proveedor de LLM; al alcanzarlo, `503 llm_unavailable`.
 - **Todo lo que genera el modelo es contenido no confiable:** se valida contra el esquema en el backend y otra vez en el frontend, y se muestra como texto plano. Lo mismo para lo que escribe el visitante en el chat en vivo.
 - El agente solo puede responder con el JSON del esquema cerrado.
-- Ningún secreto en el frontend. El token va en el header (REST) y en el query string (WebSocket).
+- Ningún secreto en el frontend. El token va en el header (REST); el WebSocket se abre con un
+  **ticket de un solo uso** en el query string, nunca con el token (ver abajo).
+
+### Ticket de WebSocket (para el frontend)
+
+El token de sesión no debe viajar en la URL de `/ws`: las URLs acaban en registros de acceso de
+proxies y servidores. En su lugar:
+
+1. Justo antes de abrir (y en cada reconexión), `POST /api/v1/ws-ticket` con
+   `Authorization: Bearer <token>` → `{ "ticket": "…", "expires_in": 30 }`.
+2. Abrir `wss://<dominio>/ws?ticket=<ticket>` antes de que pasen 30 s.
+
+Reglas:
+- Un ticket sirve **una sola vez**: reconectar exige pedir otro. Reusar uno usado, caducado o
+  inventado da `401` en el handshake.
+- El ticket hereda el visitante y el modo del token (`guest` / `user` / `owner`); un ticket de
+  dueño suscribe también a `events:owner`. Si el token se revoca (logout, cuenta borrada) entre
+  pedir el ticket y canjearlo, el canje falla con `401`.
+- Si `POST /api/v1/ws-ticket` responde `401`, el token venció o fue revocado: pedir otro (invitado:
+  `GET /auth/guest`) y repetir.
+- `?token=` sigue aceptándose temporalmente como respaldo, con aviso de deprecación en los logs.
 - No se guarda información personal del visitante; solo un UUID aleatorio, y el nombre si él lo escribe.
 
 ---

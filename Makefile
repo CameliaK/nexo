@@ -1,7 +1,7 @@
 COMPOSE      = docker compose
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
 
-.PHONY: dev down gen-key prod-up prod-down prod-logs prod-config backup
+.PHONY: dev down gen-key prod-up prod-down prod-logs prod-config backup backup-prod
 
 # ── Desarrollo ────────────────────────────────────────────────────────────────
 # docker-compose.override.yml se auto-carga: añade puertos 8888 (Traefik) y
@@ -22,13 +22,11 @@ gen-key:
 	fi
 
 # ── Producción ────────────────────────────────────────────────────────────────
-# Prepara acme.json (600) y levanta el stack con el override de producción.
+# Valida y levanta el stack con el override de producción (build con caché).
 # La primera vez que se levanta con un dominio real, Traefik obtiene el cert
-# automáticamente vía Let's Encrypt HTTP-01 (port 80 debe ser alcanzable).
-prod-up:
-	@mkdir -p traefik
-	@[ -f traefik/acme.json ] || touch traefik/acme.json
-	@chmod 600 traefik/acme.json
+# automáticamente vía Let's Encrypt HTTP-01 (port 80 debe ser alcanzable); lo
+# guarda en el volumen traefik_acme.
+prod-up: prod-config
 	$(COMPOSE_PROD) up -d --build
 
 prod-down:
@@ -37,12 +35,17 @@ prod-down:
 prod-logs:
 	$(COMPOSE_PROD) logs -f
 
-# Valida la sintaxis del compose combinado sin levantar nada.
+# Valida el compose combinado (sintaxis y variables obligatorias) sin levantar
+# nada y sin imprimirlo: la salida completa de `config` lleva los secretos.
 prod-config:
-	$(COMPOSE_PROD) config
+	@$(COMPOSE_PROD) config --quiet && echo "prod-config: OK"
 
 # ── Backups ───────────────────────────────────────────────────────────────────
 # pg_dump comprimido + export de workflows de n8n → ./backups/
-# Para cron: 0 3 * * * cd /opt/nexo && make backup >> /var/log/nexo-backup.log 2>&1
+# backup usa el compose de desarrollo; en el VPS usa backup-prod (ver
+# docs/despliegue.md §12 para el cron).
 backup:
 	@bash scripts/backup.sh
+
+backup-prod:
+	@COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml" bash scripts/backup.sh

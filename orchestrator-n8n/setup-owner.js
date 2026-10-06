@@ -33,7 +33,7 @@ function close() { return new Promise(res => db.close(res)); }
     const existing = await get("SELECT id FROM user WHERE email='owner@nexo.local'");
     if (existing) {
       ownerId = existing.id;
-      process.stdout.write('Owner already exists (' + ownerId + ') — skipping user insert\n');
+      process.stdout.write('Owner already exists (' + String(ownerId).slice(0, 8) + '…) — skipping user insert\n');
     } else {
       ownerId = crypto.randomUUID();
       const hash = bcrypt.hashSync(OWNER_PASSWORD, 10);
