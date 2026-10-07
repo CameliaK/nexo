@@ -54,3 +54,24 @@ export function chessLayout({width,height}:ChessViewport,view:ChessView={zoom:1,
     help:{left:contentLeft,top:whiteTop+playerHeight+5,width:contentWidth},
     aside:{left:stacked?contentLeft:bounds.right+20,top:asideTop,width:stacked?contentWidth:asideWidth,height:stacked?asideHeight:Math.max(80,height-footer-asideTop)}};
 }
+
+/** Mobile keeps the camera independent of the universe underneath the game. */
+export function mobileChessLayout({width,height,safeTop=0,safeBottom=0,offsetTop=0,chat=false,landscape=width>height}:{width:number;height:number;safeTop?:number;safeBottom?:number;offsetTop?:number;chat?:boolean;landscape?:boolean}){
+ const compactChat=chat&&height<480,mini=chat?28:landscape?90:84,headerHeight=36,playerHeight=28;
+ const dock=chat?Math.min(height*.5,360):0,bottom=offsetTop+height-safeBottom-dock;
+ const top=offsetTop+safeTop+mini+8;
+ const left=landscape?164:6,right=landscape?width-196:width-6;
+ const area={left,right,top:landscape?offsetTop+safeTop+42:top+headerHeight+(compactChat?4:playerHeight+4),bottom:landscape?Math.max(offsetTop+safeTop+74,bottom-12):compactChat?Math.max(top+headerHeight+28,bottom-6):Math.max(top+headerHeight+playerHeight+60,bottom-playerHeight-112)};
+ const projection={x:0,y:0,scale:1,tilt:.55,yaw:0,distance:100},unit=chessBounds(projection);
+ const scale=Math.min((right-left)/(unit.right-unit.left),(area.bottom-area.top)/(unit.bottom-unit.top));
+ const camera={...projection,scale,x:(left+right)/2-(unit.left+unit.right)*scale/2,y:(area.top+area.bottom)/2-(unit.top+unit.bottom)*scale/2};
+ const bounds=chessBounds(camera),railLeft=landscape?width-184:12;
+ const railTop=landscape?offsetTop+safeTop+92:bounds.bottom+playerHeight+6;
+ return {camera,area,stacked:!landscape,compact:true,
+  header:{left:landscape?164:12,top:landscape?offsetTop+safeTop+4:top,width:landscape?width-216:width-64,height:headerHeight},
+  close:{left:width-12,top:landscape?offsetTop+safeTop:top},
+  black:{left:landscape?railLeft:12,top:landscape?offsetTop+safeTop+42:top+headerHeight,width:landscape?172:width-24,height:playerHeight},
+  white:{left:landscape?railLeft:12,top:landscape?offsetTop+safeTop+68:bounds.bottom+4,width:landscape?172:width-24,height:playerHeight},
+  help:{left:12,top:bottom-12,width:width-24},
+  aside:{left:railLeft,top:railTop,width:landscape?172:width-24,height:Math.max(64,bottom-railTop-6)}};
+}

@@ -1,3 +1,4 @@
+import { createMobileChess } from './mobile-chess';
 import { createOwnerChessRoute } from './auth/owner-route';
 import { createConnectionNotice } from './system/connection';
 import { createAccountNode } from './auth/account';
@@ -9,6 +10,7 @@ import './style.css';
 import './auth/style.css';
 import './media.css';
 import './welcome.css';
+import './mobile.css';
 import { createWelcome } from './welcome';
 import { architecture, applyContent, registerTranslations } from './i18n/content';
 import { initializeLanguage } from './i18n';
@@ -58,6 +60,7 @@ async function start() {
   const ownerRoute=createOwnerChessRoute(account,(id,isCurrent)=>{if(!welcome.element.hidden)welcome.close();return universe.openOwnerGame(id,isCurrent)});
   welcome.attachUniverse(()=>universe.firstRootNode());
   chats=new Chats(backend,universe,traces,setup.simulated);
+  const mobile=createMobileChess(chats,universe,portal,architecture);
   let transitionTimer:ReturnType<typeof setTimeout>;
   const stopLanguage=languageStore.subscribe(()=>{
     document.documentElement.lang=languageStore.language;
@@ -99,6 +102,6 @@ async function start() {
   try { await backend.authMe(); } catch { /* A temporary HTTP outage must not disable realtime retries. */ }
   try { await backend.connect(); } catch { /* RealBackend schedules its own retry. */ }
   await account.refresh();
-  addEventListener('pagehide', event => { if(event.persisted)return;clearTimeout(transitionTimer);stopDevelopment?.();stopAccount();accountNode.dispose();ownerRoute.dispose();account.dispose();access.dispose();stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();stopEvents(); stopConnection();connectionNotice.dispose(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
+  addEventListener('pagehide', event => { if(event.persisted)return;clearTimeout(transitionTimer);mobile.dispose();stopDevelopment?.();stopAccount();accountNode.dispose();ownerRoute.dispose();account.dispose();access.dispose();stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();stopEvents(); stopConnection();connectionNotice.dispose(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });
 }
 start().catch(error => { console.error(error);document.getElementById('announcement')!.textContent=t('app.startFailed'); });

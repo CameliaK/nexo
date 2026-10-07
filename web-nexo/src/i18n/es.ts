@@ -1,4 +1,10 @@
 export const es = {
+  "mobile.chat": "Chat",
+  "mobile.chats": "Chats durante la partida",
+  "mobile.chatUnread": "Abrir chat, mensaje nuevo",
+  "mobile.assistant": "Asistente · Nexo",
+  "mobile.live": "Chat con Kirbith",
+
   "generated.forming": "Formando tu nodo…",
   "chat.suggestions": "Ideas para crear un nodo",
   "chat.suggestFrontend": "Créame un nodo con las tecnologías de frontend de Kirbith",

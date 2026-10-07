@@ -15,7 +15,8 @@
     "validate-skills": "node ../scripts/content/validate-skills.mjs",
     "test:forming-browser": "node scripts/node-forming-browser.mjs",
     "test:media-browser": "node scripts/media-browser.mjs",
-    "sync-privacy": "node scripts/sync-privacy.mjs"
+    "sync-privacy": "node scripts/sync-privacy.mjs",
+    "test:mobile": "node scripts/mobile-browser.mjs && node scripts/mobile-webkit.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

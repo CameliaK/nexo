@@ -1,8 +1,9 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
-import {writeFile} from 'node:fs/promises';
+import {mkdir,writeFile} from 'node:fs/promises';
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
 const url=process.env.PERF_URL||'http://127.0.0.1:4175';
+const output=process.env.CHESS_QA_OUTPUT||'docs';await mkdir(output,{recursive:true});
 const game={id:'qa',color:'w',fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',moves:[],turn:'player',status:'active',updated_at:'2026-10-05T18:00:00Z'};
 async function fixture(width,height,lang='en',cold=false){
  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:2});const page=await context.newPage(),errors=[],moves=[];page.on('pageerror',error=>errors.push(error.message));
@@ -51,9 +52,9 @@ try{
    if(width<650||height<600)assert.ok(result.minTouch>=44,'Every mobile grid hit target is at least 44px');
    assert.ok(result.players.every(p=>p.rect.y>=0&&p.rect.x>=0&&p.rect.x+p.rect.width<=width+1));
    assert.deepEqual(f.errors,[]);reports.push({width,height,lang,...result});
-   if(lang==='en'&&[390,1366,844].includes(width))await f.page.screenshot({path:`docs/performance-layout-${width}.png`,scale:'css'});
+   if(lang==='en'&&[390,1366,844].includes(width))await f.page.screenshot({path:`${output}/performance-layout-${width}.png`,scale:'css'});
    await f.context.close();
   }
  }
- const report=JSON.stringify({passed:true,viewports:reports},null,2);await writeFile('docs/performance-layouts.json',report+'\n');console.log('Browser QA passed: '+reports.length+' ES/EN viewport cases; cold module, delayed backend, focus and 64 persistent cells.');
+ const report=JSON.stringify({passed:true,viewports:reports},null,2);await writeFile(`${output}/performance-layouts.json`,report+'\n');console.log('Browser QA passed: '+reports.length+' ES/EN viewport cases; cold module, delayed backend, focus and 64 persistent cells.');
 }finally{await browser.close()}
