@@ -193,6 +193,44 @@ read -rs TOKEN && curl -s "https://api.telegram.org/bot${TOKEN}/getUpdates" | gr
 
 ---
 
+## 6.1 Correo (Resend)
+
+El gateway envía los enlaces de inicio de sesión y los avisos de ajedrez por SMTP:
+
+| Variable | Valor |
+|---|---|
+| `SMTP_HOST` | `smtp.resend.com` |
+| `SMTP_PORT` | `587` |
+| `SMTP_TLS` | `starttls` (obligatorio, ver abajo) |
+| `SMTP_USER` | `resend` (literal) |
+| `SMTP_PASS` | la API key de Resend (permiso *Sending access* basta) |
+| `MAIL_FROM` | `Nexo <no-reply@kirbith.dev>` |
+
+- **Puerto 587.** Hetzner bloquea por defecto la salida por los puertos 25 y 465 en
+  servidores nuevos; el 587 con STARTTLS no está bloqueado. No uses `SMTP_TLS=ssl` (465).
+- **TLS sin caída a texto plano.** Con `starttls` el gateway usa la política `TLSMandatory`
+  de go-mail v0.8.1: si el servidor no anuncia STARTTLS, el handshake falla o el certificado no
+  valida (TLS ≥ 1.2, nombre `smtp.resend.com`), el envío falla y no se manda nada. `none`
+  solo existe para mailpit y se rechaza al arrancar si hay usuario o contraseña.
+  Comprobado: contra un servidor sin STARTTLS → `target host does not support STARTTLS`;
+  `smtp.resend.com:587` anuncia STARTTLS y su certificado valida con el almacén de Alpine
+  (el de la imagen del gateway).
+- **Dominio en Resend.** Verifica `kirbith.dev` en Resend (registros SPF/DKIM que te da, en
+  Cloudflare como "solo DNS") antes de la prueba; si no, Resend rechaza el remitente.
+
+Prueba con el `.env` del servidor (con el stack levantado; tras editar `.env`, `make prod-up`):
+
+```bash
+make mail-test TO=tu-correo@ejemplo.com     # o sin TO: MAIL_TEST_TO u OWNER_EMAIL
+# mail-test: host=smtp.resend.com port=587 tls=starttls auth=true from="Nexo <no-reply@kirbith.dev>" to=t***@ejemplo.com
+# mail-test: sent OK — check the inbox (and spam)
+```
+
+No imprime la contraseña. Si falla, el mensaje de go-mail dice en qué paso (conexión,
+STARTTLS, autenticación o remitente).
+
+---
+
 ## 7. Certificados TLS
 
 No hay nada que preparar: Traefik guarda los certificados de Let's Encrypt en el volumen

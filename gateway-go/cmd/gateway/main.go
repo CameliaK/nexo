@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/redis/go-redis/v9"
 
@@ -28,6 +29,9 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "mail-test" {
+		os.Exit(mailTest(os.Args[2:]))
+	}
 	cfg := config.Load()
 	ctx := context.Background()
 
