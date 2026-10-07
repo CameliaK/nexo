@@ -77,3 +77,20 @@ test('run.error retryable false removes Retry for agent and live, including WS a
   }finally{f.dispose()}
  }
 });
+
+test('Three localized discovery suggestions only fill the draft; they never send a request',async()=>{
+ const f=setup((path)=>ok(path));
+ try{
+  await f.ready();const group=f.els.get('.panel-compose').querySelector('.chat-suggestions'),buttons=group.children;
+  assert.equal(buttons.length,3);assert.equal(group.getAttribute('role'),'group');
+  for(const language of ['es','en']){languageStore.set(language);f.chats.refreshLanguage();for(const [index,key]of ['chat.suggestFrontend','chat.suggestAI','chat.suggestData'].entries()){const before=f.requests.length;buttons[index].onclick();assert.equal(f.chats.agentInput.value,t(key));assert.equal(f.requests.length,before);assert.equal(buttons[index].type,'button')}}
+ }finally{f.dispose()}
+});
+test('Ordered forming/spawn real events reach the universe with their run ID; malformed sources and terminal events are handled',async()=>{
+ const f=setup(path=>ok(path)),calls=[];f.chats.universe.formGenerated=(...args)=>calls.push(['forming',...args]);f.chats.universe.spawnGenerated=(...args)=>calls.push(['spawn',...args]);f.chats.universe.finishForming=id=>calls.push(['finish',id]);
+ try{
+  f.chats.register('forming-chat');const node={id:'gen_forming_chat',generated:true,label:'Node',summary:'Summary',created_at:'2026-10-06T00:00:00Z',sources:[{title:'CV'}],layout:'text',content:{body:'Body'}};
+  f.chats.receive(event('forming-chat',3,'node.spawn',{anchor:null,node}));f.chats.receive(event('forming-chat',2,'node.forming',{sources:['experiencia.infosys','missing']}));f.chats.receive(event('forming-chat',1,'run.start',{kind:'chat',content_version:3}));f.chats.receive(event('forming-chat',4,'run.done',{outcome:'generated',duration_ms:1000}));
+  assert.deepEqual(calls[0],['forming','forming-chat',['experiencia.infosys']]);assert.equal(calls[1][0],'spawn');assert.equal(calls[1][4],'forming-chat');assert.deepEqual(calls[2],['finish','forming-chat']);assert.equal(f.chats.busy,false);
+ }finally{f.dispose()}
+});

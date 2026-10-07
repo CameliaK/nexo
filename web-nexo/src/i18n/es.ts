@@ -1,4 +1,10 @@
 export const es = {
+  "generated.forming": "Formando tu nodo…",
+  "chat.suggestions": "Ideas para crear un nodo",
+  "chat.suggestFrontend": "Créame un nodo con mis tecnologías de frontend",
+  "chat.suggestAI": "Créame un nodo con mi experiencia en IA",
+  "chat.suggestData": "Créame un nodo con mis bases de datos",
+
   "privacy.title": "Aviso de privacidad",
   "privacy.link": "Privacidad",
   "privacy.back": "Volver al universo",

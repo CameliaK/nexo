@@ -12,7 +12,8 @@
     "test:browser": "node scripts/chess-browser.mjs",
     "test:privacy-browser": "node scripts/privacy-browser.mjs",
     "sync-content": "node ../scripts/content/sync-content.mjs",
-    "validate-skills": "node ../scripts/content/validate-skills.mjs"
+    "validate-skills": "node ../scripts/content/validate-skills.mjs",
+    "test:forming-browser": "node scripts/node-forming-browser.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

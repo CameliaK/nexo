@@ -90,3 +90,5 @@
 .system-aperture .system-caption,.speech-bubble{transition:opacity var(--motion-hover,150ms)}
 
 .privacy-notice{font-size:10px;line-height:1.55;color:#99b0b2;margin:12px 0}.privacy-notice a,.account-privacy{color:#b6d3ca;text-underline-offset:3px}.privacy-footer{position:absolute;right:0;top:9px;pointer-events:auto;color:#89969e;font-size:10px;text-underline-offset:3px}.privacy-footer:focus-visible{outline-offset:3px}
+
+.panel-compose .chat-suggestions{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0;background:none;border:0}.panel-compose .chat-suggestions button{width:auto;height:auto;min-height:32px;flex:1 1 100%;padding:6px 9px;text-align:left;font-size:10px;line-height:1.45;color:#acd6c8;background:#b6f3dc06;border:1px solid #b6f3dc22;border-radius:3px}.panel-compose .chat-suggestions button:hover{background:#b6f3dc12}.panel-compose .chat-suggestions button:focus-visible{outline:1px solid var(--mint);outline-offset:2px}.companion-panel .panel-surface{max-height:65dvh;overflow-y:auto}@media(max-width:650px){.panel-compose .chat-suggestions button{min-height:44px;font-size:10px}}

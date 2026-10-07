@@ -814,12 +814,28 @@
           }
         },
         {
+          "delay_ms": 0,
+          "event": {
+            "v": 2,
+            "type": "node.forming",
+            "run_id": "{{run_id}}",
+            "seq": 24,
+            "ts": "{{now}}",
+            "data": {
+              "sources": [
+                "experiencia.infosys",
+                "aprendizaje.extras.infosys-ia"
+              ]
+            }
+          }
+        },
+        {
           "delay_ms": 900,
           "event": {
             "v": 2,
             "type": "node.spawn",
             "run_id": "{{run_id}}",
-            "seq": 24,
+            "seq": 25,
             "ts": "{{now}}",
             "data": {
               "anchor": null,
@@ -922,7 +938,7 @@
             "v": 2,
             "type": "trace.hop",
             "run_id": "{{run_id}}",
-            "seq": 25,
+            "seq": 26,
             "ts": "{{now}}",
             "data": {
               "hop_id": "h7",
@@ -939,7 +955,7 @@
             "v": 2,
             "type": "trace.hop",
             "run_id": "{{run_id}}",
-            "seq": 26,
+            "seq": 27,
             "ts": "{{now}}",
             "data": {
               "hop_id": "h4",
@@ -956,7 +972,7 @@
             "v": 2,
             "type": "process.step",
             "run_id": "{{run_id}}",
-            "seq": 27,
+            "seq": 28,
             "ts": "{{now}}",
             "data": {
               "step": "create_node",
@@ -970,7 +986,7 @@
             "v": 2,
             "type": "process.step",
             "run_id": "{{run_id}}",
-            "seq": 28,
+            "seq": 29,
             "ts": "{{now}}",
             "data": {
               "step": "answer",
@@ -985,7 +1001,7 @@
             "v": 2,
             "type": "trace.hop",
             "run_id": "{{run_id}}",
-            "seq": 29,
+            "seq": 30,
             "ts": "{{now}}",
             "data": {
               "hop_id": "h8",
@@ -1002,7 +1018,7 @@
             "v": 2,
             "type": "answer.chunk",
             "run_id": "{{run_id}}",
-            "seq": 30,
+            "seq": 31,
             "ts": "{{now}}",
             "data": {
               "text": "No tenía un nodo dedicado a eso, así que creé uno para ti. "
@@ -1015,7 +1031,7 @@
             "v": 2,
             "type": "answer.chunk",
             "run_id": "{{run_id}}",
-            "seq": 31,
+            "seq": 32,
             "ts": "{{now}}",
             "data": {
               "text": "Ahí reuní las herramientas de IA y ML con las que he trabajado y de dónde salen."
@@ -1028,7 +1044,7 @@
             "v": 2,
             "type": "trace.hop",
             "run_id": "{{run_id}}",
-            "seq": 32,
+            "seq": 33,
             "ts": "{{now}}",
             "data": {
               "hop_id": "h8",
@@ -1045,7 +1061,7 @@
             "v": 2,
             "type": "process.step",
             "run_id": "{{run_id}}",
-            "seq": 33,
+            "seq": 34,
             "ts": "{{now}}",
             "data": {
               "step": "answer",
@@ -1059,7 +1075,7 @@
             "v": 2,
             "type": "trace.hop",
             "run_id": "{{run_id}}",
-            "seq": 34,
+            "seq": 35,
             "ts": "{{now}}",
             "data": {
               "hop_id": "h2",
@@ -1076,7 +1092,7 @@
             "v": 2,
             "type": "run.done",
             "run_id": "{{run_id}}",
-            "seq": 35,
+            "seq": 36,
             "ts": "{{now}}",
             "data": {
               "outcome": "generated",

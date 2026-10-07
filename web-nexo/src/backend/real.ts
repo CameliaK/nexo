@@ -2,7 +2,8 @@ import { GuestTokens, retryAfterMs } from './guest-token';
 import { clearLocalSession, AUTH_TOKEN_KEY } from './identity';
 import type { AuthMe, AuthToken, Notifications, ChessGame, OwnerChessGame } from './types';
 import { t } from '../i18n';
-import { BackendError, isBackendEvent } from './types';
+import { readBackendEvent } from './wire-events';
+import { BackendError } from './types';
 import type {
   PortfolioBackend,
   BackendEvent,
@@ -34,6 +35,8 @@ export class RealBackend implements PortfolioBackend {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempt = 0;
   private ticketRetryAt = 0;
+  private identityChange: Promise<AuthToken> | null = null;
+  private closing: Promise<void> = Promise.resolve();
 
   constructor() {
     try { this.token = localStorage.getItem(AUTH_TOKEN_KEY); this.authenticatedToken = !!this.token;if(this.authenticatedToken)this.guestTokens.clear(); } catch { /* Ephemeral session. */ }
@@ -41,6 +44,7 @@ export class RealBackend implements PortfolioBackend {
   private authenticatedToken = false;
   private sessionGeneration = 0;
   async authMe(): Promise<AuthMe> {
+    if (this.identityChange) await this.identityChange.catch(() => {});
     const wasAccount=this.authenticatedToken,generation=this.sessionGeneration;
     try { return await this._request('GET', '/api/v1/auth/me') as AuthMe; }
     catch(error){if(error instanceof BackendError&&error.status===401&&wasAccount&&generation===this.sessionGeneration){await this.clearIdentity();return {mode:'guest'}}throw error}
@@ -76,7 +80,19 @@ export class RealBackend implements PortfolioBackend {
    * account). The persisted guest token is reused after redirects and reloads. A signed-in browser
    * sends none. If /auth/guest fails, sign-in still proceeds without it.
    */
-  private async signIn(path: string, body: unknown) {
+  private signIn(path: string, body: unknown): Promise<AuthToken> {
+    if (this.identityChange) return this.identityChange;
+    const pending = this.performSignIn(path, body);
+    this.identityChange = pending;
+    const settled = () => {
+      if (this.identityChange === pending) this.identityChange = null;
+      // Resume startup/realtime after the canonical visitor and credential are final.
+      void this.connect().catch(() => {});
+    };
+    void pending.then(settled, settled);
+    return pending;
+  }
+  private async performSignIn(path: string, body: unknown) {
     let guest: string | null = null;
     if (!this.authenticatedToken) { try { guest = await this.fetchToken(); } catch { /* Sign-in without anonymous data. */ } }
     return this.adopt(await this._request('POST', path, body, false, true, guest) as AuthToken);
@@ -87,8 +103,7 @@ export class RealBackend implements PortfolioBackend {
     const id = result.visitor_id;
     if (id) this.visitorId = id;
     try { localStorage.setItem(AUTH_TOKEN_KEY, result.token); if (id) localStorage.setItem(VISITOR_ID_KEY, id); } catch { /* Ephemeral identity. */ }
-    // HTTP login succeeded even if realtime is temporarily unavailable.
-    void this.connect().catch(() => {});
+    // signIn resumes realtime only after this adoption is complete.
     return result;
   }
   private async clearIdentity() {
@@ -100,12 +115,13 @@ export class RealBackend implements PortfolioBackend {
   // ── PortfolioBackend pública ───────────────────────────────────────────────
 
   connect(): Promise<void> {
+    if (this.identityChange) return this.identityChange.then(() => this.connect(), () => this.connect());
     if (this.state === 'open') return Promise.resolve();
     if (this.connecting) return this.connecting;
     if(this.reconnectTimer!==null){clearTimeout(this.reconnectTimer);this.reconnectTimer=null}
     this.intentionalClose = false;
     const generation=this.sessionGeneration;
-    const attempt=this._openConnection().catch(error=>{
+    const attempt=Promise.resolve().then(() => this._openConnection()).catch(error=>{
       if(generation===this.sessionGeneration&&!this.intentionalClose)this.scheduleReconnect();
       throw error;
     }).finally(()=>{if(this.connecting===attempt)this.connecting=null});
@@ -119,8 +135,7 @@ export class RealBackend implements PortfolioBackend {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-    this.ws?.close(1000);
-    this.ws = null;
+    this.closeSocket();
     this.change('closed');
   }
 
@@ -188,21 +203,30 @@ export class RealBackend implements PortfolioBackend {
   private async fetchToken(): Promise<string> {
     const visitorId=this.getOrCreateVisitorId();
     if(this.visitorId&&this.visitorId!==visitorId){this.guestTokens.clear();if(!this.authenticatedToken)this.token=null}
-    this.visitorId=visitorId;return this.guestTokens.get(visitorId);
+    this.visitorId=visitorId;
+    const token = await this.guestTokens.get(visitorId);
+    // Another tab may adopt a different id while guest authorization is pending.
+    if (visitorId !== this.getOrCreateVisitorId()) return this.fetchToken();
+    return token;
   }
   private async authorization():Promise<string>{
+    if (this.identityChange) await this.identityChange.catch(() => {});
     if(this.authenticatedToken&&this.token)return this.token;
     const generation=this.sessionGeneration;
     let token:string;try{token=await this.fetchToken()}catch(error){if(error instanceof BackendError&&error.status===429&&generation===this.sessionGeneration&&!this.intentionalClose)this.scheduleReconnect();throw error}
+    if (this.identityChange) { await this.identityChange.catch(() => {}); return this.authorization(); }
     if(generation!==this.sessionGeneration)throw new BackendError('internal',t('error.offline'),503);
     this.token=token;return token;
   }
   private async _openConnection(): Promise<void> {
     const generation = this.sessionGeneration;
+    await this.closing;
+    if (generation !== this.sessionGeneration || this.intentionalClose) return;
     this.change('connecting');
     if (this.ticketRetryAt > Date.now()) throw new BackendError('rate_limited', t('connection.retrying'), 429, Math.ceil((this.ticketRetryAt - Date.now()) / 1000));
     try {
       const result = await this._request('POST', '/api/v1/ws-ticket') as { ticket: string; expires_in: number };
+      if (this.identityChange) await this.identityChange.catch(() => {});
       if (generation !== this.sessionGeneration) return;
       if (typeof result?.ticket !== 'string' || !result.ticket || !(result.expires_in > 0)) throw new BackendError('internal', t('error.connection'), 503);
       await this._openWebSocket(result.ticket);
@@ -234,8 +258,8 @@ export class RealBackend implements PortfolioBackend {
       ws.onmessage = (ev: MessageEvent<string>) => {
         if (this.ws !== ws) return;
         try {
-          const msg: unknown = JSON.parse(ev.data);
-          if (isBackendEvent(msg)) this.events.forEach(h => h(msg));
+          const msg = readBackendEvent(JSON.parse(ev.data));
+          if (msg) this.events.forEach(h => h(msg));
         } catch { /* Ignora mensajes malformados. */ }
       };
 
@@ -256,9 +280,20 @@ export class RealBackend implements PortfolioBackend {
     });
   }
 
+  private closeSocket(): void {
+    const previous = this.ws; this.ws = null;
+    if (!previous || previous.readyState === 3) return;
+    const closed = new Promise<void>(resolve => {
+      const onclose = previous.onclose;
+      previous.onclose = event => { onclose?.call(previous, event); resolve(); };
+      previous.close(1000);
+    });
+    this.closing = Promise.all([this.closing, closed]).then(() => {});
+  }
+
   private scheduleReconnect(): void {
     if(this.intentionalClose||this.reconnectTimer!==null)return;
-    const previous=this.ws;this.ws=null;previous?.close(1000);
+    this.closeSocket();
     this.change('reconnecting');
     const base=RECONNECT_DELAYS[Math.min(this.reconnectAttempt++,RECONNECT_DELAYS.length-1)];
     const delay=Math.max(Math.min(15000,base*(.85+Math.random()*.3)),this.ticketRetryAt-Date.now(),(this.authenticatedToken?0:this.guestTokens.retryUntil-Date.now()));
@@ -276,7 +311,9 @@ export class RealBackend implements PortfolioBackend {
     publicRequest = false,
     guestBearer: string | null = null,
   ): Promise<unknown> {
+    const generation = this.sessionGeneration;
     const sentToken=publicRequest?guestBearer:await this.authorization();
+    if (!publicRequest && generation !== this.sessionGeneration) throw new BackendError('internal', t('error.offline'), 503);
 
     const res = await fetch(path, {
       method,

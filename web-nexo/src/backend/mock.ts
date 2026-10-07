@@ -4,7 +4,8 @@ import { MockAccount } from './mock-account';
 import type { ChessGame, Notifications } from './types';
 import { t } from '../i18n';
 import scenariosFile from '../data/mock-scenarios.json';
-import { BackendError, LIMITS, isBackendEvent } from './types';
+import { readBackendEvent } from './wire-events';
+import { BackendError, LIMITS } from './types';
 import type { PortfolioBackend, BackendEvent, ConnectionState, GeneratedNode, LiveMessage } from './types';
 import { generatedSize } from './generated';
 
@@ -122,8 +123,8 @@ export class MockBackend implements PortfolioBackend {
     for (const entry of scenario.events) {
       elapsed += entry.delay_ms;
       this.later(() => {
-        const event = replace(entry.event);
-        if (!isBackendEvent(event)) return;
+        const event = readBackendEvent(replace(entry.event));
+        if (!event) return;
         if (event.type === 'node.spawn') {
           if (!this.saved.nodes.some(n=>n.id===event.data.node.id)&&this.saved.nodes.reduce((sum,node)=>sum+generatedSize(node),0)+generatedSize(event.data.node) <= LIMITS.generatedNodesPerSession) this.saved.nodes.push(event.data.node);
           this.persist();

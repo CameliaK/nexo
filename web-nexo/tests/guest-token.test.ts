@@ -200,3 +200,55 @@ test('A ticket Retry-After of zero retains the normal reconnect backoff instead 
  b.setRoute(path=>path==='/auth/guest'?Response.json({token:'guest'}):++attempts===1?new Response(null,{status:429,headers:{'Retry-After':'0'}}):Response.json({ticket:'after-backoff',expires_in:30}));
  try{await assert.rejects(()=>real.connect(),{status:429,retryAfterSec:0});assert.equal([...b.tasks.values()][0].at-b.now,1000);await b.advance(1000);assert.equal(b.sockets.length,1);assert.equal(b.guests().length,1)}finally{await b.dispose()}
 });
+
+test('Startup with reentrant connection listeners and concurrent me/connect calls obtains one ticket and one socket',async()=>{
+ const b=browser(),real=b.backend();const stop=real.onConnectionChange(state=>{if(state==='connecting')void real.connect()});
+ try{
+  await Promise.all([real.authMe(),real.connect(),real.connect()]);await flush();
+  assert.equal(b.guests().length,1);assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,1);assert.equal(b.sockets.length,1);
+ }finally{stop();await b.dispose()}
+});
+test('Google/email completion on initial load waits for canonical identity before obtaining the only WS ticket',async()=>{
+ for(const method of ['email','google']){
+  const b=browser(),real=b.backend();let release!:(response:Response)=>void;
+  b.setRoute(path=>path==='/auth/guest'?Response.json({token:'guest'}):path==='/auth/email/verify'||path==='/auth/exchange'?new Promise(resolve=>{release=resolve}):Response.json({mode:'user',ticket:'ticket',expires_in:30}));
+  try{
+   const login=method==='email'?real.verifyEmailLogin('link'):real.exchangeCode('code');
+   const startup=Promise.all([real.authMe(),real.connect(),real.connect()]);await flush();
+   assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,0);assert.equal(b.sockets.length,0);
+   release(Response.json({token:'definitive-account-token',visitor_id:'canonical-id'}));await login;await startup;await flush();
+   const tickets=b.requests.filter(r=>r.path==='/api/v1/ws-ticket');assert.equal(tickets.length,1);assert.equal(tickets[0].headers.get('Authorization'),'Bearer definitive-account-token');assert.equal(b.sockets.length,1);assert.equal(b.storage.getItem('nexo.visitor_id'),'canonical-id');
+  }finally{await b.dispose()}
+ }
+});
+test('A guest connection still authorizing when sign-in starts is superseded without consuming an obsolete ticket',async()=>{
+ const b=browser(),real=b.backend();let releaseGuest!:(response:Response)=>void,releaseLogin!:(response:Response)=>void;
+ b.setRoute(path=>path==='/auth/guest'?new Promise(resolve=>{releaseGuest=resolve}):path==='/auth/exchange'?new Promise(resolve=>{releaseLogin=resolve}):Response.json({ticket:'fresh',expires_in:30}));
+ try{
+  const initial=real.connect();await flush();const login=real.exchangeCode('code');releaseGuest(Response.json({token:'guest'}));await flush();
+  assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,0);assert.equal(b.sockets.length,0);
+  releaseLogin(Response.json({token:'account',visitor_id:'canonical'}));await Promise.all([initial,login]);await flush();
+  assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,1);assert.equal(b.sockets.length,1);
+ }finally{await b.dispose()}
+});
+test('Sign-in closes the previous WS and waits for its close event before requesting the next ticket',async()=>{
+ const b=browser(),real=b.backend();b.setRoute(path=>path==='/auth/guest'?Response.json({token:'guest'}):path==='/auth/exchange'?Response.json({token:'account',visitor_id:'canonical'}):Response.json({ticket:'ticket',expires_in:30}));
+ try{
+  await real.connect();const previous=b.sockets[0];let closing=false;
+  previous.close=()=>{closing=true};
+  await real.exchangeCode('code');await flush();assert.equal(closing,true);assert.equal(b.sockets.length,1);assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,1);
+  previous.closed=true;previous.onclose?.({code:1000});await real.connect();await flush();
+  assert.equal(b.sockets.length,2);assert.equal(previous.closed,true);assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,2);assert.equal(b.requests.at(-1)!.headers.get('Authorization'),'Bearer account');
+ }finally{await b.dispose()}
+});
+test('A visitor_id adopted while the guest request is pending binds the only ticket to the final visitor',async()=>{
+ const b=browser(),real=b.backend();let release!:(response:Response)=>void;
+ b.setRoute((path,headers)=>path==='/auth/guest'&&headers.get('X-Visitor-Id')==='visitor-a'?new Promise(resolve=>{release=resolve}):Response.json({token:'final-guest',ticket:'ticket',expires_in:30}));
+ try{const pending=real.connect();await flush();b.storage.setItem('nexo.visitor_id','visitor-final');release(Response.json({token:'obsolete-guest'}));await pending;assert.equal(b.sockets.length,1);assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,1);assert.equal(b.requests.at(-1)!.headers.get('Authorization'),'Bearer final-guest');assert.equal(JSON.parse(b.storage.getItem(GUEST_TOKEN_KEY)!).visitorId,'visitor-final')}finally{await b.dispose()}
+});
+
+test('Startup preflight replaces an expired account identity before opening the only socket',async()=>{
+ const b=browser();b.storage.setItem(AUTH_TOKEN_KEY,'expired-account');const real=b.backend();
+ b.setRoute((path,headers)=>path==='/api/v1/auth/me'&&headers.get('Authorization')==='Bearer expired-account'?new Response(null,{status:401}):path==='/auth/guest'?Response.json({token:'fresh-guest'}):Response.json({mode:'guest',ticket:'ticket',expires_in:30}));
+ try{assert.deepEqual(await real.authMe(),{mode:'guest'});await real.connect();assert.equal(b.sockets.length,1);assert.equal(b.requests.filter(r=>r.path==='/api/v1/ws-ticket').length,1);assert.equal(b.requests.find(r=>r.path==='/api/v1/ws-ticket')!.headers.get('Authorization'),'Bearer fresh-guest');assert.equal(b.storage.getItem(AUTH_TOKEN_KEY),null)}finally{await b.dispose()}
+});

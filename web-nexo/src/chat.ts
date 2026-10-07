@@ -10,7 +10,8 @@ import type { TracePlayer } from './system/traces';
 
 export interface Universe {
   navigate(id:string):Promise<unknown>;isSystem():boolean;exitSystem():Promise<unknown>;openAgent():void;
-  spawnGenerated(node:GeneratedNode,anchor?:string|null,restored?:boolean):void;removeGenerated(id:string):void;
+  formGenerated?(runId:string,sources:string[]):void;finishForming?(runId:string):void;clearFormations?():void;
+  spawnGenerated(node:GeneratedNode,anchor?:string|null,restored?:boolean,runId?:string):void;removeGenerated(id:string):void;
   inspectGenerated(id:string):void;setUnread(count:number):void;setChatMessage(text:string,from:'owner'|'visitor'):void;setLiveOpen(open:boolean):void;morphLivePanel(panel:HTMLElement,opening:boolean,complete:()=>void):void;focusLiveNode():void;nodeExists(id:string):boolean;nodeLabel(id:string):string;
 }
 function element<K extends keyof HTMLElementTagNameMap>(tag:K,text='',className='') {const e=document.createElement(tag);e.textContent=text;e.className=className;return e}
@@ -42,7 +43,7 @@ export class Chats {
   }
   private identityEpoch=0;private agentErrorValue:unknown=null;private liveErrorValue:unknown=null;private errorRows:{element:HTMLElement;error:unknown}[]=[];private liveRuns=new Map<string,string>();
   resetIdentity(){
-    this.identityEpoch++;this.agentCooldown=this.liveCooldown=0;this.agentErrorValue=this.liveErrorValue=null;this.errorRows=[];this.liveRuns.clear();
+    this.universe.clearFormations?.();this.identityEpoch++;this.agentCooldown=this.liveCooldown=0;this.agentErrorValue=this.liveErrorValue=null;this.errorRows=[];this.liveRuns.clear();
     this.inbox.reset();this.runs.clear();this.liveRows.clear();this.liveHistory.replaceChildren();this.agentHistory.replaceChildren();
     for(const id of this.generated.keys())this.universe.removeGenerated(id);this.generated.clear();this.unread.clear();this.routeQueue=[];this.updateUnread();
     this.busy=false;this.activeRun=null;
@@ -51,7 +52,7 @@ export class Chats {
   receive(event:BackendEvent){this.inbox.receive(event)}
   async connection(state:ConnectionState){
     const lost=this.state==='open'&&state!=='open';this.state=state;
-    if(lost){const interrupted=this.busy||this.pendingSend;this.busy=false;this.pendingSend=false;this.inbox.reset();this.routeQueue=[];this.routeNotice.hidden=true;if(interrupted)this.agentError(new Error(t('chat.lost')));for(const row of this.liveRows.values())if(row.state==='sending'||row.state==='sent')this.delivery(row.message.id,'failed')}
+    if(lost){this.universe.clearFormations?.();const interrupted=this.busy||this.pendingSend;this.busy=false;this.pendingSend=false;this.inbox.reset();this.routeQueue=[];this.routeNotice.hidden=true;if(interrupted)this.agentError(new Error(t('chat.lost')));for(const row of this.liveRows.values())if(row.state==='sending'||row.state==='sent')this.delivery(row.message.id,'failed')}
     this.refresh();
     if(state==='open'){
       const identityEpoch=this.identityEpoch;
@@ -71,7 +72,12 @@ export class Chats {
     const steps=element('ol');for(const[id,label]of Object.entries(stepLabels())){const row=element('li',label);row.dataset.state='waiting';steps.append(row);this.steps.set(id,row)}this.process.append(steps,this.sources);body.append(this.process);
     this.agentSend.setAttribute('aria-label',t('chat.sendAgent'));this.agentSend.textContent='↗';this.agentSend.onclick=()=>void this.sendAgent();
     this.agentInput.maxLength=LIMITS.messageMaxChars;this.agentInput.addEventListener('input',()=>this.refresh());this.agentInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();void this.sendAgent()}});
-    document.querySelector('.panel-compose')!.append(this.agentCounter, privacyNotice('privacy.assistant'));
+    const suggestions=element('div','','chat-suggestions');suggestions.setAttribute('role','group');suggestions.setAttribute('aria-label',t('chat.suggestions'));
+    for(const key of ['chat.suggestFrontend','chat.suggestAI','chat.suggestData'] as const){
+      const button=element('button',t(key));button.type='button';button.dataset.i18n=key;
+      button.onclick=()=>{this.agentInput.value=t(key);this.refresh();this.agentInput.focus()};suggestions.append(button);
+    }
+    document.querySelector('.panel-compose')!.append(this.agentCounter,suggestions,privacyNotice('privacy.assistant'));
     if(this.simulated)document.querySelector('#companion-panel .panel-footer')!.append(element('span',t('common.simulated'),'simulation-label'));
   }
   private buildLive(){
@@ -173,13 +179,13 @@ export class Chats {
     if(!retryable)row.root.querySelector('.message-retry')?.remove();
     if(state==='failed'&&retryable&&!row.root.querySelector('.message-retry')){const retry=element('button',t('common.retry'),'message-retry');retry.onclick=()=>void this.sendLive(row);row.root.append(retry)}
   }
-  private acceptGenerated(value:unknown,anchor:string|null,restored=false){
+  private acceptGenerated(value:unknown,anchor:string|null,restored=false,runId?:string){
     if(!validateGeneratedNode(value,this.ids))return false;
     if(this.generated.has(value.id))return true;
     const count=[...this.generated.values()].reduce((sum,node)=>sum+generatedSize(node),0);
     const existingIds=new Set([...this.generated.values()].flatMap(n=>[n.id,...(n.children||[]).map(c=>c.id)]));
     if([value.id,...(value.children||[]).map(c=>c.id)].some(id=>existingIds.has(id))||count+generatedSize(value)>LIMITS.generatedNodesPerSession){this.agentHint.textContent=t('generated.limit');return false}
-    this.generated.set(value.id,value);this.universe.spawnGenerated(value,anchor&&this.ids.has(anchor)?anchor:null,restored);this.renderInventory();return true;
+    this.generated.set(value.id,value);this.universe.spawnGenerated(value,anchor&&this.ids.has(anchor)?anchor:null,restored,runId);this.renderInventory();return true;
   }
   private renderInventory(){this.inventory.hidden=!this.simulated||!this.generated.size;this.inventoryList.replaceChildren();const count=[...this.generated.values()].reduce((sum,node)=>sum+generatedSize(node),0);this.inventory.querySelector('summary')!.textContent=t('generated.count',{count});for(const node of this.generated.values()){const button=element('button',node.label);button.onclick=()=>this.universe.inspectGenerated(node.id);this.inventoryList.append(button)}}
   async discard(id:string){try{await this.backend.deleteGeneratedNode(id);this.generated.delete(id);for(const [key,node]of this.generated)if(node.children?.some(child=>child.id===id))this.generated.set(key,{...node,children:node.children.filter(child=>child.id!==id)});this.universe.removeGenerated(id);this.renderInventory()}catch{this.agentHint.textContent=t('generated.discardFailed')}}
@@ -202,7 +208,8 @@ export class Chats {
     if(event.type==='rag.result'&&run){this.sources.replaceChildren(element('p',event.data.used?t('step.sources'):t('step.noSources')));for(const hit of event.data.hits)this.sources.append(element('span',hit.title,'source-link'))}
     if(event.type==='route.plan'&&run){run.path=[];for(const id of event.data.path){if(!this.ids.has(id))break;run.path.push(id)}this.routeLabel.textContent=t('step.route',{path:run.path.map(id=>this.universe.nodeLabel(id)).join(' › ')})}
     if(event.type==='route.step'&&run&&run.path[event.data.index]===event.data.node_id){this.routeQueue.push(event.data.node_id);if(this.universe.isSystem())this.routeNotice.hidden=false;else void this.drainRoute()}
-    if(event.type==='node.spawn'&&run){if(!this.acceptGenerated(event.data.node,event.data.anchor))this.agentHint.textContent=t('generated.invalid')}
+    if(event.type==='node.forming'&&run)this.universe.formGenerated?.(event.run_id,event.data.sources.filter(id=>this.ids.has(id)));
+    if(event.type==='node.spawn'&&run){if(!this.acceptGenerated(event.data.node,event.data.anchor,false,event.run_id))this.agentHint.textContent=t('generated.invalid')}
     if(event.type==='live.message')this.addLive(event.data.message);
     if(event.type==='live.delivery')this.delivery(event.data.message_id,event.data.status);
     if((event.type==='run.done'||event.type==='run.error')&&run){run.closed=true;if(this.activeRun===event.run_id){this.busy=false;this.activeRun=null}if(event.type==='run.error')this.agentError(new BackendError(event.data.code,''),event.data.retryable);else this.agentHint.textContent=t('chat.done');}
@@ -211,8 +218,8 @@ export class Chats {
       if(row)row.error=error;this.liveErrorValue=error;this.liveHint.textContent=chatErrorText(error);this.delivery(id,'failed',event.data.retryable);
       if(error.code==='rate_limited')this.liveCooldown=Date.now()+30000;
     }
-    if(event.type==='run.done'||event.type==='run.error')this.liveRuns.delete(event.run_id);
+    if(event.type==='run.done'||event.type==='run.error'){this.universe.finishForming?.(event.run_id);this.liveRuns.delete(event.run_id);}
     this.refresh();
   }
-  dispose(){this.stopped=true;clearInterval(this.timer);this.inbox.reset()}
+  dispose(){this.stopped=true;clearInterval(this.timer);this.inbox.reset();this.universe.clearFormations?.()}
 }

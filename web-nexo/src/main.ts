@@ -96,6 +96,7 @@ async function start() {
     panel.append(summary,help,buttons,status);document.body.append(panel);
   }
   access.readRoute();
+  try { await backend.authMe(); } catch { /* A temporary HTTP outage must not disable realtime retries. */ }
   try { await backend.connect(); } catch { /* RealBackend schedules its own retry. */ }
   await account.refresh();
   addEventListener('pagehide', event => { if(event.persisted)return;clearTimeout(transitionTimer);stopDevelopment?.();stopAccount();accountNode.dispose();ownerRoute.dispose();account.dispose();access.dispose();stopLanguage();stopContent();stopPersistence();welcome.dispose();languageNode.dispose();stopEvents(); stopConnection();connectionNotice.dispose(); backend.disconnect(); chats.dispose();universe.dispose();chess.dispose(); });

@@ -1,5 +1,11 @@
 import type { UIKey } from './es';
 export const en = {
+  "generated.forming": "Forming your node…",
+  "chat.suggestions": "Ideas for creating a node",
+  "chat.suggestFrontend": "Create a node with my frontend technologies",
+  "chat.suggestAI": "Create a node with my AI experience",
+  "chat.suggestData": "Create a node with my databases",
+
   "privacy.title": "Privacy notice",
   "privacy.link": "Privacy",
   "privacy.back": "Back to the universe",

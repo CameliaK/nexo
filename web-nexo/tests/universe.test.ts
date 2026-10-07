@@ -1,4 +1,5 @@
 // @ts-nocheck -- This lightweight DOM fixture exercises the unchanged Canvas renderer.
+import { formationPhase } from '../src/node-forming';
 import { motion as MOTION, easeOut, resumeStart } from '../src/motion';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,13 +39,14 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  const listeners={},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
  if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
- const sandbox={t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:(k,f)=>listeners[k]=f,document:{getElementById:el,querySelector:el,createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listeners['document:'+key]=fn,body:el('body'),hidden:false,get activeElement(){return activeElement}}};
+ const sandbox={t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:(k,f)=>listeners[k]=f,document:{getElementById:el,querySelector:el,createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listeners['document:'+key]=fn,body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let mediaFrame;
  if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { motion as MOTION, easeOut, resumeStart } from './motion';",'').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
+ source=source.replace("import { formationPhase } from './node-forming';",'');
  source=source.replace("import { LivePreview, placeSatellite, satelliteFootprint } from './live-satellite.js';",'');
- source=source.replace('return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getClock:()=>clock,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){');
+ source=source.replace('return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){', 'globalThis.api={apertureNodes,distantSystemBounds,systemPopulation,meshFaces,navigateAsync,spawnGenerated,formGenerated,formingRuns,drawFormations,removeGenerated,generatedRegistry,activate,enterSystem,exitSystem,camera,goBack,setCamera:(p,z)=>{pan=p;zoom=z;targetZoom=z},openPanel,panelProjection,ageValue,scenes,records,geometry,createMorphPlan,refreshTravelGeometry,morphTriangle,instantiate,project,morphLivePanel,companion,chessOrbit,chatTarget,chatPreview,chatMessage,chatOrbit,chatObstacles,getMediaBounds:()=>occupiedMediaBounds,getChatPosition:()=>chatPosition,getMorphCanvas:()=>morphCanvas,getClock:()=>clock,getLevel:()=>level,getNodes:()=>nodes,getSystemTravel:()=>systemTravel,getTravel:()=>travel,panelOpen:()=>panelOpen};return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){');
  source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);Object.assign(sandbox.api,sandbox.universe);
  const frames=(ms=2700)=>{const end=now+ms;while(now<end){now=Math.min(end,now+50);raf(now)}};
  const enter=id=>{el('node-targets').children.find(e=>e.dataset.node===id).click();frames()};
@@ -418,4 +420,29 @@ test('Hidden tabs stop canvas work and resume the shared clock without jumping t
  const {api,frames,sandbox,listeners}=fixture();frames(100);const clock=api.getClock();
  sandbox.document.hidden=true;listeners['document:visibilitychange']();frames(2000);assert.equal(api.getClock(),clock);
  sandbox.document.hidden=false;listeners['document:visibilitychange']();frames(100);assert.ok(api.getClock()>clock);assert.ok(api.getClock()-clock<.2);api.dispose();
+});
+
+test('Forming reserves the actual generated position, projects with the camera, builds a wireframe and finishes within 1.5 seconds',()=>{
+ const {api,frames}=fixture();frames(100);const camera=JSON.stringify(api.camera());
+ api.formGenerated('forming-run',['experiencia.infosys','aprendizaje.extras.infosys-ia']);frames(100);
+ const state=api.formingRuns.get('forming-run');assert.equal(api.formingRuns.size,1);assert.ok(Number.isFinite(state.ghost.sx)&&Number.isFinite(state.ghost.sy));
+ const ghost={x:state.ghost.sx,y:state.ghost.sy};api.setCamera({x:50,y:-20},1.25);frames(100);assert.notEqual(state.ghost.sx,ghost.x);
+ const node={id:'gen_forming',generated:true,label:'New node',summary:'Summary',created_at:'2026-10-06T00:00:00Z',sources:[{title:'CV'}],layout:'text',content:{body:'Text'}};
+ api.spawnGenerated(node,null,false,'forming-run');frames(100);const actual=api.getNodes().find(n=>n.id==='gen_forming');assert.equal(actual.formation,state);assert.equal(actual.birthOrigin,null);assert.equal(actual.el.disabled,true);
+ const before=JSON.stringify(api.camera());frames(1100);assert.equal(api.formingRuns.size,0);assert.equal(actual.el.disabled,false);assert.equal(JSON.stringify(api.camera()),before);assert.notEqual(before,camera);
+ assert.ok(MOTION.formingThreads+MOTION.formingBuild+MOTION.formingPulse<1500);api.dispose();
+});
+test('Reduced motion forms directly; orphan, error and disconnected formations can be cleared without a camera move',()=>{
+ const reduced=fixture(false,true);reduced.frames(100);reduced.api.formGenerated('quiet',['experiencia']);assert.equal(reduced.api.formingRuns.size,0);
+ const node={id:'gen_quiet',generated:true,label:'Quiet',summary:'Summary',created_at:'2026-10-06T00:00:00Z',sources:[{title:'CV'}],layout:'text',content:{body:'Text'}};
+ reduced.api.spawnGenerated(node,null,false,'quiet');assert.equal(reduced.api.getNodes().find(n=>n.id===node.id).birthOrigin,null);reduced.api.dispose();
+ const {api,frames}=fixture();frames(100);api.formGenerated('cancelled',['experiencia']);api.finishForming('cancelled');assert.equal(api.formingRuns.size,0);
+ api.formGenerated('disconnected',['experiencia']);api.clearFormations();assert.equal(api.formingRuns.size,0);api.formGenerated('orphan',['experiencia']);frames(MOTION.formingWait+100);assert.equal(api.formingRuns.size,0);api.dispose();
+});
+
+test('A forming node keeps its reserved scene when the visitor navigates before spawn',()=>{
+ const {api,frames,enter}=fixture();frames(100);api.formGenerated('navigation-forming',['experiencia.infosys']);const scene=api.getLevel();
+ enter('experiencia');const current=api.getLevel();assert.notEqual(current,scene);
+ const node={id:'gen_reserved',generated:true,label:'Reserved node',summary:'Summary',created_at:'2026-10-06T00:00:00Z',sources:[{title:'Portfolio'}],layout:'text',content:{body:'Body'}};
+ api.spawnGenerated(node,null,false,'navigation-forming');assert.equal(api.generatedRegistry.get(node.id).scene,scene);assert.equal(api.getLevel(),current);assert.equal(api.getNodes().some(n=>n.id===node.id),false);api.goBack();frames();assert.ok(api.getNodes().some(n=>n.id===node.id));api.dispose();
 });
