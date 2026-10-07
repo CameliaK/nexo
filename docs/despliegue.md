@@ -356,6 +356,30 @@ $C start agent gateway n8n
 
 ---
 
+### Registros (logs) y direcciones IP
+
+Revisado el 2026-10-07. Rotación de Docker por tamaño (`x-logging` en `docker-compose.yml`):
+3 archivos de 10 MB por contenedor; `docker compose down` / recrear un contenedor borra sus
+logs.
+
+| Servicio | ¿IP del visitante en el log? | Qué registra | Volumen medido (sin tráfico) → 30 MB |
+|---|---|---|---|
+| traefik | No: sin registro de acceso (nunca añadir `--accesslog`) | Solo errores | ~0 |
+| web-nexo (nginx) | No: `$remote_addr` es la IP del contenedor de Traefik (no hay `real_ip`), y sin query ni Referer | Una línea por petición; el healthcheck pide `/index.html` cada 30 s | ~0,2 MB/día → ~4 meses; menos con visitas |
+| gateway | No: ninguna línea lleva IP; ids enmascarados (8 caracteres) | Arranque, ws open/close, errores | Casi nada en reposo |
+| agent (uvicorn) | No: el cliente siempre era el contenedor del gateway/n8n o 127.0.0.1; desde ahora se sustituye por `-` y se quita el query | Healthcheck cada 15 s, sondeo de Telegram cada 30 s | ~0,56 MB/día → ~7 semanas |
+| n8n | No: no recibe tráfico público (los webhooks vienen del agente) | Arranque y activación de flujos | Casi nada |
+
+Fuera de los logs:
+- **Redis**: los contadores de límite por IP (`rl:*:ip:…`, ventana de 1 h) guardaban la IP en
+  claro, también en el `dump.rdb` del volumen. Ahora la clave es un HMAC-SHA256 de la IP
+  (truncado, con una clave aleatoria por proceso del gateway): Redis nunca ve la dirección.
+  Un reinicio del gateway reinicia esas ventanas.
+- **Postgres**: ninguna tabla guarda IPs.
+- **Ejecuciones de n8n** con error (7 días): cuerpo del webhook del agente, sin IPs.
+
+---
+
 ## 13. Actualizar
 
 ### El código del stack
