@@ -6,11 +6,17 @@
 # silently falling back to the dev defaults of docker-compose.yml (a known
 # n8n password, the "nexo" Postgres password, an ephemeral PASETO key).
 #
-# Memory limits are calculated for an 8 GB VPS (Hetzner CX32):
-#   OS + Docker overhead ≈ 1.5 GB; total limits ≈ 3.6 GB → ~2.9 GB headroom.
-#   Measurements from docker stats on the dev stack: traefik 44 MiB, web-nexo 8,
-#   gateway 10, agent 1060 idle / 1250 peak (2026-10-06), redis 18,
-#   postgres 35, n8n 257.
+# Memory limits for an 8 GB / 4 vCPU VPS (recalculated 2026-10-07):
+#   traefik 256 + web-nexo 64 + gateway 64 + agent 2048 + redis 128
+#   + postgres 512 + n8n 512 = 3584 MiB (3.5 GiB) if every container hit its
+#   limit at once. An "8 GB" server shows ~7.6 GiB to Linux; Ubuntu + Docker
+#   (systemd, sshd, dockerd, containerd, shims) ≈ 1 GiB with margin
+#   → ~3.1 GiB free in the worst case. Limits are caps, not reservations.
+#   docker stats on the dev stack (2026-10-07): agent 1.37 GiB after
+#   startup + one generated node (peak seen 1.22 GiB on 2026-10-06 → limit
+#   still ≥ 1.5×), traefik 158 MiB (dev, dashboard on, 25 h up), n8n 228,
+#   postgres 21, redis 15, gateway 13, web-nexo 9. Typical total ≈ 1.9 GiB.
+#   Optional 2 GiB swapfile (docs/despliegue.md §2.5) for builds on the server.
 
 services:
 

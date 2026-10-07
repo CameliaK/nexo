@@ -8,10 +8,25 @@ TLS automático con Let's Encrypt (ACME HTTP-01).
 ## 1. Requisitos previos
 
 ### Hardware
-Hetzner **CX32** (4 vCPU, 8 GB RAM, 80 GB SSD NVMe) o superior.
-Los límites de memoria del stack suman ~3.6 GB. El agente, con PyTorch y el modelo de
-embeddings multilingüe, usa ~1.06 GiB en reposo y llega a ~1.22 GiB con carga; su límite es
-2048 MB. El resto es para el SO y margen.
+Hetzner Cloud en **Ashburn (ash)**: 4 vCPU, 8 GB de RAM, ~160 GB de disco.
+
+Límites de memoria (`docker-compose.prod.yml`, recalculados el 2026-10-07):
+
+| Servicio | Límite | Medido (dev) |
+|---|---|---|
+| agent | 2048 MiB | 1,37 GiB tras arrancar y generar un nodo |
+| traefik | 256 MiB | 158 MiB |
+| postgres | 512 MiB | 21 MiB |
+| n8n | 512 MiB | 228 MiB |
+| redis | 128 MiB | 15 MiB |
+| gateway | 64 MiB | 13 MiB |
+| web-nexo | 64 MiB | 9 MiB |
+| **Total** | **3584 MiB (3,5 GiB)** | ≈ 1,9 GiB |
+
+Linux ve ~7,6 GiB de un servidor "8 GB"; Ubuntu + Docker ≈ 1 GiB con holgura. **Margen en
+el peor caso (todos los contenedores en su límite a la vez): ~3,1 GiB**; en uso normal quedan
+~4,5 GiB para la caché de disco. No es justo, así que el swap es opcional (§2.5): solo
+amortigua picos como una construcción de la imagen del agente en el servidor.
 
 ### Software en el VPS
 - Ubuntu 24.04 LTS
@@ -100,6 +115,20 @@ sistema y todos los servicios tienen `restart: unless-stopped`. Queda después d
 de las 03:00.
 
 Opcional: `sudo apt-get install -y fail2ban` (la jaula `sshd` viene activa por defecto).
+
+### 2.5 Swap pequeño (opcional)
+
+Las imágenes de Hetzner Cloud no traen swap. Con ~3 GiB de margen no hace falta para el
+stack, pero 2 GiB de swap con `swappiness` baja evitan que el OOM killer mate algo durante
+un pico (un `docker build` del agente en el servidor, un `apt upgrade` grande):
+
+```bash
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/99-nexo-swap.conf && sudo sysctl --system
+free -h
+```
 
 ---
 
