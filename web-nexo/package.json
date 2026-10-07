@@ -16,6 +16,7 @@
     "test:forming-browser": "node scripts/node-forming-browser.mjs",
     "test:media-browser": "node scripts/media-browser.mjs",
     "sync-privacy": "node scripts/sync-privacy.mjs",
+    "test:chess-transition-browser": "node scripts/chess-transition-browser.mjs",
     "test:navigation-browser": "node scripts/navigation-browser.mjs",
     "test:mobile": "node scripts/mobile-browser.mjs && node scripts/mobile-webkit.mjs"
   },

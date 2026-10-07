@@ -52,6 +52,14 @@ test('A portrait keyboard viewport does not turn the board into a landscape rail
 test('A deliberate mouse click and blur/visibility reset cannot inherit touch suppression',()=>{
  const f=fixture();f.send('pointerdown',1,100,200);f.send('pointerdown',2,200,200);f.send('pointerup',2,200,200);f.send('pointerup',1,100,200);
  f.handlers.get('pointerdown')?.({pointerType:'mouse'} as unknown as Event);assert.equal(f.send('click',1,100,200),false);
- f.send('pointerdown',1,100,200);f.send('pointerdown',2,200,200);f.handlers.get('window:blur')?.({} as Event);f.send('pointermove',1,300,200);f.gestures.flush();assert.equal(f.applies(),0);
+ f.send('pointerdown',1,100,200);f.send('pointerdown',2,200,200);const beforeBlur=f.applies();f.handlers.get('window:blur')?.({} as Event);f.send('pointermove',1,300,200);f.gestures.flush();assert.equal(f.applies(),beforeBlur);
  f.send('pointerdown',1,100,200);f.send('pointerdown',2,200,200);f.root.hidden=true;f.handlers.get('visibilitychange')?.({} as Event);f.root.hidden=false;f.send('pointerdown',1,100,200);f.send('pointermove',1,107,200);f.send('pointerup',1,107,200);assert.equal(f.send('click',1,107,200),false);f.gestures.dispose();
+});
+
+import {chessPhase} from '../src/chess/transition';
+import {motion} from '../src/motion';
+test('Chess unfolds over 1.4 seconds before its pieces fade in; the same phases reverse',()=>{
+ assert.equal(motion.chessApproach+motion.chessUnfold+motion.chessPieces,motion.chessOpen);assert.equal(motion.chessOpen,1400);assert.equal(motion.chessClose,1400);
+ assert.equal(chessPhase(0).board,0);assert.equal(chessPhase(.2).pieces,0);assert.ok(chessPhase(.6).unfold>0);assert.equal(chessPhase(.6).pieces,0);assert.equal(chessPhase(1).pieces,1);
+ assert.deepEqual(chessPhase(.4,true),{approach:0,unfold:1,board:.4,pieces:.4,pulse:0});
 });
