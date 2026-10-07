@@ -307,15 +307,40 @@ Las credenciales son `owner@nexo.local` y el valor de `N8N_OWNER_PASSWORD` de tu
 
 ---
 
-## 12. Respaldos automáticos (cron)
+## 12. Respaldos cifrados (age)
 
 `make backup-prod` hace un `pg_dump` comprimido (con `--clean`, restaurable sobre una base
-existente) y exporta los workflows de n8n. Los archivos se crean con permisos 600 porque
-**contienen datos personales** (correos de las cuentas, mensajes del chat en vivo). Se
-borran a los 30 días.
+existente) y exporta los workflows de n8n, y **cifra ambos con [age](https://age-encryption.org)
+en el mismo tubo**: el volcado en claro nunca se escribe en el disco del VPS. Los archivos
+(`nexo_db_<fecha>.sql.gz.age`, `n8n_workflows_<fecha>.json.age`) se crean con permisos 600 y se
+borran a los 30 días. Sin la clave pública, `backup-prod` falla en vez de dejar un respaldo
+en claro.
+
+| Dónde | Qué hay |
+|---|---|
+| VPS `/opt/nexo/backup-recipients.txt` | Solo la **clave pública** (`age1…`). Con ella se cifra, no se descifra |
+| Tu Mac `~/.config/nexo/backup-key.txt` | La **clave privada** (`AGE-SECRET-KEY-1…`). Nunca en el VPS ni en el repo |
+| Tu gestor de contraseñas | Una segunda copia de la clave privada: sin ella los respaldos no sirven |
+
+### 12.1 Crear la clave (una vez, en tu Mac)
 
 ```bash
+brew install age
+install -d -m 700 ~/.config/nexo
+age-keygen -o ~/.config/nexo/backup-key.txt      # imprime "Public key: age1…"
+chmod 600 ~/.config/nexo/backup-key.txt
+age-keygen -y ~/.config/nexo/backup-key.txt      # vuelve a mostrar la pública
+```
+
+Guarda el contenido de `backup-key.txt` en tu gestor de contraseñas.
+
+### 12.2 Instalar la clave pública y el cron (en el VPS)
+
+```bash
+sudo apt-get install -y age
+echo 'age1…tu-clave-pública…' > /opt/nexo/backup-recipients.txt   # está en .gitignore
 sudo install -d -o deploy -g deploy -m 700 /opt/nexo/backups
+cd /opt/nexo && BACKUP_DIR=/opt/nexo/backups make backup-prod      # primera prueba
 crontab -e      # como deploy
 # Añadir (03:00, antes del posible reinicio de las 04:30):
 0 3 * * * cd /opt/nexo && BACKUP_DIR=/opt/nexo/backups make backup-prod >> /opt/nexo/backups/backup.log 2>&1
@@ -323,36 +348,67 @@ crontab -e      # como deploy
 
 Comprueba al día siguiente: `tail /opt/nexo/backups/backup.log` y `ls -l /opt/nexo/backups`.
 
-**Copia fuera del VPS.** Un respaldo en el mismo disco no sobrevive a la pérdida del
-servidor. Cópialo cifrado a otro sitio, por ejemplo a un Hetzner Storage Box con `restic`
-o con `rsync` a una máquina tuya.
+### 12.3 Traerlos a tu Mac
+
+Un respaldo en el mismo disco no sobrevive a la pérdida del servidor. Como ya están
+cifrados, basta con copiarlos; se tiran desde la Mac (el VPS no necesita acceso a ella):
+
+```bash
+mkdir -p ~/nexo-backups
+rsync -av --chmod=F600 deploy@<IP-del-VPS>:/opt/nexo/backups/'*.age' ~/nexo-backups/
+```
+
+Para hacerlo a diario, una línea en `crontab -e` de la Mac (corre solo si la Mac está
+encendida; si no, la siguiente vez trae todo lo que falte):
+
+```bash
+30 9 * * * rsync -a --chmod=F600 deploy@<IP-del-VPS>:/opt/nexo/backups/'*.age' ~/nexo-backups/ >> ~/nexo-backups/rsync.log 2>&1
+```
+
+En la Mac no se borran solos: limpia de vez en cuando
+(`find ~/nexo-backups -name '*.age' -mtime +90 -delete`). Alternativa sin la Mac encendida:
+un Hetzner Storage Box con `rsync`/`restic` desde el VPS (los archivos ya van cifrados).
+
+### 12.4 Probar un respaldo (en tu Mac, base desechable)
+
+```bash
+cd ~/Desktop/Projects/nexo
+make restore-test FILE=~/nexo-backups/nexo_db_<fecha>.sql.gz.age
+# AGE_IDENTITY=… si la clave no está en ~/.config/nexo/backup-key.txt
+```
+
+Levanta un `pgvector/pgvector:pg17` temporal sin volumen, descifra y carga el volcado en un
+tubo, lista las tablas con sus filas y borra el contenedor. Workflows:
+`age -d -i ~/.config/nexo/backup-key.txt n8n_workflows_<fecha>.json.age | jq '.[].name'`.
+
+Probado el 2026-10-07 contra el stack de desarrollo: 8 tablas con el mismo número de filas
+que la base original, 3 workflows; con una clave equivocada falla y no deja contenedores.
+
+### 12.5 Restaurar de verdad
+
+La clave privada no sube al VPS: se descifra en la Mac y el SQL viaja por SSH.
+
+```bash
+# En el VPS: que nadie escriba mientras tanto
+cd /opt/nexo && docker compose -f docker-compose.yml -f docker-compose.prod.yml stop gateway agent n8n
+
+# En la Mac
+age -d -i ~/.config/nexo/backup-key.txt ~/nexo-backups/nexo_db_<fecha>.sql.gz.age | gunzip \
+  | ssh deploy@<IP-del-VPS> 'cd /opt/nexo && docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres psql -U nexo -d nexo -q -v ON_ERROR_STOP=1'
+
+# En el VPS
+docker compose -f docker-compose.yml -f docker-compose.prod.yml start agent gateway n8n
+```
+
+Workflows de n8n (solo si se perdió el volumen `n8n_data`; el entrypoint ya importa los de
+`orchestrator-n8n/workflows/` en cada arranque): descifra el JSON en la Mac, cópialo con `scp`
+y usa `n8n import:workflow --input=…` dentro del contenedor.
 
 **Privacidad.** Lo que un visitante borra (`DELETE /api/v1/session/data`, borrar la cuenta)
-o lo que caduca por retención sigue en los respaldos hasta 30 días. Si restauras uno, los
-datos borrados después de esa fecha vuelven: tras restaurar, el barrido de retención los
-vuelve a borrar si ya caducaron, pero un borrado explícito hay que repetirlo.
-
-### Probar un respaldo (en una base temporal, sin tocar la real)
-
-```bash
-DUMP=$(ls -t backups/nexo_db_*.sql.gz | head -1)
-C="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
-$C exec -T postgres psql -U nexo -d postgres -c "CREATE DATABASE nexo_restore_test"
-gunzip -c "$DUMP" | $C exec -T postgres psql -U nexo -d nexo_restore_test -q -v ON_ERROR_STOP=1
-$C exec -T postgres psql -U nexo -d nexo_restore_test -c "SELECT count(*) FROM accounts"
-$C exec -T postgres psql -U nexo -d postgres -c "DROP DATABASE nexo_restore_test"
-```
-
-Probado el 2026-10-05: tablas, filas, índices y búsqueda vectorial idénticos a la original.
-
-### Restaurar de verdad
-
-```bash
-C="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
-$C stop gateway agent n8n                 # nadie escribe mientras tanto
-gunzip -c backups/nexo_db_<fecha>.sql.gz | $C exec -T postgres psql -U nexo -d nexo -q -v ON_ERROR_STOP=1
-$C start agent gateway n8n
-```
+o lo que caduca por retención sigue en los respaldos hasta 30 días (y en la Mac hasta que los
+limpies). Si restauras uno, los datos borrados después de esa fecha vuelven: tras restaurar,
+el barrido de retención los vuelve a borrar si ya caducaron, pero un borrado explícito hay que
+repetirlo.
 
 ### Registros (logs) y direcciones IP
 

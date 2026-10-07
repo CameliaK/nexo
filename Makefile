@@ -1,7 +1,7 @@
 COMPOSE      = docker compose
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
 
-.PHONY: dev down gen-key prod-up prod-down prod-logs prod-config backup backup-prod
+.PHONY: dev down gen-key prod-up prod-down prod-logs prod-config backup backup-prod restore-test
 
 # ── Desarrollo ────────────────────────────────────────────────────────────────
 # docker-compose.override.yml se auto-carga: añade puertos 8888 (Traefik) y
@@ -42,10 +42,19 @@ prod-config:
 
 # ── Backups ───────────────────────────────────────────────────────────────────
 # pg_dump comprimido + export de workflows de n8n → ./backups/
-# backup usa el compose de desarrollo; en el VPS usa backup-prod (ver
-# docs/despliegue.md §12 para el cron).
+# backup usa el compose de desarrollo (cifra solo si pasas AGE_RECIPIENTS);
+# backup-prod exige el archivo de destinatarios de age (clave pública) y nunca
+# deja un respaldo en claro. Ver docs/despliegue.md §12.
+AGE_RECIPIENTS ?= ./backup-recipients.txt
+
 backup:
 	@bash scripts/backup.sh
 
 backup-prod:
-	@COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml" bash scripts/backup.sh
+	@COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml" \
+		AGE_RECIPIENTS="$(AGE_RECIPIENTS)" REQUIRE_AGE=1 bash scripts/backup.sh
+
+# Descifra un respaldo y lo carga en un Postgres desechable (en tu Mac, donde
+# está la clave privada). make restore-test FILE=backups/nexo_db_….sql.gz.age
+restore-test:
+	@bash scripts/restore-test.sh "$(FILE)"
