@@ -14,7 +14,8 @@
     "sync-content": "node ../scripts/content/sync-content.mjs",
     "validate-skills": "node ../scripts/content/validate-skills.mjs",
     "test:forming-browser": "node scripts/node-forming-browser.mjs",
-    "test:media-browser": "node scripts/media-browser.mjs"
+    "test:media-browser": "node scripts/media-browser.mjs",
+    "sync-privacy": "node scripts/sync-privacy.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

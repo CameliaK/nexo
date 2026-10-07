@@ -16,7 +16,7 @@ export const en = {
   "privacy.deleting": "Deleting data…",
   "privacy.error": "Your data could not be deleted. Please try again.",
   "privacy.wait": "Wait {seconds} s before trying again.",
-  "privacy.assistant": "Your questions are sent to an AI provider to answer you. Don’t type sensitive personal data.",
+  "privacy.assistant": "Your questions are sent to an AI provider to answer you. Don't type sensitive personal data.",
   "privacy.live": "Your message (and your name, if you enter one) reaches me through Telegram and is stored so I can reply.",
   "privacy.access": "We use your email only to sign you in, save your game and notify you of moves. You can delete your account at any time.",
 
