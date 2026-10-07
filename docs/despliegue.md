@@ -354,8 +354,6 @@ gunzip -c backups/nexo_db_<fecha>.sql.gz | $C exec -T postgres psql -U nexo -d n
 $C start agent gateway n8n
 ```
 
----
-
 ### Registros (logs) y direcciones IP
 
 Revisado el 2026-10-07. Rotación de Docker por tamaño (`x-logging` en `docker-compose.yml`):
