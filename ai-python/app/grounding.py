@@ -253,3 +253,20 @@ def verify_node(node: dict, ev: Evidence) -> tuple[dict | None, Report]:
         rep.dropped.append("no source supports the kept elements")
         return None, rep
     return {**node, "content": content, "children": children, "sources": sources}, rep
+
+
+# A request whose point is a claim the index never records — years of
+# experience, an expertise level — cannot be built as asked, whatever the
+# sources say: no node (and no LLM call). Narrower than _FORBIDDEN on
+# purpose: "nivel de inglés" (B2 is in the portfolio) or "dominio" (also
+# "domain") are not such a request.
+_UNVERIFIABLE_REQUEST = [
+    r"\b\d+\s*(anos|years?)\s+(de\s+experiencia|of\s+experience)\b", r"\banos de experiencia\b",
+    r"\byears? of experience\b", r"\bexpert[oa]?s?\b", r"\bexpertise\b", r"\bsenior\b",
+    r"\bproficien(t|cy)\b", r"\bmastery\b", r"\bavanzad[oa]s?\b", r"\badvanced\b",
+]
+
+
+def asks_unverifiable(text: str) -> bool:
+    norm = normalize(text)
+    return any(re.search(p, norm) for p in _UNVERIFIABLE_REQUEST)

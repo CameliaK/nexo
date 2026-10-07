@@ -15,11 +15,12 @@ from .agent.router import run as run_agent
 from .config import load
 from . import db as db_mod
 from . import rag as rag_mod
+from . import grounding
 from . import node_builder
 from . import chess_api
 from . import chess_game
 from . import retention
-from .skills import SkillsIndex, to_hits
+from .skills import SkillsIndex, mentioned_in, to_hits
 from .events import EventPublisher
 from .logsafe import install as install_log_filters, mask_id, redact
 from .llm.budget import BudgetedLLM, LLMBudgetExceeded
@@ -252,7 +253,8 @@ async def internal_rag_search(body: _RagSearchRequest):
     """Evidence for the deep route: first the skills index (facts, source
     "skills"), then the RAG. used=False when there is no evidence or the
     visitor is at the node cap (limit_reached). missing_terms: what the
-    visitor named that the index does not know."""
+    visitor named that neither the index nor the portfolio knows; sources:
+    the portfolio ids behind the hits."""
     if _db_pool is None or _rag_model is None or _skills is None:
         raise HTTPException(status_code=503, detail="service not ready")
 
@@ -266,9 +268,18 @@ async def internal_rag_search(body: _RagSearchRequest):
         {"node_id": h.node_id, "title": h.title, "score": round(h.score, 3), "source": h.source, "body": h.body}
         for h in rag_hits
     ]
+    # A named term the index does not know may still be in the portfolio (a
+    # company, a project: "Infosys", "HERMES"): that is not missing.
+    portfolio_texts = [f"{n.get('label', '')} {n.get('summary', '')} {' '.join(n.get('keywords') or [])}"
+                       for n in _portfolio.values()]
+    elsewhere = mentioned_in(lookup.unmatched_terms,
+                             portfolio_texts + [f"{h['title']} {h['body']}" for h in hits])
+    missing = [t for t in lookup.unmatched_terms if t not in elsewhere]
+    found = lookup.matched_terms + elsewhere
     used = len(hits) > 0
-    if body.terms and not lookup.matched_terms and not body.skills.techs:
-        # Every tech the visitor named is unknown: nothing supports the request,
+    unsupported = bool(body.terms) and not found and not body.skills.techs
+    if unsupported:
+        # Every term the visitor named is unknown: nothing supports the request,
         # whatever loosely related fragments the RAG found. No node design.
         used = False
     limit_reached = False
@@ -278,8 +289,13 @@ async def internal_rag_search(body: _RagSearchRequest):
             log.info("visitor %s at node limit (%d), used=False", mask_id(body.visitor_id), count)
             used, limit_reached = False, True
 
+    # The portfolio nodes behind the hits: when no node is built, the answer
+    # gets them, so it explains what was found instead of denying it.
+    # (Not when every named term is unknown: those hits are not about it.)
+    sources = [] if unsupported else list(
+        dict.fromkeys(h["node_id"] for h in hits if h["node_id"] in _portfolio))[:6]
     return {"hits": hits, "used": used, "limit_reached": limit_reached,
-            "missing_terms": lookup.unmatched_terms, "found_terms": lookup.matched_terms}
+            "missing_terms": missing, "found_terms": found, "sources": sources}
 
 
 class _DesignNodeRequest(BaseModel):
@@ -302,6 +318,11 @@ async def internal_design_node(body: _DesignNodeRequest):
         raise HTTPException(status_code=503, detail="service not ready")
 
     lang = body.lang if body.lang in ("es", "en") else "es"
+    if grounding.asks_unverifiable(body.question):
+        # Years of experience or an expertise level: never recorded, so the
+        # node cannot be built as asked (the answer explains what was found).
+        log.warning("design_node: request asks for years/levels, no node")
+        return {"node": None, "missing": body.missing_terms[:6], "forming": None}
     try:
         node = await node_builder.design_node(body.question, body.hits, _llm, lang=lang)
     except LLMBudgetExceeded:
