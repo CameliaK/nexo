@@ -101,7 +101,7 @@ func main() {
 	presenceStore := presence.New(rdb, ws.PresenceTTL)
 	wsTickets := ws.NewTickets(rdb, tokens)
 	mux.HandleFunc("POST /api/v1/ws-ticket", tokens.RequireAuth(wsTickets.Issue))
-	mux.HandleFunc("GET /ws", ws.NewHandler(tokens, wsTickets, rdb, presenceStore))
+	mux.HandleFunc("GET /ws", ws.NewHandler(wsTickets, rdb, presenceStore))
 	mux.HandleFunc("POST /api/v1/chat", chat.NewHandler(tokens, rdb, cfg.AgentURL, chat.Limits{
 		Limiter: limiter, IPs: ips,
 		PerHour: cfg.ChatRatePerHour, PerIPHour: cfg.ChatRatePerIPHour, ActiveTTL: cfg.ChatActiveTTL,

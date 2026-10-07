@@ -20,7 +20,7 @@ services:
   #   - HTTPS entrypoint + Let's Encrypt (HTTP-01) for ${DOMAIN} and www.${DOMAIN}.
   #   - Every HTTP request is redirected to HTTPS, permanently.
   #   - No access log (Traefik's default; never add --accesslog: RequestPath
-  #     keeps the query string, e.g. the deprecated /ws?token=).
+  #     keeps the query string, e.g. /ws?ticket=).
   #   - ACME storage in a named volume: a bind mount of a missing acme.json makes
   #     Docker create a directory there and ACME fails.
   traefik:

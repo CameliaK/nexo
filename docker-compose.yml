@@ -33,7 +33,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Las rutas del backend nunca caen en nginx, ni con el gateway caído o
-      # recreándose: /ws?token=… acabaría en su registro de acceso.
+      # recreándose: /ws?ticket=… acabaría en su registro de acceso.
       - "traefik.http.routers.web-nexo.rule=PathPrefix(`/`) && !PathPrefix(`/ws`) && !PathPrefix(`/api`) && !PathPrefix(`/auth`) && !PathPrefix(`/health`)"
       - "traefik.http.routers.web-nexo.entrypoints=web"
       - "traefik.http.services.web-nexo.loadbalancer.server.port=80"

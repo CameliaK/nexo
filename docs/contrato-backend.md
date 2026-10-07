@@ -220,7 +220,7 @@ Un nodo (`live_chat`, dentro de Contacto) abre un panel de chat. Lo que el visit
 | `GET /auth/guest` | Con `X-Visitor-Id`. Devuelve `{ "token": "v4.local...." }` (invitado, PASETO v4). El token expira |
 | `POST /api/v1/ws-ticket` | Bearer (invitado, usuario o dueño). Devuelve `200 { "ticket", "expires_in": 30 }` con `Cache-Control: no-store`: un código aleatorio de un solo uso, válido 30 s, ligado al visitante y al modo del token |
 | `GET /ws?ticket=…` | Abre el WebSocket con un ticket recién pedido. El servidor hace ping cada 30 s |
-| `GET /ws?token=…` | **Obsoleto, respaldo temporal.** Sigue funcionando, pero el gateway registra un aviso de deprecación (con el id enmascarado) y se quitará cuando el frontend use tickets |
+| `GET /ws?token=…` | **Retirado.** Responde `401` aunque el token sea válido: el token de sesión no viaja en la URL. Solo `?ticket=` |
 | `POST /api/v1/chat` | Body `{ "message", "lang"? }` (`lang`: `"es"` o `"en"`, preferencia de idioma; otro valor se ignora). Responde `202 { "run_id" }`; los eventos llegan por el WebSocket |
 | `GET /api/v1/session/nodes` | `{ "nodes": [GeneratedNode] }` del visitante |
 | `DELETE /api/v1/session/nodes/{id}` | Descarta un nodo generado (`204`) |
@@ -380,7 +380,7 @@ Reglas:
   pedir el ticket y canjearlo, el canje falla con `401`.
 - Si `POST /api/v1/ws-ticket` responde `401`, el token venció o fue revocado: pedir otro (invitado:
   `GET /auth/guest`) y repetir.
-- `?token=` sigue aceptándose temporalmente como respaldo, con aviso de deprecación en los logs.
+- `?token=` ya no se acepta: `GET /ws?token=…` da `401` aunque el token sea válido.
 - No se guarda información personal del visitante; solo un UUID aleatorio, y el nombre si él lo escribe.
 
 ---
