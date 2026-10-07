@@ -529,7 +529,50 @@ cada uno debe iluminar su recorrido)
 - [ ] `docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --since 30m | grep -iE "error|panic|traceback"`
   → nada inesperado; ningún log con IPs de visitantes, tokens o ids completos (§12, *Registros*).
 - [ ] `docker stats --no-stream` → cada contenedor por debajo de su límite (§1).
-- [ ] n8n por el túnel (§11): los 3 flujos activos.
+- [ ] n8n: los 3 flujos activos (§10.2, sin túnel).
+
+### 10.2 n8n: primer arranque
+
+Con el volumen `n8n_data` vacío, el entrypoint (`orchestrator-n8n/entrypoint.sh`) arranca n8n
+una vez solo para que cree su base, da de alta al dueño `owner@nexo.local` por su API
+(`POST /rest/owner/setup`), lo detiene y sigue con el arranque normal: importa los 3 flujos y los
+activa. Con un volumen ya inicializado ese paso se salta y no toca al dueño. En los registros:
+
+```bash
+docker logs nexo-n8n-1 2>&1 | grep -E "owner-state|owner-setup|entrypoint|Activated"
+# primer arranque:   owner-state: no database yet (fresh volume)
+#                    owner-setup: instance owner created (owner@nexo.local)
+#                    entrypoint: first boot setup done
+# siguientes:        owner-state: owner already set up
+# siempre:           Activated "Nexo Deep Route": OK   (y Live Outbound, Live Inbound)
+```
+
+**Comprobación** (lee la base; no necesita túnel ni contraseña):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec n8n \
+  n8n list:workflow --active=true 2>/dev/null | grep '|'
+# f1e2d3c4-…|Nexo Deep Route
+# a1b2c3d4-…|Nexo Live Outbound
+# b2c3d4e5-…|Nexo Live Inbound
+```
+
+Deben salir las tres líneas. Si falta alguna, revisa `docker logs nexo-n8n-1 --tail 80` y
+busca `Activated "…": FAILED` o `Patch "…" FAILED`.
+
+**Si el arranque falla** (el contenedor se reinicia en bucle; nunca se imprime la contraseña):
+
+| Mensaje | Causa y arreglo |
+|---|---|
+| `N8N_OWNER_PASSWORD is not set` | Falta en `.env`. Agrégala y `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d n8n` |
+| `n8n rejected the owner setup: Password must …` | n8n exige 8–64 caracteres, al menos un número y una mayúscula. Cambia `N8N_OWNER_PASSWORD` y vuelve a levantar n8n |
+| `n8n did not become ready within 180 s` | n8n no terminó sus migraciones: revisa memoria (`docker stats`) y el resto del log |
+| `could not create the owner after 5 attempts` | Error del servidor de n8n; el log anterior trae el código HTTP |
+| `Login failed (401)` en `activate-via-api` | El dueño ya existe con **otra** contraseña (volumen de un despliegue anterior): pon en `.env` la contraseña original |
+
+Tras corregir, basta volver a levantar n8n: el entrypoint retoma desde donde quedó (base creada
+sin dueño → crea el dueño; dueño ya creado → solo importa y activa). No hace falta borrar el
+volumen ni arrancar n8n a mano.
 
 ---
 
@@ -738,6 +781,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml down -v
 | Traefik no obtiene el cert | DNS no propagado; puerto 80 bloqueado por firewall del VPS |
 | Agente no arranca | `docker logs nexo-agent-1 --tail 50` — verificar `DEEPSEEK_API_KEY` y `POSTGRES_URL` |
 | n8n workflows no activos | `docker logs nexo-n8n-1 --tail 80` — revisar `N8N_ENCRYPTION_KEY` |
+| n8n se reinicia en bucle al primer arranque | §10.2 — `docker logs nexo-n8n-1 2>&1 \| grep -E "owner|entrypoint"` |
 | Traefik no obtiene el cert de `www` | Falta el registro DNS de `www.DOMAIN` |
 | `make prod-config` falla con "required variable … is missing" | Falta una variable obligatoria en `.env` — ver `.env.prod.example` |
 | `make prod-check` marca algo | Lee el nombre que indica; nunca imprime el valor. Compara con `.env.prod.example` |
