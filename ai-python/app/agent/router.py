@@ -11,6 +11,7 @@ import redis.asyncio as aioredis
 from ..logsafe import mask_id
 from .. import grounding
 from .. import node_builder
+from .. import route_check
 from .. import voice
 from .. import rag as rag_mod
 from ..events import EventPublisher
@@ -176,11 +177,16 @@ async def run(
                 await pub.publish("route.step", {"node_id": node_id, "index": i})
             final_outcome = "route"
             answer_hop_id = "h4"
+            # Everything the answer may say, and what it is verified against.
+            route_ctx = route_check.build(path, portfolio, skills,
+                                          result["skills"]["techs"] + result["terms"])
             if existing:
                 answer_system = _existing_answer_system(input_text, existing, portfolio, answer_lang, first_person,
-                                                        _unknown_terms(result["terms"], skills, portfolio))
+                                                        _unknown_terms(result["terms"], skills, portfolio),
+                                                        ctx=route_ctx)
             else:
-                answer_system = _route_answer_system(input_text, path, portfolio, answer_lang, first_person)
+                answer_system = _route_answer_system(input_text, path, portfolio, answer_lang, first_person,
+                                                     ctx=route_ctx)
         else:
             await pub.publish("process.step", {"step": "search_nodes", "status": "done"})
             final_outcome, answer_hop_id, answer_system = await _n8n_deep_route(
@@ -207,7 +213,11 @@ async def run(
         })
 
         try:
-            answer = await _voiced_answer(llm, answer_system, input_text, answer_lang, run_id)
+            if final_outcome == "route":
+                answer = await _grounded_route_answer(llm, answer_system, input_text, answer_lang, run_id,
+                                                      route_ctx, portfolio, skills)
+            else:
+                answer = await _voiced_answer(llm, answer_system, input_text, answer_lang, run_id)
         except LLMBudgetExceeded as exc:
             h_ans_ms = int((time.monotonic() - h_ans_start) * 1000)
             await pub.publish("trace.hop", {
@@ -327,6 +337,35 @@ async def _voiced_answer(llm: LLMProvider, system: str, user: str, lang: str, ru
     log.warning("voice: run=%s regenerated (%s) -> %s", run_id, voice.describe(left),
                 "ok" if not still else "unresolved: " + voice.describe(still))
     return retry if len(still) <= len(left) else fixed
+
+
+async def _grounded_route_answer(llm: LLMProvider, system: str, user: str, lang: str, run_id: str,
+                                 ctx: "route_check.Context", portfolio: dict, skills: SkillsIndex) -> str:
+    """A route answer whose risky claims are all in its sources
+    (app/route_check.py). Unsupported → one regeneration with what was
+    wrong; still unsupported → those sentences are removed and the answer
+    says it has no more verified detail; nothing left → only the sources'
+    summary and the node."""
+    text = await _voiced_answer(llm, system, user, lang, run_id)
+    found = route_check.verify(text, ctx, portfolio, skills)
+    if not found:
+        return text
+    log.warning("route grounding: run=%s %d unsupported: %s | in: %s", run_id, len(found),
+                "; ".join(f"{f.claim} ({f.why})" for f in found)[:300], found[0].sentence[:160])
+    try:
+        text = await _voiced_answer(llm, route_check.feedback(found) + system, user, lang, run_id)
+    except LLMBudgetExceeded:
+        log.warning("route grounding: run=%s no budget to regenerate", run_id)
+    found = route_check.verify(text, ctx, portfolio, skills)
+    if not found:
+        log.warning("route grounding: run=%s regenerated ok", run_id)
+        return text
+    kept = route_check.strip(text, found)
+    log.warning("route grounding: run=%s still %d unsupported after regenerating -> %s | in: %s", run_id,
+                len(found), "sentences removed" if kept else "fallback", found[0].sentence[:160])
+    if kept:
+        return f"{kept} {route_check.no_detail(ctx, lang)}"
+    return route_check.fallback(ctx, lang)
 
 
 def _chunks(text: str, words: int = 6) -> list[str]:
@@ -575,26 +614,43 @@ def _path_to(node_id: str, portfolio: dict) -> list[str]:
     return chain[-3:]
 
 
+_GROUNDING_RULES = """- Usa SOLO la información de las FUENTES de arriba: es todo lo que sabes de Kirbith para esta
+  respuesta. Si la pregunta pide un detalle que no está, di que no tienes ese detalle y que lo
+  llevaste al nodo; nunca rellenes ni supongas. Los nodos relacionados (subnodos) también son
+  fuentes: úsalos para responder antes de decir que no tienes un detalle.
+- Una tecnología solo se atribuye al trabajo o proyecto donde las fuentes dicen que se usó.
+- No afirmes estado actual ("sigue", "actualmente", "still", "currently") salvo que una fuente
+  diga "Estado: actual" o "en construcción". Usa el hecho general sobre sus estudios tal cual.
+- No calcules ni afirmes duraciones, años ni fechas que no estén escritos en las fuentes."""
+
+
+def _sources_block(path: list, portfolio: dict, ctx: "route_check.Context | None") -> str:
+    if ctx is not None:
+        return ctx.prompt
+    return "\n".join(f"- {portfolio[nid]['label']}: {portfolio[nid].get('summary', '')}"
+                     for nid in path if nid in portfolio)
+
+
 def _route_answer_system(question: str, path: list, portfolio: dict, lang: str = "es",
-                         first_person: bool = False) -> str:
-    path_labels = "\n".join(
-        f"- {portfolio[nid]['label']}: {portfolio[nid].get('summary', '')}"
-        for nid in path if nid in portfolio
-    )
+                         first_person: bool = False, ctx: "route_check.Context | None" = None) -> str:
     return f"""Eres el agente del portafolio de Kirbith Cubillas.
 La pregunta fue: "{question}"
-Llevaste al visitante a estos nodos:
-{path_labels}
+Llevaste al visitante a: {", ".join(portfolio[n]["label"] for n in path if n in portfolio)}.
+
+FUENTES:
+{_sources_block(path, portfolio, ctx)}
 
 Escribe una respuesta BREVE (2-3 oraciones) {_in_lang(lang)}:
-- Responde directamente a la pregunta basándote solo en la información de los nodos
+- Responde directamente a la pregunta
+{_GROUNDING_RULES}
 - Menciona que llevaste al visitante a ese nodo{_first_person_rule(first_person, lang)}
 {voice.prompt_rule(lang)}
 - Solo texto plano, sin markdown ni listas"""
 
 
 def _existing_answer_system(question: str, node_id: str, portfolio: dict, lang: str = "es",
-                            first_person: bool = False, missing: list[str] | None = None) -> str:
+                            first_person: bool = False, missing: list[str] | None = None,
+                            ctx: "route_check.Context | None" = None) -> str:
     """A node was requested whose topic one portfolio node already covers:
     no duplicate; the visitor is taken there."""
     node = portfolio[node_id]
@@ -609,10 +665,11 @@ no creaste un duplicado: lo llevaste a ese nodo.
 Nodo existente: "{node['label']}" — {node.get('summary', '')}
 Dentro de él:
 {inside}
-
+{"" if ctx is None else "FUENTES:" + chr(10) + ctx.prompt + chr(10)}
 Escribe una respuesta BREVE (2-4 oraciones) {_in_lang(lang)}:
 - Di que ya existe un nodo sobre eso y que lo llevaste ahí
 - Resume en una oración lo que contiene, solo con la información de arriba{not_found}
+{_GROUNDING_RULES}
 - Ofrece crear un nodo nuevo si quiere un cruce que no existe, p. ej. las tecnologías que usó en
   {node['label']}{_first_person_rule(first_person, lang)}
 {voice.prompt_rule(lang)}
