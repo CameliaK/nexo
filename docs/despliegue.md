@@ -288,6 +288,52 @@ make prod-config
 
 ---
 
+## 8.1 Dónde se construyen las imágenes
+
+**Decisión: se construyen en el VPS** (`make prod-up` = `up -d --build`). Es lo más simple:
+
+| | Construir en el VPS | Registro privado desde la Mac |
+|---|---|---|
+| Arquitectura | amd64 nativo | La Mac es arm64: `buildx --platform linux/amd64` con emulación QEMU (pip y torch emulados, lento) |
+| Subida | Nada: el VPS descarga de PyPI/PyTorch/Hugging Face desde el centro de datos | ~2,9 GB del agente desde tu conexión de casa en cada cambio de dependencias |
+| Piezas nuevas | Ninguna | Cuenta y token del registro en el VPS (`docker login`), etiquetas por versión, y un `image:` por servicio en el compose de producción |
+| Costo | 0 | Los planes gratuitos limitan el almacenamiento privado; una imagen de 2,9 GB puede no caber |
+| Riesgo | Un build usa CPU/RAM del servidor unos minutos (el swap de §2.5 lo amortigua) | Si el registro no responde, no hay despliegue |
+
+Reproducibilidad: `requirements.txt`, `go.mod`, n8n y el modelo de embeddings ya estaban
+fijados; `torch` se fijó a `2.14.1` (CPU) en `ai-python/Dockerfile`, la versión probada, para
+que el VPS no construya con otra.
+
+Tiempos de referencia (Mac, red de casa, 2026-10-07): la capa de torch tardó ~1 min, las
+dependencias ~7 min, el modelo ~1,5 min. Un cambio solo de código (`app/`) reutiliza todas las
+capas y tarda segundos; solo un cambio del Dockerfile o de `requirements.txt` vuelve a
+descargar todo.
+
+**Disco en el VPS (~160 GB):**
+
+| Qué | Tamaño aproximado |
+|---|---|
+| Imágenes: agent 2,9 GB, n8n 1,8, pgvector 0,65, traefik 0,23, gateway/web/redis 0,2 | ~5,8 GB |
+| Imágenes base de los builds (python slim, golang alpine, node alpine) | ~0,8 GB |
+| Caché de BuildKit | ~4–5 GB (medido 4,7 GB en la Mac) |
+| Volúmenes (Postgres, n8n, Redis, certificados) | < 1 GB hoy |
+| Logs (3 × 10 MB × 8 contenedores) | ≤ 0,25 GB |
+| Respaldos cifrados (30 días) | < 10 MB hoy |
+| **Total** | **~12–13 GB**, < 10 % del disco |
+
+Cada reconstrucción que cambia dependencias deja la imagen anterior del agente "colgando"
+(~2,9 GB, `<none>` en `docker images`). Con 160 GB caben muchas, pero tras confirmar que el
+despliegue nuevo funciona puedes liberarlas con `docker image prune -f`: borra **solo** imágenes
+sin etiqueta y sin contenedor; no toca volúmenes ni la caché. Nunca uses
+`docker system prune --volumes` ni `down -v` en el servidor.
+
+Cuándo pasar a un registro: si el VPS se queda corto de CPU/RAM para construir, o si algún día
+hay más de un servidor. Entonces: `docker buildx build --platform linux/amd64 -t
+<registro>/nexo-agent:<commit> --push ai-python` desde la Mac y un `image:` en
+`docker-compose.prod.yml`.
+
+---
+
 ## 9. Levantar el stack
 
 ```bash

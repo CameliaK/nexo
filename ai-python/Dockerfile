@@ -2,8 +2,10 @@ FROM python:3.13-slim
 WORKDIR /app
 
 # Install CPU-only torch first so pip doesn't pull the 2 GB CUDA wheel
-# when it later resolves sentence-transformers' torch dependency
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+# when it later resolves sentence-transformers' torch dependency. Pinned to the
+# version the dev image was tested with (2026-10-07), so a build on the server
+# gets the same one; the CPU index has amd64 and arm64 wheels for it.
+RUN pip install --no-cache-dir torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
