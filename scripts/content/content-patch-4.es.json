@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "language": "es",
+    "note": "Parche 4: Este portafolio conserva su nodo; descripción en vez de aportación."
+  },
+  "updates": [
+    {
+      "id": "proyectos-personales.este-portafolio",
+      "set": {
+        "summary": "La arquitectura real de este sitio, en vivo. Cada vez que escribes en el chat, tu petición viaja por los servicios del sistema (proxy, gateway, agente, modelo de lenguaje, base de datos y automatización) y los ves iluminarse aquí, en tiempo real. No es una simulación: es el recorrido verdadero de tu pregunta.",
+        "keywords": [
+          "este portafolio",
+          "arquitectura",
+          "sistema",
+          "tiempo real",
+          "traefik",
+          "gateway",
+          "agente",
+          "pgvector",
+          "redis",
+          "n8n",
+          "cómo funciona"
+        ]
+      },
+      "delete": [
+        "needs_review",
+        "review_note"
+      ]
+    }
+  ]
+}

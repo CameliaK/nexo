@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "language": "en",
+    "note": "Patch 4: This portfolio keeps its node; a description instead of a contribution."
+  },
+  "updates": [
+    {
+      "id": "proyectos-personales.este-portafolio",
+      "set": {
+        "summary": "The real architecture of this site, live. Every time you type in the chat, your request travels through the system's services (proxy, gateway, agent, language model, database and automation) and you see them light up here, in real time. It is not a simulation: it is the actual path of your question.",
+        "keywords": [
+          "this portfolio",
+          "architecture",
+          "system",
+          "real time",
+          "traefik",
+          "gateway",
+          "agent",
+          "pgvector",
+          "redis",
+          "n8n",
+          "how it works"
+        ]
+      },
+      "delete": [
+        "needs_review",
+        "review_note"
+      ]
+    }
+  ]
+}

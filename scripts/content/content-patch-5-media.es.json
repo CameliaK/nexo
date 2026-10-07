@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "language": "es",
+    "note": "Parche 5: imágenes para Fitness App, Financial Management System y Digital Twin."
+  },
+  "updates": [
+    {
+      "id": "aprendizaje.proyectos-academicos.fitness-app",
+      "set": {
+        "media": [
+          {
+            "id": "resumen",
+            "src": "/media/aprendizaje.proyectos-academicos.fitness-app/01-resumen.webp",
+            "alt": "Tres pantallas de Pulse: selección de grupos musculares, actividad y rachas, y constructor de rutinas.",
+            "caption": "Las tres pantallas principales",
+            "width": 1062,
+            "height": 1358
+          },
+          {
+            "id": "entrenar",
+            "src": "/media/aprendizaje.proyectos-academicos.fitness-app/02-entrenar.webp",
+            "alt": "Pantalla de entrenamiento con un modelo corporal interactivo para elegir grupos musculares, con el número de ejercicios de cada región.",
+            "caption": "Selección de músculos objetivo",
+            "width": 395,
+            "height": 1600
+          },
+          {
+            "id": "actividad",
+            "src": "/media/aprendizaje.proyectos-academicos.fitness-app/03-actividad.webp",
+            "alt": "Pantalla de actividad con la racha de días, la meta semanal, un mapa de calor del volumen de entrenamiento y el registro de sesiones recientes.",
+            "caption": "Actividad y rachas",
+            "width": 329,
+            "height": 1600
+          },
+          {
+            "id": "rutina",
+            "src": "/media/aprendizaje.proyectos-academicos.fitness-app/04-rutina.webp",
+            "alt": "Constructor de rutinas con la lista de ejercicios, sus series, repeticiones y descansos, y una estimación de la duración.",
+            "caption": "Constructor de rutinas",
+            "width": 459,
+            "height": 1600
+          }
+        ]
+      }
+    },
+    {
+      "id": "aprendizaje.proyectos-academicos.sistema-financiero",
+      "set": {
+        "media": [
+          {
+            "id": "panel",
+            "src": "/media/aprendizaje.proyectos-academicos.sistema-financiero/01-panel.webp",
+            "alt": "Panel financiero con el saldo total, los ingresos, gastos y ahorros del mes, una gráfica comparativa por mes, el gasto por categoría y las transacciones recientes.",
+            "caption": "Panel financiero",
+            "width": 1600,
+            "height": 1415
+          },
+          {
+            "id": "cuentas",
+            "src": "/media/aprendizaje.proyectos-academicos.sistema-financiero/02-cuentas.webp",
+            "alt": "Gestión de cuentas con el patrimonio neto, las cuentas de depósito, inversión y efectivo, una tarjeta de crédito, la actividad reciente y una transferencia rápida.",
+            "caption": "Gestión de cuentas",
+            "width": 1520,
+            "height": 1600
+          },
+          {
+            "id": "transaccion",
+            "src": "/media/aprendizaje.proyectos-academicos.sistema-financiero/03-transaccion.webp",
+            "alt": "Formulario para agregar una transacción con tipo, monto, descripción, categoría, cuenta, fecha y notas.",
+            "caption": "Registro de transacciones",
+            "width": 1600,
+            "height": 1078
+          }
+        ]
+      }
+    },
+    {
+      "id": "experiencia.infosys.digital-twin",
+      "set": {
+        "media": [
+          {
+            "id": "flota",
+            "src": "/media/experiencia.infosys.digital-twin/01-flota.webp",
+            "alt": "Vista general de la flota de elevadores con su estado de salud, la matriz de unidades, la detección de anomalías con aprendizaje automático y el flujo de mensajes MQTT en vivo.",
+            "caption": "Vista general de la flota (datos simulados)",
+            "width": 1321,
+            "height": 1600
+          },
+          {
+            "id": "gemelo-digital",
+            "src": "/media/experiencia.infosys.digital-twin/02-gemelo-digital.webp",
+            "alt": "Gemelo digital de un elevador con la estructura del hueco, las lecturas de vibración, temperatura, carga, posición y puerta, y el flujo de paquetes de sensores.",
+            "caption": "Gemelo digital de una unidad (datos simulados)",
+            "width": 1600,
+            "height": 1280
+          }
+        ]
+      }
+    }
+  ]
+}
