@@ -220,7 +220,7 @@ Un nodo (`live_chat`, dentro de Contacto) abre un panel de chat. Lo que el visit
 | `GET /auth/guest` | Con `X-Visitor-Id`. Devuelve `{ "token": "v4.local...." }` (invitado, PASETO v4). El token expira |
 | `POST /api/v1/ws-ticket` | Bearer (invitado, usuario o dueño). Devuelve `200 { "ticket", "expires_in": 30 }` con `Cache-Control: no-store`: un código aleatorio de un solo uso, válido 30 s, ligado al visitante y al modo del token |
 | `GET /ws?ticket=…` | Abre el WebSocket con un ticket recién pedido. El servidor hace ping cada 30 s |
-| `GET /ws?token=…` | **Obsoleto, respaldo temporal.** Sigue funcionando, pero el gateway registra un aviso de deprecación (con el id enmascarado) y se quitará cuando el frontend use tickets |
+| `GET /ws?token=…` | **Retirado.** Responde `401` aunque el token sea válido: el token de sesión no viaja en la URL. Solo `?ticket=` |
 | `POST /api/v1/chat` | Body `{ "message", "lang"? }` (`lang`: `"es"` o `"en"`, preferencia de idioma; otro valor se ignora). Responde `202 { "run_id" }`; los eventos llegan por el WebSocket |
 | `GET /api/v1/session/nodes` | `{ "nodes": [GeneratedNode] }` del visitante |
 | `DELETE /api/v1/session/nodes/{id}` | Descarta un nodo generado (`204`) |
@@ -260,7 +260,7 @@ Todos los mensajes tienen el mismo sobre:
 | `route.step` | `node_id`, `index` | La cámara viaja a ese nodo y lo ilumina |
 | `rag.search` | `query` | Muestra "buscando en la base" |
 | `rag.result` | `hits[]`, `used` | Muestra las fuentes encontradas (o que no hubo) |
-| `node.forming` | `sources` (ids de nodos del portafolio) | **Opcional, detrás de `NODE_FORMING_EVENT`** (ver abajo). Llega justo antes de `node.spawn`: anima la formación del nodo a partir de esos nodos |
+| `node.forming` | `sources` (ids de nodos del portafolio) | **Opcional, detrás de `NODE_FORMING_EVENT`** (encendido por defecto, ver abajo). Llega justo antes de `node.spawn`: anima la formación del nodo a partir de esos nodos |
 | `node.spawn` | `anchor`, `node` | Nace un nodo generado |
 | `answer.chunk` | `text` | Añade texto al chat del agente (streaming) |
 | `live.message` | `conversation_id`, `message` | Añade una burbuja al chat en vivo |
@@ -273,9 +273,10 @@ Todos los mensajes tienen el mismo sobre:
 **`node.forming`** va dentro de la ejecución, con su `seq`, entre `design_node` y `node.spawn`.
 `sources` son los ids del portafolio de los que sale el nodo: los mismos que sus `sources[].ref`.
 
-El backend solo lo publica con `NODE_FORMING_EVENT=true` (por defecto `false`). Un frontend
-que no conoce el tipo lo descarta y deja un hueco de `seq`, y como reproduce en orden, la
-ejecución se congela. Por eso se activa solo cuando el frontend desplegado lo soporte:
+El backend lo publica con `NODE_FORMING_EVENT=true`, el valor por defecto desde que el
+frontend lo soporta (f982fcd). Un frontend que no conoce el tipo lo descarta y deja un hueco
+de `seq`, y como reproduce en orden, la ejecución se congela: frente a un frontend anterior,
+`NODE_FORMING_EVENT=false`. Lo que el frontend necesita (ya hecho):
 1. agregarlo a `EVENT_TYPES`;
 2. animar la formación;
 3. tolerar que no llegue, porque es opcional.
@@ -380,7 +381,7 @@ Reglas:
   pedir el ticket y canjearlo, el canje falla con `401`.
 - Si `POST /api/v1/ws-ticket` responde `401`, el token venció o fue revocado: pedir otro (invitado:
   `GET /auth/guest`) y repetir.
-- `?token=` sigue aceptándose temporalmente como respaldo, con aviso de deprecación en los logs.
+- `?token=` ya no se acepta: `GET /ws?token=…` da `401` aunque el token sea válido.
 - No se guarda información personal del visitante; solo un UUID aleatorio, y el nombre si él lo escribe.
 
 ---

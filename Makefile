@@ -1,7 +1,7 @@
 COMPOSE      = docker compose
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
 
-.PHONY: dev down gen-key prod-up prod-down prod-logs prod-config backup backup-prod
+.PHONY: dev down gen-key prod-up prod-down prod-logs prod-config backup backup-prod restore-test mail-test prod-check
 
 # ── Desarrollo ────────────────────────────────────────────────────────────────
 # docker-compose.override.yml se auto-carga: añade puertos 8888 (Traefik) y
@@ -40,12 +40,33 @@ prod-logs:
 prod-config:
 	@$(COMPOSE_PROD) config --quiet && echo "prod-config: OK"
 
+# Envía un correo de prueba con el SMTP del gateway de producción (el .env del
+# servidor, tal como lo cargó el contenedor en marcha: tras editar .env, make
+# prod-up). Destinatario: TO=…, si no MAIL_TEST_TO u OWNER_EMAIL. No imprime
+# la contraseña. Resend: smtp.resend.com:587 + STARTTLS (Hetzner bloquea 25 y 465).
+mail-test:
+	@$(COMPOSE_PROD) exec -T gateway /gateway mail-test "$(TO)"
+
+# Valida el .env de producción (obligatorias, formatos, valores de dev,
+# permisos, clave de respaldos) sin imprimir ningún valor.
+prod-check:
+	@bash scripts/prod-check.sh
+
 # ── Backups ───────────────────────────────────────────────────────────────────
 # pg_dump comprimido + export de workflows de n8n → ./backups/
-# backup usa el compose de desarrollo; en el VPS usa backup-prod (ver
-# docs/despliegue.md §12 para el cron).
+# backup usa el compose de desarrollo (cifra solo si pasas AGE_RECIPIENTS);
+# backup-prod exige el archivo de destinatarios de age (clave pública) y nunca
+# deja un respaldo en claro. Ver docs/despliegue.md §12.
+AGE_RECIPIENTS ?= ./backup-recipients.txt
+
 backup:
 	@bash scripts/backup.sh
 
 backup-prod:
-	@COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml" bash scripts/backup.sh
+	@COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml" \
+		AGE_RECIPIENTS="$(AGE_RECIPIENTS)" REQUIRE_AGE=1 bash scripts/backup.sh
+
+# Descifra un respaldo y lo carga en un Postgres desechable (en tu Mac, donde
+# está la clave privada). make restore-test FILE=backups/nexo_db_….sql.gz.age
+restore-test:
+	@bash scripts/restore-test.sh "$(FILE)"

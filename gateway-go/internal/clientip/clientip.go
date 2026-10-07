@@ -12,6 +12,10 @@ package clientip
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -31,6 +35,10 @@ type Resolver struct {
 	hostIPs   []net.IP
 	refreshed time.Time
 	lookup    func(ctx context.Context, host string) ([]net.IP, error)
+
+	// pepper keys the HMAC in Key. Random per process: the IP never reaches
+	// Redis (nor its snapshots on disk); a restart only resets the windows.
+	pepper []byte
 }
 
 // New parses a comma-separated list of hostnames (resolved through Docker's
@@ -39,7 +47,10 @@ type Resolver struct {
 func New(spec string) (*Resolver, error) {
 	r := &Resolver{lookup: func(ctx context.Context, host string) ([]net.IP, error) {
 		return net.DefaultResolver.LookupIP(ctx, "ip", host)
-	}}
+	}, pepper: make([]byte, 32)}
+	if _, err := rand.Read(r.pepper); err != nil {
+		return nil, err
+	}
 	for _, item := range strings.Split(spec, ",") {
 		item = strings.TrimSpace(item)
 		switch {
@@ -84,10 +95,13 @@ func (r *Resolver) IP(req *http.Request) net.IP {
 	return peer
 }
 
-// Key is the IP used in rate-limit keys. IPv6 is cut to its /64 prefix: one
-// subscriber usually owns a whole /64 and could rotate addresses inside it.
+// Key identifies the client in rate-limit keys: an HMAC of the normalized IP
+// (IPv6 cut to its /64 prefix: one subscriber usually owns a whole /64 and
+// could rotate addresses inside it), so Redis never stores the address.
 func (r *Resolver) Key(req *http.Request) string {
-	return Normalize(r.IP(req))
+	m := hmac.New(sha256.New, r.pepper)
+	m.Write([]byte(Normalize(r.IP(req))))
+	return hex.EncodeToString(m.Sum(nil)[:16])
 }
 
 func Normalize(ip net.IP) string {

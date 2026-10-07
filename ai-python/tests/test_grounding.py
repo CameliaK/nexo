@@ -27,9 +27,26 @@ def node(layout, content, label="Lenguajes de frontend", summary="Lenguajes de f
             "content": content, "children": [], "sources": []}
 
 
-def test_needs_review_is_never_asserted():
-    lk, _ = evidence(techs=["java"])
-    assert lk.facts and all(f.node != "aprendizaje.proyectos-academicos.fitness-app" for f in lk.facts)
+def test_needs_review_is_never_asserted(tmp_path):
+    # Synthetic index: the rule must not depend on which real evidence is
+    # still pending review in knowledge/skills.json.
+    path = tmp_path / "skills.json"
+    path.write_text(json.dumps({
+        "meta": {"domains": ["backend"]},
+        "skills": [{
+            "id": "fakelang", "name": "FakeLang", "aliases": [], "kind": "language",
+            "domains": ["backend"],
+            "evidence": [
+                {"level": "proyecto", "node": "test.confirmado", "note": "Confirmada."},
+                {"level": "experiencia", "node": "test.pendiente", "note": "Sin confirmar.",
+                 "needs_review": True},
+            ],
+        }],
+    }), encoding="utf-8")
+    index = SkillsIndex(str(path))
+    for query in ({"techs": ["fakelang"]}, {"terms": ["FakeLang"]}, {"domains": ["backend"]}):
+        lk = index.lookup(**{"techs": [], "domains": [], "kinds": [], "terms": [], **query})
+        assert [(f.node, f.level) for f in lk.facts] == [("test.confirmado", "proyecto")], query
 
 
 def test_mencion_is_worded_as_cv_listing():

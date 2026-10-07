@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -52,5 +53,34 @@ func TestNormalize(t *testing.T) {
 		if got := Normalize(net.ParseIP(in)); got != want {
 			t.Errorf("Normalize(%s) = %s, want %s", in, got, want)
 		}
+	}
+}
+
+func TestKeyHidesIP(t *testing.T) {
+	r := resolver(t, "")
+	key := func(remote string) string {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.RemoteAddr = remote
+		return r.Key(req)
+	}
+	a := key("203.0.113.7:1000")
+	if strings.Contains(a, "203.0.113") || len(a) != 32 {
+		t.Fatalf("key %q leaks the IP or has the wrong length", a)
+	}
+	if a != key("203.0.113.7:2000") {
+		t.Error("same IP, different port: keys differ")
+	}
+	if a == key("203.0.113.8:1000") {
+		t.Error("different IPs share a key")
+	}
+	if key("[2001:db8:aa:bb::1]:1") != key("[2001:db8:aa:bb::2]:1") {
+		t.Error("same IPv6 /64: keys differ")
+	}
+	if other := resolver(t, ""); func() string {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.RemoteAddr = "203.0.113.7:1000"
+		return other.Key(req)
+	}() == a {
+		t.Error("two processes share the pepper")
 	}
 }

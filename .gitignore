@@ -5,3 +5,9 @@ __pycache__/
 
 # Respaldos: contienen datos personales (correos, mensajes). Nunca al repo.
 backups/
+# Clave age de los respaldos: la pública vive solo en el servidor; la privada,
+# nunca en el VPS ni en el repo.
+backup-recipients.txt
+*.age
+AGE-SECRET-KEY*
+backup-key*.txt

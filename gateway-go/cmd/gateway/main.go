@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/redis/go-redis/v9"
 
@@ -28,6 +29,9 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "mail-test" {
+		os.Exit(mailTest(os.Args[2:]))
+	}
 	cfg := config.Load()
 	ctx := context.Background()
 
@@ -101,7 +105,7 @@ func main() {
 	presenceStore := presence.New(rdb, ws.PresenceTTL)
 	wsTickets := ws.NewTickets(rdb, tokens)
 	mux.HandleFunc("POST /api/v1/ws-ticket", tokens.RequireAuth(wsTickets.Issue))
-	mux.HandleFunc("GET /ws", ws.NewHandler(tokens, wsTickets, rdb, presenceStore))
+	mux.HandleFunc("GET /ws", ws.NewHandler(wsTickets, rdb, presenceStore))
 	mux.HandleFunc("POST /api/v1/chat", chat.NewHandler(tokens, rdb, cfg.AgentURL, chat.Limits{
 		Limiter: limiter, IPs: ips,
 		PerHour: cfg.ChatRatePerHour, PerIPHour: cfg.ChatRatePerIPHour, ActiveTTL: cfg.ChatActiveTTL,

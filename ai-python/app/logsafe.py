@@ -15,12 +15,15 @@ def mask_id(value: str | None) -> str:
 
 class _AccessQueryFilter(logging.Filter):
     """uvicorn's access log prints the full path; internal routes carry
-    ?visitor_id=… there. Keep the path, drop the query string."""
+    ?visitor_id=… there. Keep the path, drop the query string. The client
+    address goes too: today it is only the gateway's or n8n's container (the
+    agent is not published), but with proxy headers it would be the
+    visitor's IP, and nothing here needs it."""
 
     def filter(self, record: logging.LogRecord) -> bool:
         if isinstance(record.args, tuple) and len(record.args) == 5:
-            client, method, path, version, status = record.args
-            record.args = (client, method, _QUERY.sub("", str(path)), version, status)
+            _client, method, path, version, status = record.args
+            record.args = ("-", method, _QUERY.sub("", str(path)), version, status)
         return True
 
 

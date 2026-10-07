@@ -6,11 +6,17 @@
 # silently falling back to the dev defaults of docker-compose.yml (a known
 # n8n password, the "nexo" Postgres password, an ephemeral PASETO key).
 #
-# Memory limits are calculated for an 8 GB VPS (Hetzner CX32):
-#   OS + Docker overhead ≈ 1.5 GB; total limits ≈ 3.6 GB → ~2.9 GB headroom.
-#   Measurements from docker stats on the dev stack: traefik 44 MiB, web-nexo 8,
-#   gateway 10, agent 1060 idle / 1250 peak (2026-10-06), redis 18,
-#   postgres 35, n8n 257.
+# Memory limits for an 8 GB / 4 vCPU VPS (recalculated 2026-10-07):
+#   traefik 256 + web-nexo 64 + gateway 64 + agent 2048 + redis 128
+#   + postgres 512 + n8n 512 = 3584 MiB (3.5 GiB) if every container hit its
+#   limit at once. An "8 GB" server shows ~7.6 GiB to Linux; Ubuntu + Docker
+#   (systemd, sshd, dockerd, containerd, shims) ≈ 1 GiB with margin
+#   → ~3.1 GiB free in the worst case. Limits are caps, not reservations.
+#   docker stats on the dev stack (2026-10-07): agent 1.37 GiB after
+#   startup + one generated node (peak seen 1.22 GiB on 2026-10-06 → limit
+#   still ≥ 1.5×), traefik 158 MiB (dev, dashboard on, 25 h up), n8n 228,
+#   postgres 21, redis 15, gateway 13, web-nexo 9. Typical total ≈ 1.9 GiB.
+#   Optional 2 GiB swapfile (docs/despliegue.md §2.5) for builds on the server.
 
 services:
 
@@ -20,7 +26,7 @@ services:
   #   - HTTPS entrypoint + Let's Encrypt (HTTP-01) for ${DOMAIN} and www.${DOMAIN}.
   #   - Every HTTP request is redirected to HTTPS, permanently.
   #   - No access log (Traefik's default; never add --accesslog: RequestPath
-  #     keeps the query string, e.g. the deprecated /ws?token=).
+  #     keeps the query string, e.g. /ws?ticket=).
   #   - ACME storage in a named volume: a bind mount of a missing acme.json makes
   #     Docker create a directory there and ACME fails.
   traefik:
@@ -53,8 +59,12 @@ services:
   # middlewares:
   #   - security-headers: HSTS (1 year, subdomains, no preload), nosniff,
   #     X-Frame-Options DENY, Referrer-Policy and Permissions-Policy; strips
-  #     the Server header. No CSP yet: it needs the frontend's inventory of
-  #     scripts, styles and fonts (pending in web-nexo/).
+  #     the Server header.
+  #   - csp-report-only (frontend router only): the candidate policy of
+  #     web-nexo/docs/csp.md as Content-Security-Policy-Report-Only. Browsers
+  #     report violations in the console and block nothing. Traefik v2.11 has
+  #     no report-only option (contentSecurityPolicy would enforce it), hence
+  #     customResponseHeaders. No report-to: there is no receiver yet.
   #   - www-to-root: https://www.${DOMAIN}/… → https://${DOMAIN}/… (301).
   web-nexo:
     labels:
@@ -63,7 +73,7 @@ services:
       - "traefik.http.routers.web-nexo.entrypoints=websecure"
       - "traefik.http.routers.web-nexo.tls=true"
       - "traefik.http.routers.web-nexo.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.web-nexo.middlewares=security-headers"
+      - "traefik.http.routers.web-nexo.middlewares=security-headers,csp-report-only"
       - "traefik.http.services.web-nexo.loadbalancer.server.port=80"
       - "traefik.http.routers.www.rule=Host(`www.${DOMAIN:?DOMAIN is required}`)"
       - "traefik.http.routers.www.entrypoints=websecure"
@@ -80,6 +90,7 @@ services:
       - "traefik.http.middlewares.security-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
       - "traefik.http.middlewares.security-headers.headers.permissionsPolicy=camera=(), microphone=(), geolocation=(), payment=()"
       - "traefik.http.middlewares.security-headers.headers.customResponseHeaders.Server="
+      - "traefik.http.middlewares.csp-report-only.headers.customResponseHeaders.Content-Security-Policy-Report-Only=default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' wss://${DOMAIN:?DOMAIN is required}; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; manifest-src 'self'"
     deploy:
       resources:
         limits:

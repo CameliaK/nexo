@@ -32,14 +32,13 @@ var upgrader = websocket.Upgrader{
 }
 
 type handler struct {
-	tokens   *auth.TokenService
 	tickets  *Tickets
 	rdb      *redis.Client
 	presence *presence.Store
 }
 
-func NewHandler(tokens *auth.TokenService, tickets *Tickets, rdb *redis.Client, presence *presence.Store) http.HandlerFunc {
-	h := &handler{tokens: tokens, tickets: tickets, rdb: rdb, presence: presence}
+func NewHandler(tickets *Tickets, rdb *redis.Client, presence *presence.Store) http.HandlerFunc {
+	h := &handler{tickets: tickets, rdb: rdb, presence: presence}
 	return h.serveHTTP
 }
 
@@ -131,34 +130,24 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// authenticate accepts ?ticket= (one-time, from POST /api/v1/ws-ticket) or,
-// as a temporary fallback, ?token= (deprecated: the session token ends up in
-// URLs and access logs). The mode comes only from the validated claims.
+// authenticate accepts only ?ticket= (one-time, from POST /api/v1/ws-ticket):
+// the session token never travels in the URL, where proxies and access logs
+// would see it. ?token= is no longer accepted. The mode comes only from the
+// claims the ticket was issued for.
 func (h *handler) authenticate(w http.ResponseWriter, r *http.Request) (*auth.Claims, bool) {
-	q := r.URL.Query()
-	if ticket := q.Get("ticket"); ticket != "" {
-		claims, err := h.tickets.redeem(r.Context(), ticket)
-		if err != nil {
-			if !errors.Is(err, errBadTicket) && !errors.Is(err, auth.ErrRevoked) {
-				log.Printf("ws ticket: %v", err)
-			}
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return nil, false
-		}
-		return claims, true
-	}
-	tokenStr := q.Get("token")
-	if tokenStr == "" {
+	ticket := r.URL.Query().Get("ticket")
+	if ticket == "" {
 		http.Error(w, "missing ticket", http.StatusUnauthorized)
 		return nil, false
 	}
-	claims, err := h.tokens.VerifyClaims(r.Context(), tokenStr)
+	claims, err := h.tickets.redeem(r.Context(), ticket)
 	if err != nil {
+		if !errors.Is(err, errBadTicket) && !errors.Is(err, auth.ErrRevoked) {
+			log.Printf("ws ticket: %v", err)
+		}
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return nil, false
 	}
-	log.Printf("ws: deprecated ?token= used visitor=%s mode=%s — switch to POST /api/v1/ws-ticket + ?ticket=",
-		mask.ID(claims.VisitorID), claims.Mode)
 	return claims, true
 }
 
