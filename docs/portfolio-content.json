@@ -810,29 +810,6 @@
     },
     {
       "id": "aprendizaje.proyectos-academicos.astralis",
-      "media": [
-        {
-          "id": "geometria",
-          "src": "/media/_placeholder/geometria.webp",
-          "alt": "Composición de un cubo en alambre sobre una cuadrícula oscura.",
-          "caption": "Imagen neutra de prueba · Sustituir por una imagen del proyecto.",
-          "placeholder": true
-        },
-        {
-          "id": "capas",
-          "src": "/media/_placeholder/capas.webp",
-          "alt": "Cuatro planos geométricos superpuestos en perspectiva.",
-          "caption": "Imagen neutra de prueba · Sustituir por una imagen del proyecto.",
-          "placeholder": true
-        },
-        {
-          "id": "trama",
-          "src": "/media/_placeholder/trama.webp",
-          "alt": "Tres anillos octogonales unidos por una trama radial.",
-          "caption": "Imagen neutra de prueba · Sustituir por una imagen del proyecto.",
-          "placeholder": true
-        }
-      ],
       "parent": "aprendizaje.proyectos-academicos",
       "order": 1,
       "label": "Astralis",
@@ -1026,7 +1003,33 @@
             "label": "protege el acceso"
           }
         ]
-      }
+      },
+      "media": [
+        {
+          "id": "panel",
+          "src": "/media/aprendizaje.proyectos-academicos.sistema-financiero/01-panel.webp",
+          "alt": "Panel financiero con el saldo total, los ingresos, gastos y ahorros del mes, una gráfica comparativa por mes, el gasto por categoría y las transacciones recientes.",
+          "caption": "Panel financiero",
+          "width": 1600,
+          "height": 1415
+        },
+        {
+          "id": "cuentas",
+          "src": "/media/aprendizaje.proyectos-academicos.sistema-financiero/02-cuentas.webp",
+          "alt": "Gestión de cuentas con el patrimonio neto, las cuentas de depósito, inversión y efectivo, una tarjeta de crédito, la actividad reciente y una transferencia rápida.",
+          "caption": "Gestión de cuentas",
+          "width": 1520,
+          "height": 1600
+        },
+        {
+          "id": "transaccion",
+          "src": "/media/aprendizaje.proyectos-academicos.sistema-financiero/03-transaccion.webp",
+          "alt": "Formulario para agregar una transacción con tipo, monto, descripción, categoría, cuenta, fecha y notas.",
+          "caption": "Registro de transacciones",
+          "width": 1600,
+          "height": 1078
+        }
+      ]
     },
     {
       "id": "aprendizaje.proyectos-academicos.fitness-app",
@@ -1136,33 +1139,44 @@
         ]
       },
       "needs_review": true,
-      "review_note": "Confirmar con el repositorio del proyecto qué parte era Java y cuál C#: el reparto actual de las conexiones es una suposición (el dueño recuerda Java como backend y C# como frontend, con duda; Flutter era el cliente móvil)."
+      "review_note": "Confirmar con el repositorio del proyecto qué parte era Java y cuál C#: el reparto actual de las conexiones es una suposición (el dueño recuerda Java como backend y C# como frontend, con duda; Flutter era el cliente móvil).",
+      "media": [
+        {
+          "id": "resumen",
+          "src": "/media/aprendizaje.proyectos-academicos.fitness-app/01-resumen.webp",
+          "alt": "Tres pantallas de Pulse: selección de grupos musculares, actividad y rachas, y constructor de rutinas.",
+          "caption": "Las tres pantallas principales",
+          "width": 1062,
+          "height": 1358
+        },
+        {
+          "id": "entrenar",
+          "src": "/media/aprendizaje.proyectos-academicos.fitness-app/02-entrenar.webp",
+          "alt": "Pantalla de entrenamiento con un modelo corporal interactivo para elegir grupos musculares, con el número de ejercicios de cada región.",
+          "caption": "Selección de músculos objetivo",
+          "width": 395,
+          "height": 1600
+        },
+        {
+          "id": "actividad",
+          "src": "/media/aprendizaje.proyectos-academicos.fitness-app/03-actividad.webp",
+          "alt": "Pantalla de actividad con la racha de días, la meta semanal, un mapa de calor del volumen de entrenamiento y el registro de sesiones recientes.",
+          "caption": "Actividad y rachas",
+          "width": 329,
+          "height": 1600
+        },
+        {
+          "id": "rutina",
+          "src": "/media/aprendizaje.proyectos-academicos.fitness-app/04-rutina.webp",
+          "alt": "Constructor de rutinas con la lista de ejercicios, sus series, repeticiones y descansos, y una estimación de la duración.",
+          "caption": "Constructor de rutinas",
+          "width": 459,
+          "height": 1600
+        }
+      ]
     },
     {
       "id": "proyectos-personales.qfb-app",
-      "media": [
-        {
-          "id": "geometria",
-          "src": "/media/_placeholder/geometria.webp",
-          "alt": "Composición de un cubo en alambre sobre una cuadrícula oscura.",
-          "caption": "Imagen neutra de prueba · Sustituir por una imagen del proyecto.",
-          "placeholder": true
-        },
-        {
-          "id": "capas",
-          "src": "/media/_placeholder/capas.webp",
-          "alt": "Cuatro planos geométricos superpuestos en perspectiva.",
-          "caption": "Imagen neutra de prueba · Sustituir por una imagen del proyecto.",
-          "placeholder": true
-        },
-        {
-          "id": "trama",
-          "src": "/media/_placeholder/trama.webp",
-          "alt": "Tres anillos octogonales unidos por una trama radial.",
-          "caption": "Imagen neutra de prueba · Sustituir por una imagen del proyecto.",
-          "placeholder": true
-        }
-      ],
       "parent": "proyectos-personales",
       "order": 1,
       "label": "NKare",
@@ -1207,26 +1221,23 @@
       "label": "Este portafolio",
       "type": "system",
       "status": "en_construccion",
-      "summary": "La arquitectura real de este sitio, en vivo: cada vez que usas el chat, se ilumina aquí.",
+      "summary": "La arquitectura real de este sitio, en vivo. Cada vez que escribes en el chat, tu petición viaja por los servicios del sistema (proxy, gateway, agente, modelo de lenguaje, base de datos y automatización) y los ves iluminarse aquí, en tiempo real. No es una simulación: es el recorrido verdadero de tu pregunta.",
       "keywords": [
+        "este portafolio",
         "arquitectura",
-        "backend",
-        "go",
-        "fastapi",
-        "n8n",
-        "redis",
-        "postgres",
-        "pgvector",
+        "sistema",
+        "tiempo real",
         "traefik",
+        "gateway",
         "agente",
-        "rag",
-        "este portafolio"
+        "pgvector",
+        "redis",
+        "n8n",
+        "cómo funciona"
       ],
       "content": {
         "source": "backend-architecture.json"
-      },
-      "needs_review": true,
-      "review_note": "Confirmar que este nodo va en Proyectos personales y definir mi aportación."
+      }
     },
     {
       "id": "experiencia.infosys",
@@ -1464,7 +1475,25 @@
             "label": "aloja"
           }
         ]
-      }
+      },
+      "media": [
+        {
+          "id": "flota",
+          "src": "/media/experiencia.infosys.digital-twin/01-flota.webp",
+          "alt": "Vista general de la flota de elevadores con su estado de salud, la matriz de unidades, la detección de anomalías con aprendizaje automático y el flujo de mensajes MQTT en vivo.",
+          "caption": "Vista general de la flota (datos simulados)",
+          "width": 1321,
+          "height": 1600
+        },
+        {
+          "id": "gemelo-digital",
+          "src": "/media/experiencia.infosys.digital-twin/02-gemelo-digital.webp",
+          "alt": "Gemelo digital de un elevador con la estructura del hueco, las lecturas de vibración, temperatura, carga, posición y puerta, y el flujo de paquetes de sensores.",
+          "caption": "Gemelo digital de una unidad (datos simulados)",
+          "width": 1600,
+          "height": 1280
+        }
+      ]
     },
     {
       "id": "experiencia.dgti",

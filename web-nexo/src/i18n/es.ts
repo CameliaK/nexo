@@ -274,6 +274,8 @@ export const es = {
   "step.noSources": "No encontré información suficiente",
   "step.route": "Te llevo a {path}",
   "generated.label": "Generado para ti",
+  "generated.created": "Nodo creado: {name}",
+  "generated.view": "Ver",
   "generated.badge": "GENERADO PARA TI",
   "generated.count": "Generado para ti · {count}/12",
   "generated.limit": "Llegaste al límite de 12 nodos. Descarta alguno para crear más.",

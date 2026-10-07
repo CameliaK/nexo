@@ -275,6 +275,8 @@ export const en = {
   "step.noSources": "I could not find enough information",
   "step.route": "Taking you to {path}",
   "generated.label": "Generated for you",
+  "generated.created": "Node created: {name}",
+  "generated.view": "View",
   "generated.badge": "GENERATED FOR YOU",
   "generated.count": "Generated for you · {count}/12",
   "generated.limit": "You reached the 12-node limit. Discard a node to create more.",

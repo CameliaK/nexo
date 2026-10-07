@@ -9,6 +9,7 @@ import { languageStore, t } from '../src/i18n';
 function setup(response:(path:string,request:any)=>Response){
  const oldDocument=globalThis.document,oldStorage=globalThis.localStorage,oldFetch=globalThis.fetch;
  class Element {
+  classList={contains:name=>this.className.split(' ').includes(name)};
   children=[];childNodes=[];dataset={};attributes={};value='';textContent='';className='';hidden=false;disabled=false;handlers={};parentElement=null;
   append(...items){for(const item of items){item.parentElement?.removeChild(item);this.children.push(item);item.parentElement=this}}
   removeChild(item){this.children=this.children.filter(child=>child!==item)}
@@ -93,4 +94,8 @@ test('Ordered forming/spawn real events reach the universe with their run ID; ma
   f.chats.receive(event('forming-chat',3,'node.spawn',{anchor:null,node}));f.chats.receive(event('forming-chat',2,'node.forming',{sources:['experiencia.infosys','missing']}));f.chats.receive(event('forming-chat',1,'run.start',{kind:'chat',content_version:3}));f.chats.receive(event('forming-chat',4,'run.done',{outcome:'generated',duration_ms:1000}));
   assert.deepEqual(calls[0],['forming','forming-chat',['experiencia.infosys']]);assert.equal(calls[1][0],'spawn');assert.equal(calls[1][4],'forming-chat');assert.deepEqual(calls[2],['finish','forming-chat']);assert.equal(f.chats.busy,false);
  }finally{f.dispose()}
+});
+
+test('Answer streaming stays visible in the compact panel while the generated camera view is active',()=>{
+ const f=setup(path=>ok(path));try{document.body.className='generated-camera-focused';const body=document.querySelector('#companion-panel .panel-body');body.scrollHeight=123;f.chats.register('stream-focus');f.chats.receive(event('stream-focus',1,'run.start',{kind:'chat',content_version:3}));f.chats.receive(event('stream-focus',2,'answer.chunk',{text:'Still completing'}));assert.equal(body.scrollTop,123);assert.equal(f.chats.runs.get('stream-focus').answer.textContent,'Still completing')}finally{f.dispose()}
 });

@@ -92,3 +92,21 @@
 .privacy-notice{font-size:10px;line-height:1.55;color:#99b0b2;margin:12px 0}.privacy-notice a,.account-privacy{color:#b6d3ca;text-underline-offset:3px}.privacy-footer{position:absolute;right:0;top:9px;pointer-events:auto;color:#89969e;font-size:10px;text-underline-offset:3px}.privacy-footer:focus-visible{outline-offset:3px}
 
 .panel-compose .chat-suggestions{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0;background:none;border:0}.panel-compose .chat-suggestions button{width:auto;height:auto;min-height:32px;flex:1 1 100%;padding:6px 9px;text-align:left;font-size:10px;line-height:1.45;color:#acd6c8;background:#b6f3dc06;border:1px solid #b6f3dc22;border-radius:3px}.panel-compose .chat-suggestions button:hover{background:#b6f3dc12}.panel-compose .chat-suggestions button:focus-visible{outline:1px solid var(--mint);outline-offset:2px}.companion-panel .panel-surface{max-height:65dvh;overflow-y:auto}@media(max-width:650px){.panel-compose .chat-suggestions button{min-height:44px;font-size:10px}}
+
+.generated-camera-controls{position:fixed;left:24px;top:220px;z-index:42;display:flex;gap:10px;align-items:center;padding:10px 14px;border:1px solid #aef1d24d;background:#0a141cf0;color:var(--mint);font:12px 'DM Sans',sans-serif;max-width:calc(100vw - 48px)}
+.generated-camera-focused #companion-panel .agent-process{display:none}
+.generated-camera-controls[hidden],.generated-camera-controls [hidden]{display:none}
+.generated-camera-controls>span{min-width:0;overflow-wrap:anywhere}
+.generated-camera-controls button{flex-shrink:0;background:transparent;border:1px solid #aef1d245;border-radius:3px;color:inherit;min-height:36px;padding:6px 12px;cursor:pointer}
+.generated-camera-controls button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+@media(max-width:650px){
+ .generated-camera-controls{left:16px;max-width:calc(100vw - 32px);font-size:11px}
+ .generated-camera-controls button{min-height:44px}
+ .generated-camera-focused #companion-panel .panel-surface{max-height:26dvh;padding:12px;display:flex;flex-direction:column}
+ .generated-camera-focused #companion-panel .panel-header{padding-bottom:8px;flex-shrink:0}
+ .generated-camera-focused #companion-panel .panel-body{min-height:60px;max-height:12dvh;flex:1;padding:8px 0}
+ .generated-camera-focused #companion-panel .nexo-context,.generated-camera-focused #companion-panel .chat-suggestions,.generated-camera-focused #companion-panel .chat-counter,.generated-camera-focused #companion-panel .panel-compose label{display:none}
+ .generated-camera-focused #companion-panel .panel-compose{padding-bottom:0}
+ .generated-camera-focused #companion-panel .panel-compose input{padding:7px}
+ .generated-camera-focused #companion-panel .panel-footer{display:none}
+}

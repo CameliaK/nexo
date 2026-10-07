@@ -1,0 +1,169 @@
+{
+  "at": "2026-10-07T03:28:51.227Z",
+  "url": "http://127.0.0.1:4192",
+  "browser": "154.0.8037.98",
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M2",
+    "cores": 8
+  },
+  "viewport": "1366x768",
+  "dpr": 2,
+  "generatedNodes": 12,
+  "openingWindowMs": 1800,
+  "summary": {
+    "interactiveMs": 74.3111111074686,
+    "cameraFps": 60.18196429578045,
+    "lostFrames": 21.0,
+    "unexpectedLostFrames": 1.2222222222222223,
+    "longTasks": 0
+  },
+  "results": [
+    {
+      "run": 1,
+      "interactiveMs": 79.3999999910593,
+      "cameraFps": 60.2100442199066,
+      "unexpectedLostFrames": 2,
+      "lostFrames": 22,
+      "frameIntervals": 85,
+      "longTasks": [],
+      "maxFrameMs": 35.3999999910593,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 2,
+      "interactiveMs": 53,
+      "cameraFps": 60.281712557623884,
+      "unexpectedLostFrames": 1,
+      "lostFrames": 21,
+      "frameIntervals": 86,
+      "longTasks": [],
+      "maxFrameMs": 34.79999999701977,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 3,
+      "interactiveMs": 43.79999999701977,
+      "cameraFps": 60.2445571130331,
+      "unexpectedLostFrames": 0,
+      "lostFrames": 20,
+      "frameIntervals": 85,
+      "longTasks": [],
+      "maxFrameMs": 35.20000000298023,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 1,
+      "interactiveMs": 109.59999999403954,
+      "cameraFps": 60.19787817390595,
+      "unexpectedLostFrames": 1,
+      "lostFrames": 20,
+      "frameIntervals": 83,
+      "longTasks": [],
+      "maxFrameMs": 34.20000000298023,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 2,
+      "interactiveMs": 63.5,
+      "cameraFps": 60.28171255780259,
+      "unexpectedLostFrames": 2,
+      "lostFrames": 22,
+      "frameIntervals": 85,
+      "longTasks": [],
+      "maxFrameMs": 34.20000000298023,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 3,
+      "interactiveMs": 76.79999999701977,
+      "cameraFps": 59.60812086870915,
+      "unexpectedLostFrames": 2,
+      "lostFrames": 22,
+      "frameIntervals": 84,
+      "longTasks": [],
+      "maxFrameMs": 34.3999999910593,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 4,
+      "interactiveMs": 83.69999998807907,
+      "cameraFps": 60.20984023538239,
+      "unexpectedLostFrames": 1,
+      "lostFrames": 21,
+      "frameIntervals": 84,
+      "longTasks": [],
+      "maxFrameMs": 35.400000005960464,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 5,
+      "interactiveMs": 56.5,
+      "cameraFps": 60.305494941479864,
+      "unexpectedLostFrames": 1,
+      "lostFrames": 21,
+      "frameIntervals": 84,
+      "longTasks": [],
+      "maxFrameMs": 34.20000000298023,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 6,
+      "interactiveMs": 102.5,
+      "cameraFps": 60.29831799418059,
+      "unexpectedLostFrames": 1,
+      "lostFrames": 20,
+      "frameIntervals": 83,
+      "longTasks": [],
+      "maxFrameMs": 40.6000000089407,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    }
+  ],
+  "interactiveMeasurement": "legacy-post-click-playwright-rpc"
+}

@@ -29,14 +29,21 @@ try{
   await page.routeWebSocket(/\/ws\?/,ws=>{ws.onMessage(()=>{});if(firstSocket){firstSocket=false;setTimeout(()=>ws.close({code:1000}),500)}});
   await page.addInitScript(()=>{
    localStorage.setItem('nexo.welcome.dismissed.v1','1');localStorage.setItem('nexo.auth.token','fixture-account');localStorage.setItem('nexo.language','en');
-   const perf=window.__perf={frames:[],budgets:[],tasks:[],start:0};
+   const perf=window.__perf={frames:[],budgets:[],tasks:[],start:0,interactive:null};
    const original=CanvasRenderingContext2D.prototype.fillRect;
    CanvasRenderingContext2D.prototype.fillRect=function(x,y,w,h){
     if(this.canvas.id==='space'&&x===0&&y===0&&w===innerWidth&&h===innerHeight){const now=performance.now();if(!perf.frames.length||now-perf.frames.at(-1)>2){perf.frames.push(now);perf.budgets.push(Number(document.body?.dataset.canvasFps)||60)}}
     return original.call(this,x,y,w,h);
    };
    new PerformanceObserver(list=>{for(const task of list.getEntries())perf.tasks.push({start:task.startTime,duration:task.duration})}).observe({type:'longtask',buffered:true});
-   document.addEventListener('click',event=>{if(event.target.closest?.('#floating-chess'))perf.start=performance.now()},true);
+   document.addEventListener('click',event=>{
+    if(!event.target.closest?.('#floating-chess'))return;
+    perf.start=performance.now();perf.interactive=null;
+    // Measure inside the browser from the click, not after Playwright's
+    // click RPC resolves. The latter adds variable tool/transport latency.
+    const poll=()=>{const scene=document.querySelector('#chess-scene'),square=scene?.querySelector('[data-square="e2"]');if(square&&scene.classList.contains('is-ready')&&!square.closest('[inert]')){square.click();if(square.getAttribute('aria-selected')==='true'){perf.interactive=performance.now()-perf.start;return}}requestAnimationFrame(poll)};
+    requestAnimationFrame(poll);
+   },true);
   });
   await page.goto(url);await page.waitForFunction(()=>document.querySelectorAll('.node-target.is-generated').length===12).catch(async error=>{console.error(await page.evaluate(()=>({nodes:document.querySelectorAll('.node-target.is-generated').length,text:document.body.innerText.slice(-1500)})));throw error});
   await page.waitForTimeout(1500);
@@ -47,9 +54,8 @@ try{
   await page.mouse.up();const cameraEnd=await page.evaluate(()=>performance.now());
   const fps=await page.evaluate(({cameraStart,cameraEnd})=>{const f=window.__perf.frames.filter(t=>t>=cameraStart&&t<=cameraEnd);return (f.length-1)*1000/(f.at(-1)-f[0])},{cameraStart,cameraEnd});
   await page.locator('#floating-chess').click({force:true});
-  const interactive=await page.evaluate(()=>new Promise(resolve=>{
-   const poll=()=>{const scene=document.querySelector('#chess-scene'),square=scene?.querySelector('[data-square="e2"]');if(square&&scene.classList.contains('is-ready')&&!square.closest('[inert]')){square.click();if(square.getAttribute('aria-selected')==='true'){resolve(performance.now()-window.__perf.start);return}}requestAnimationFrame(poll)};poll();
-  }));
+  await page.waitForFunction(()=>typeof window.__perf.interactive==='number');
+  const interactive=await page.evaluate(()=>window.__perf.interactive);
   await page.waitForTimeout(1800);
   const opening=await page.evaluate(()=>{
    const {start,frames,budgets,tasks}=window.__perf,end=start+1800,f=frames.filter(t=>t>=start&&t<=end),intervals=f.slice(1).map((v,i)=>v-f[i]);
@@ -61,6 +67,6 @@ try{
   await context.close();
  }
  const average=key=>results.reduce((sum,r)=>sum+r[key],0)/results.length;
- const report={at:new Date().toISOString(),url,browser:await browser.version(),machine:{platform:os.platform(),arch:os.arch(),cpu:os.cpus()[0]?.model,cores:os.cpus().length},viewport:'1366x768',dpr:2,generatedNodes:12,openingWindowMs:1800,summary:{interactiveMs:average('interactiveMs'),cameraFps:average('cameraFps'),lostFrames:average('lostFrames'),unexpectedLostFrames:average('unexpectedLostFrames'),longTasks:results.reduce((sum,r)=>sum+r.longTasks.length,0)},results};
+ const report={interactiveMeasurement:'click-capture-raf-legal-selection-v2',at:new Date().toISOString(),url,browser:await browser.version(),machine:{platform:os.platform(),arch:os.arch(),cpu:os.cpus()[0]?.model,cores:os.cpus().length},viewport:'1366x768',dpr:2,generatedNodes:12,openingWindowMs:1800,summary:{interactiveMs:average('interactiveMs'),cameraFps:average('cameraFps'),lostFrames:average('lostFrames'),unexpectedLostFrames:average('unexpectedLostFrames'),longTasks:results.reduce((sum,r)=>sum+r.longTasks.length,0)},results};
  await writeFile(output,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report.summary,null,2));
 }finally{await browser.close()}
