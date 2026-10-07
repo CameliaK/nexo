@@ -92,6 +92,8 @@ body.mobile-chess-chat .live-panel .privacy-notice{max-height:48px;overflow-y:au
 /* Transformed world nodes must not enlarge a mobile browser's layout viewport. */
 body{position:fixed;inset:0;max-width:100vw;max-height:100dvh;contain:paint;overflow:clip}
 #node-targets{position:fixed;inset:0;overflow:clip;contain:layout paint;pointer-events:none}
+/* The clipping container passes through empty space; its actual buttons must hit. */
+#node-targets .node-target{pointer-events:auto}
 body.mobile-system-expanded .chess-shell{visibility:hidden;pointer-events:none!important}
 .chess-loading-close{position:absolute;right:0;top:-52px;pointer-events:auto;min-width:44px;min-height:44px;border:1px solid #b6f3dc55;background:#10251f;color:#d6f6e9;font-size:24px;border-radius:5px}
 @media(max-width:768px),(pointer:coarse) and (max-height:768px){
