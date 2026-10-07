@@ -5,7 +5,7 @@ import type { Move, Square, Color, PieceSymbol } from 'chess.js';
 import { ChessGame, type Promotion, type PositionPiece } from './game';
 import { squareAt, squareCoords, type Triangle, type Point } from './geometry';
 import { pieceSolids, box, normal, project3D, unprojectBoard, cellPolygon, insideTriangle, type Camera, type Mesh, type Vec3, type Tri3 } from './spatial';
-import { chessLayout, chessBounds, type ChessView } from './layout';
+import { chessLayout, mobileChessLayout, chessBounds, type ChessView } from './layout';
 import './style.css';
 
 export const CHESS_NODE_VISIBLE = true;
@@ -73,7 +73,10 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   const legal=()=>selected?game.legal(selected):[];
   let boardKey='';
   function applyLayout(){
-    const layout=chessLayout({width:innerWidth,height:innerHeight},currentView);
+    const data=document.body.dataset;
+    const mobile=document.body.classList.contains('mobile-chess');
+    if(mobile&&dialog.dataset.mobile!=='true')($<HTMLDetailsElement>('.chess-history')).open=true;dialog.dataset.mobile=String(mobile);dialog.dataset.compactChat=String(mobile&&document.body.classList.contains('mobile-chess-chat')&&Number(data.mobileHeight)<480);
+    const layout=document.body.classList.contains('mobile-chess')?mobileChessLayout({width:innerWidth,height:Number(data.mobileHeight)||innerHeight,safeTop:Number(data.safeTop)||0,safeBottom:Number(data.safeBottom)||0,offsetTop:Number(data.mobileTop)||0,chat:document.body.classList.contains('mobile-chess-chat'),landscape:innerWidth>innerHeight}):chessLayout({width:innerWidth,height:innerHeight},currentView);
     const changed=JSON.stringify(camera)!==JSON.stringify(layout.camera);camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';dialog.dataset.density=layout.compact?'compact':'normal';
     const {header,close,black,white,help,aside}=layout;
     if(systemBounds&&!layout.stacked&&aside.left+aside.width>systemBounds.left&&aside.left<systemBounds.left+systemBounds.width){aside.top=Math.max(aside.top,systemBounds.top+systemBounds.height+28);aside.height=Math.max(80,innerHeight-104-aside.top)}
@@ -95,7 +98,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     buttons.forEach((b,square)=>{
       const [col,row]=squareCoords(square,flipped),polygon=cellPolygon(col,row,camera);
       const x=Math.min(...polygon.map(p=>p[0])),y=Math.min(...polygon.map(p=>p[1])),w=Math.max(...polygon.map(p=>p[0]))-x,h=Math.max(...polygon.map(p=>p[1]))-y;
-      Object.assign(b.style,{left:(x-left)+'px',top:(y-top)+'px',width:Math.max(innerWidth<650||innerHeight<600?44:0,w)+'px',height:Math.max(innerWidth<650||innerHeight<600?44:0,h)+'px',clipPath:innerWidth<650||innerHeight<600?'none':`polygon(${polygon.map(p=>`${(p[0]-x)/w*100}% ${(p[1]-y)/h*100}%`).join(',')})`});
+      Object.assign(b.style,{left:(x-left)+'px',top:(y-top)+'px',width:Math.max(document.body.classList.contains('mobile-chess-chat')?0:innerWidth<650||innerHeight<600?44:0,w)+'px',height:Math.max(document.body.classList.contains('mobile-chess-chat')?0:innerWidth<650||innerHeight<600?44:0,h)+'px',clipPath:innerWidth<650||innerHeight<600?'none':`polygon(${polygon.map(p=>`${(p[0]-x)/w*100}% ${(p[1]-y)/h*100}%`).join(',')})`});
     });
   }
   function buildBoard(){
@@ -415,7 +418,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     morph={opening:false,start:performance.now(),duration:reduced.matches?0:motion.chessClose,source:origin!.faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle),color:white};
   }
   function finishClose(){
-    active=false;remote?.open(false);dialog.hidden=true;picking=[];document.body.classList.remove('is-chess');onClosed?.();returnFocus?.focus({preventScroll:true});returnFocus=null;
+    active=false;remote?.open(false);dialog.hidden=true;picking=[];document.body.classList.remove('is-chess');dispatchEvent(new Event('nexo:chess-state'));onClosed?.();returnFocus?.focus({preventScroll:true});returnFocus=null;
     const next=queuedExit;queuedExit=null;next?.();
   }
   let onClosed:(()=>void)|undefined;
@@ -429,7 +432,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   const onResize=()=>{if(active){cancelDrag();resize();if(morph&&originProvider)morph.source=originProvider().faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle)}};
   const onBlur=()=>cancelDrag();
   const onMotion=()=>{if(animation)animation.duration=0;if(morph&&reduced.matches)morph.duration=0};
-  addEventListener('resize',onResize);addEventListener('blur',onBlur);addEventListener('keydown',onEscape);reduced.addEventListener('change',onMotion);
+  addEventListener('nexo:mobile-layout',onResize);addEventListener('resize',onResize);addEventListener('blur',onBlur);addEventListener('keydown',onEscape);reduced.addEventListener('change',onMotion);
   const stopRemote=remote?.subscribe(()=>{
     const record=remote.game;
     if(record){
@@ -445,5 +448,5 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     if(active&&remote.me.mode==='guest'&&remote.available)close();
   });
   buildBoard();resize();
-  return {refreshLanguage(){refresh();translateUI(dialog);syncBoard()},open,render,progress,isOpen:()=>active,isAnimating:()=>!!morph||!!animation||!!drag?.moved,pauseFor:(ms:number,since=performance.now()-ms)=>{const now=performance.now();if(morph)morph.start=resumeStart(morph.start,since,now);if(animation)animation.start=resumeStart(animation.start,since,now)},closeForNavigation:(fn:()=>void)=>{queuedExit=fn;close()},setOnClosed:(fn:()=>void)=>{onClosed=fn},dispose(){stopRemote?.();disposed=true;removeEventListener('resize',onResize);removeEventListener('blur',onBlur);removeEventListener('keydown',onEscape);reduced.removeEventListener('change',onMotion);document.body.classList.remove('is-chess');dialog.remove()}};
+  return {refreshLanguage(){refresh();translateUI(dialog);syncBoard()},open,render,progress,isOpen:()=>active,isAnimating:()=>!!morph||!!animation||!!drag?.moved,pauseFor:(ms:number,since=performance.now()-ms)=>{const now=performance.now();if(morph)morph.start=resumeStart(morph.start,since,now);if(animation)animation.start=resumeStart(animation.start,since,now)},closeForNavigation:(fn:()=>void)=>{queuedExit=fn;close()},setOnClosed:(fn:()=>void)=>{onClosed=fn},dispose(){stopRemote?.();disposed=true;removeEventListener('nexo:mobile-layout',onResize);removeEventListener('resize',onResize);removeEventListener('blur',onBlur);removeEventListener('keydown',onEscape);reduced.removeEventListener('change',onMotion);document.body.classList.remove('is-chess');dialog.remove()}};
 }

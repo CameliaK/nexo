@@ -1,5 +1,11 @@
 import type { UIKey } from './es';
 export const en = {
+  "mobile.chat": "Chat",
+  "mobile.chats": "Chats during the game",
+  "mobile.chatUnread": "Open chat, new message",
+  "mobile.assistant": "Assistant · Nexo",
+  "mobile.live": "Chat with Kirbith",
+
   "generated.forming": "Forming your node…",
   "chat.suggestions": "Ideas for creating a node",
   "chat.suggestFrontend": "Create a node with Kirbith's frontend technologies",
