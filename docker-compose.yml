@@ -144,10 +144,10 @@ services:
       - N8N_LIVE_OUTBOUND_URL=http://n8n:5678/webhook/nexo-live-outbound
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
-      # node.forming antes de node.spawn (contrato §9). Apagado hasta que el
-      # frontend lo conozca: un tipo desconocido deja un hueco de seq y congela
-      # la ejecución en la interfaz actual.
-      - NODE_FORMING_EVENT=${NODE_FORMING_EVENT:-false}
+      # node.forming antes de node.spawn (contrato §9). Encendido: el frontend
+      # lo soporta desde f982fcd. Ponlo en false solo frente a un frontend
+      # anterior (un tipo desconocido deja un hueco de seq y congela la ejecución).
+      - NODE_FORMING_EVENT=${NODE_FORMING_EVENT:-true}
       # Calibrado el 2026-10-06 con docs/eval (multilingüe + contenido): 0.35
       - RAG_SIMILARITY_THRESHOLD=${RAG_SIMILARITY_THRESHOLD:-0.35}
       - ROUTE_CONFIDENCE_THRESHOLD=${ROUTE_CONFIDENCE_THRESHOLD:-0.7}

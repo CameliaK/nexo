@@ -1,7 +1,7 @@
 COMPOSE      = docker compose
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
 
-.PHONY: dev down gen-key prod-up prod-down prod-logs prod-config backup backup-prod restore-test mail-test
+.PHONY: dev down gen-key prod-up prod-down prod-logs prod-config backup backup-prod restore-test mail-test prod-check
 
 # ── Desarrollo ────────────────────────────────────────────────────────────────
 # docker-compose.override.yml se auto-carga: añade puertos 8888 (Traefik) y
@@ -46,6 +46,11 @@ prod-config:
 # la contraseña. Resend: smtp.resend.com:587 + STARTTLS (Hetzner bloquea 25 y 465).
 mail-test:
 	@$(COMPOSE_PROD) exec -T gateway /gateway mail-test "$(TO)"
+
+# Valida el .env de producción (obligatorias, formatos, valores de dev,
+# permisos, clave de respaldos) sin imprimir ningún valor.
+prod-check:
+	@bash scripts/prod-check.sh
 
 # ── Backups ───────────────────────────────────────────────────────────────────
 # pg_dump comprimido + export de workflows de n8n → ./backups/
