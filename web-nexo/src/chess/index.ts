@@ -7,6 +7,7 @@ import { squareAt, squareCoords, type Triangle, type Point } from './geometry';
 import { pieceSolids, box, normal, project3D, unprojectBoard, cellPolygon, insideTriangle, type Camera, type Mesh, type Vec3, type Tri3 } from './spatial';
 import { chessLayout, mobileChessLayout, chessBounds, type ChessView } from './layout';
 import './style.css';
+import { chessPhase } from './transition';
 
 export const CHESS_NODE_VISIBLE = true;
 const names = () => ({p:t('chess.pawn'),r:t('chess.rook'),n:t('chess.knight'),b:t('chess.bishop'),q:t('chess.queen'),k:t('chess.king')});
@@ -20,7 +21,7 @@ const center=(t:Triangle):Point=>[(t[0][0]+t[1][0]+t[2][0])/3,(t[0][1]+t[1][1]+t
 interface Face { points:Triangle; color:number[]; alpha:number; depth:number; edge?:boolean; square?:Square }
 interface OpeningOrigin { x:number;y:number;r:number;faces:{points:number[][]}[] }
 interface Animation { move:Move; before:PositionPiece[]; start:number; duration:number }
-interface Morph { opening:boolean; start:number; duration:number; source:Triangle[]; color:number[] }
+interface Morph { from:number;to:number;opening:boolean; start:number; duration:number; source:Triangle[]; color:number[] }
 interface Drag { from:Square; id:number; start:Point; current:Point; moved:boolean }
 
 export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
@@ -41,7 +42,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
         </div>
         <aside class="chess-aside">
           <div class="chess-status"><span class="chess-eyebrow">${t('chess.status')}</span><h2 class="chess-status-title"></h2><p class="chess-status-detail"></p></div>
-          <details class="chess-history"><summary class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span></summary><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></details>
+          <details class="chess-history"><summary class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span><span class="chess-last-move">—</span></summary><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></details>
           <div class="chess-actions"><button type="button" class="chess-flip">⇄ <span>${t('chess.flip')}</span></button><button type="button" class="chess-restart">↻ <span>${t('chess.new')}</span></button><button type="button" class="chess-claim" hidden>${t('chess.claim')}</button></div>
           <p class="chess-local-note">${t('chess.note')}</p>
         </aside>
@@ -53,6 +54,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   document.body.append(dialog);
   const $=<T extends HTMLElement=HTMLElement>(selector:string)=>dialog.querySelector<T>(selector)!;
   let ctx:CanvasRenderingContext2D;
+  dialog.append($('.chess-close'));
   const board=$('.chess-board'),popover=$('.chess-popover'),backdrop=$('.chess-popover-backdrop');
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   let selected:Square|null=null,flipped=false,animation:Animation|null=null,morph:Morph|null=null;
@@ -65,6 +67,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   let systemBounds:{left:number;top:number;width:number;height:number}|undefined;
   let currentView:ChessView={zoom:1,pan:{x:0,y:0}},cachedFaces:Face[]|null=null;
   let boardFaces:Face[]|null=null;const pieceCache=new Map<string,Face[]>();
+  let tileRaster:HTMLCanvasElement|null=null,pieceRaster:HTMLCanvasElement|null=null;
   let raster:HTMLCanvasElement|null=null,rasterFaces:Face[]|null=null,rasterBounds=chessBounds(camera);
   let pickSource:Face[]|null=null,picking:Face[]=[],queuedExit:(()=>void)|null=null;
   const buttons=new Map<Square,HTMLButtonElement>();
@@ -75,10 +78,12 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   function applyLayout(){
     const data=document.body.dataset;
     const mobile=document.body.classList.contains('mobile-chess');
-    if(mobile&&dialog.dataset.mobile!=='true')($<HTMLDetailsElement>('.chess-history')).open=true;dialog.dataset.mobile=String(mobile);dialog.dataset.compactChat=String(mobile&&document.body.classList.contains('mobile-chess-chat')&&Number(data.mobileHeight)<480);
+    const status=$('.chess-status'),statusParent=mobile?$('.chess-shell'):$('.chess-aside');if(status.parentElement!==statusParent)statusParent.prepend(status);
+    if(mobile&&dialog.dataset.mobile!=='true')($<HTMLDetailsElement>('.chess-history')).open=innerHeight>700;dialog.dataset.mobile=String(mobile);dialog.dataset.compactChat=String(mobile&&document.body.classList.contains('mobile-chess-chat')&&Number(data.mobileHeight)<480&&innerWidth<innerHeight);
     const layout=document.body.classList.contains('mobile-chess')?mobileChessLayout({width:innerWidth,height:Number(data.mobileHeight)||innerHeight,safeTop:Number(data.safeTop)||0,safeBottom:Number(data.safeBottom)||0,offsetTop:Number(data.mobileTop)||0,chat:document.body.classList.contains('mobile-chess-chat'),landscape:innerWidth>innerHeight}):chessLayout({width:innerWidth,height:innerHeight},currentView);
     const changed=JSON.stringify(camera)!==JSON.stringify(layout.camera);camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';dialog.dataset.density=layout.compact?'compact':'normal';
     const {header,close,black,white,help,aside}=layout;
+    if(mobile){const status=(layout as ReturnType<typeof mobileChessLayout>).status;for(const [key,value] of Object.entries(status))dialog.style.setProperty('--chess-status-'+key,value+'px')}
     if(systemBounds&&!layout.stacked&&aside.left+aside.width>systemBounds.left&&aside.left<systemBounds.left+systemBounds.width){aside.top=Math.max(aside.top,systemBounds.top+systemBounds.height+28);aside.height=Math.max(80,innerHeight-104-aside.top)}
     for(const [prefix,region] of Object.entries({header,close,black:flipped?white:black,white:flipped?black:white,help,aside}))for(const [key,value] of Object.entries(region))dialog.style.setProperty('--chess-'+prefix+'-'+key,value+'px');
     if(changed||!buttons.size)placeBoard();
@@ -168,7 +173,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     if(record){
       const history=$('.chess-moves');history.replaceChildren();
       for(let i=0;i<record.moves.length;i+=2){const row=document.createElement('li');for(const value of [String(i/2+1).padStart(2,'0'),record.moves[i].san,record.moves[i+1]?.san||'—']){const span=document.createElement('span');span.textContent=value;row.append(span)}history.append(row)}
-      $('.chess-empty').hidden=record.moves.length>0;$('.chess-move-count').textContent=String(record.moves.length).padStart(2,'0');
+      $('.chess-empty').hidden=record.moves.length>0;$('.chess-move-count').textContent=String(record.moves.length).padStart(2,'0');$('.chess-last-move').textContent=record.moves.at(-1)?.san||'—';
       for(const color of ['w','b'] as const){const player=$(`[data-color="${color}"]`),own=color===remote.side;player.querySelector('strong')!.textContent=own?(remote.ownerId?'Kirbith':t('common.you')):(remote.ownerId?t('chess.player'):'Kirbith');player.querySelector('.chess-avatar')!.textContent=own?(remote.ownerId?'K':'V'):(remote.ownerId?'V':'K');player.querySelector('.chess-player-info>span')!.textContent=t(own?'chess.playerSide':remote.ownerId?'chess.opponentSide':'chess.hostSide',{color:t(color==='w'?'chess.white':'chess.black')});}
     }
   }
@@ -185,7 +190,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     }
     const history=game.history,list=$('.chess-moves');list.replaceChildren();
     for(let i=0;i<history.length;i+=2){const item=document.createElement('li');for(const text of [String(i/2+1).padStart(2,'0'),history[i].san,history[i+1]?.san||'—']){const s=document.createElement('span');s.textContent=text;item.append(s)}list.append(item)}
-    $('.chess-empty').hidden=history.length>0;$('.chess-move-count').textContent=String(history.length).padStart(2,'0');
+    $('.chess-empty').hidden=history.length>0;$('.chess-move-count').textContent=String(history.length).padStart(2,'0');$('.chess-last-move').textContent=history.at(-1)?.san||'—';
     const scroll=$('.chess-history-scroll');scroll.scrollTop=scroll.scrollHeight;
     $('.chess-claim').hidden=!(status.claimable||game.canAnnounceClaim||claimMode);
     $('.chess-claim').textContent=claimMode?t('chess.cancelClaim'):t('chess.claim');
@@ -362,7 +367,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   function progress(now=performance.now()){
     if(!active)return 0;
     if(!morph)return 1;
-    const t=clamp((now-morph.start)/Math.max(1,morph.duration));return smooth(morph.opening?t:1-t);
+    const t=clamp((now-morph.start)/Math.max(1,morph.duration));return lerp(morph.from,morph.to,t);
   }
   function render(context:CanvasRenderingContext2D,now:number,view?:{zoom:number;pan:{x:number;y:number};systemBounds?:{left:number;top:number;width:number;height:number}}){
     if(disposed)return;
@@ -373,31 +378,51 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     }
     if(!active)return;
     ctx=context;ctx.save();
-    if(morph&&!morph.opening)ctx.globalAlpha=1-easeOut((now-morph.start)/Math.max(1,morph.duration));
+    const reveal=progress(now),phase=chessPhase(reveal,reduced.matches);
+    document.body.style.setProperty('--chess-world-reveal',String(reveal));
+    dialog.style.setProperty('--chess-reveal',String(reduced.matches?reveal:phase.pieces));
+    dialog.dataset.transition=morph?(morph.opening?'opening':'closing'):'resting';
     const faces=renderBoard(now);if(pickSource!==faces){picking=faces.filter(face=>face.square&&face.alpha>.1);pickSource=faces}
     if(!animation&&!drag?.moved){
+      const ratio=Math.min(devicePixelRatio||1,motion.maxDpr);
       if(rasterFaces!==faces){
-        rasterBounds=chessBounds(camera);raster ||= document.createElement('canvas');
-        const ratio=Math.min(devicePixelRatio||1,motion.maxDpr);
-        raster.width=Math.ceil((rasterBounds.right-rasterBounds.left)*ratio);raster.height=Math.ceil((rasterBounds.bottom-rasterBounds.top)*ratio);
-        const layer=raster.getContext('2d')!;layer.setTransform(ratio,0,0,ratio,-rasterBounds.left*ratio,-rasterBounds.top*ratio);
-        const main=ctx;ctx=layer;faces.forEach(paint);ctx=main;rasterFaces=faces;
+        rasterBounds=chessBounds(camera);raster ||= document.createElement('canvas');tileRaster ||= document.createElement('canvas');pieceRaster ||= document.createElement('canvas');
+        const layers=[raster,tileRaster,pieceRaster];
+        for(const layer of layers){layer.width=Math.ceil((rasterBounds.right-rasterBounds.left)*ratio);layer.height=Math.ceil((rasterBounds.bottom-rasterBounds.top)*ratio)}
+        const main=ctx;
+        for(const [layer,isPiece] of [[tileRaster,false],[pieceRaster,true]] as const){
+          const target=layer.getContext('2d')!;target.setTransform(ratio,0,0,ratio,-rasterBounds.left*ratio,-rasterBounds.top*ratio);ctx=target;
+          for(const face of faces)if(!!face.square===isPiece)paint(face);
+        }
+        ctx=main;const target=raster.getContext('2d')!;target.drawImage(tileRaster,0,0);target.drawImage(pieceRaster,0,0);rasterFaces=faces;
       }
-      ctx.drawImage(raster!,rasterBounds.left,rasterBounds.top,raster!.width/(Math.min(devicePixelRatio||1,motion.maxDpr)),raster!.height/(Math.min(devicePixelRatio||1,motion.maxDpr)));
+      const draw=(layer:HTMLCanvasElement,alpha:number)=>{ctx.globalAlpha=alpha;ctx.drawImage(layer,rasterBounds.left,rasterBounds.top,layer.width/ratio,layer.height/ratio)};
+      if(morph){draw(tileRaster!,phase.board);draw(pieceRaster!,phase.pieces)}else draw(raster!,1);
+      ctx.globalAlpha=1;
     }else faces.forEach(paint);
-    drawGuides();
+    if(!morph||phase.pieces>.9)drawGuides();
     if(morph){
-      const m=morph,t=clamp((now-m.start)/Math.max(1,m.duration)),u=easeOut(m.opening?t:1-t);
-      // The complete board is usable now; a small set of wireframe fragments
-      // carries the node's unfolding instead of interpolating ~6,000 faces/frame.
-      ctx.globalAlpha=Math.sin(Math.PI*t)*.24;
-      m.source.forEach((source,i)=>{
-        const target=faces[Math.floor(i*faces.length/m.source.length)];if(!target)return;
-        const points=source.map((p,j)=>[lerp(p[0],target.points[j][0],u),lerp(p[1],target.points[j][1],u)]) as Triangle;
-        paint({...target,points,alpha:.2});
-      });ctx.globalAlpha=1;
-      if(!m.opening)dialog.style.setProperty('--chess-reveal',String(1-easeOut(t)));
-      if(t>=1){const opening=m.opening;morph=null;if(opening){if(document.activeElement===dialog)buttons.get(focusSquare)?.focus({preventScroll:true});if(queuedExit)close()}else finishClose()}
+      const m=morph,t=clamp((now-m.start)/Math.max(1,m.duration));
+      if(!reduced.matches&&phase.pieces<1&&m.source.length){
+        const boardCenter:Point=[(rasterBounds.left+rasterBounds.right)/2,(rasterBounds.top+rasterBounds.bottom)/2];
+        const sourceCenter:Point=[origin!.x,origin!.y];
+        ctx.lineWidth=.8;ctx.strokeStyle=rgba(white,.8*(1-phase.pieces*.9));
+        // Split the node faces into the 128 triangles of the board's top grid.
+        // Only this wireframe moves per frame; pieces and tile fills use cached layers.
+        for(let i=0;i<128;i++){
+          const source=m.source[i%m.source.length],polygon=cellPolygon(Math.floor(i/2)%8,Math.floor(i/16),camera);
+          const target=(i%2?[polygon[0],polygon[2],polygon[3]]:[polygon[0],polygon[1],polygon[2]]) as Triangle;
+          const angle=i*2.39996,scatter=Math.sin(Math.PI*phase.unfold)*camera.scale*.22;
+          ctx.beginPath();
+          source.forEach((point,j)=>{
+            const approached:Point=[lerp(point[0],boardCenter[0]+(point[0]-sourceCenter[0])*2,phase.approach),lerp(point[1],boardCenter[1]+(point[1]-sourceCenter[1])*2,phase.approach)];
+            const p:Point=[lerp(approached[0],target[j][0],phase.unfold)+Math.cos(angle)*scatter,lerp(approached[1],target[j][1],phase.unfold)+Math.sin(angle)*scatter];
+            if(j)ctx.lineTo(...p);else ctx.moveTo(...p);
+          });ctx.closePath();ctx.stroke();
+        }
+        if(phase.pulse){ctx.globalAlpha=phase.pulse*.25;ctx.strokeStyle=rgba(white);ctx.strokeRect(rasterBounds.left-4,rasterBounds.top-4,rasterBounds.right-rasterBounds.left+8,rasterBounds.bottom-rasterBounds.top+8);ctx.globalAlpha=1}
+      }
+      if(t>=1){const opening=m.opening;morph=null;document.body.classList.remove('is-chess-transitioning');if(opening){if(document.activeElement===dialog)buttons.get(focusSquare)?.focus({preventScroll:true});if(queuedExit)close()}else finishClose()}
     }else if(queuedExit&&!animation)close();
     ctx.restore();
   }
@@ -406,19 +431,19 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     remote?.open(true);
     if(remote){flipped=remote.side==='b';focusSquare=flipped?'e7':'e2'}
     origin=value;originProvider=getOrigin;returnFocus=focusReturn||document.activeElement as HTMLElement;active=true;selected=null;claimMode=false;
-    dialog.hidden=false;document.body.classList.add('is-chess');dialog.classList.add('is-ready');dialog.style.setProperty('--chess-reveal','1');buildBoard();refresh();resize();board.inert=false;dialog.focus({preventScroll:true});
-    morph={opening:true,start:performance.now(),duration:reduced.matches?0:motion.chessOpen,source:value.faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle),color:white};
+    dialog.hidden=false;document.body.classList.add('is-chess');dialog.classList.add('is-ready');dialog.style.setProperty('--chess-reveal','0');document.body.classList.add('is-chess-transitioning');buildBoard();refresh();resize();board.inert=false;dialog.focus({preventScroll:true});
+    morph={from:0,to:1,opening:true,start:performance.now(),duration:reduced.matches?motion.reduced:motion.chessOpen,source:value.faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle),color:white};
   }
   function close(){
     if(!active||animation)return;
     if(morph&&!morph.opening)return;
     if(!backdrop.hidden){hidePopover();return}
-    cancelDrag();selected=null;claimMode=false;board.inert=true;dialog.classList.remove('is-ready');
-    if(originProvider)origin=originProvider();
-    morph={opening:false,start:performance.now(),duration:reduced.matches?0:motion.chessClose,source:origin!.faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle),color:white};
+    cancelDrag();selected=null;claimMode=false;board.inert=true;document.body.classList.add('is-chess-transitioning');
+    const from=progress();
+    morph={from,to:0,opening:false,start:performance.now(),duration:(reduced.matches?motion.reduced:motion.chessClose)*from,source:origin!.faces.map(f=>f.points.map(p=>[p[0],p[1]]) as Triangle),color:white};
   }
   function finishClose(){
-    active=false;remote?.open(false);dialog.hidden=true;picking=[];document.body.classList.remove('is-chess');dispatchEvent(new Event('nexo:chess-state'));onClosed?.();returnFocus?.focus({preventScroll:true});returnFocus=null;
+    active=false;remote?.open(false);dialog.hidden=true;picking=[];document.body.classList.remove('is-chess','is-chess-transitioning');document.body.style.removeProperty('--chess-world-reveal');dialog.classList.remove('is-ready');dispatchEvent(new Event('nexo:chess-state'));onClosed?.();returnFocus?.focus({preventScroll:true});returnFocus=null;
     const next=queuedExit;queuedExit=null;next?.();
   }
   let onClosed:(()=>void)|undefined;

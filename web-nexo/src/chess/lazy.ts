@@ -38,7 +38,7 @@ export function createLazyChess(remote: AccountChess, openAccount: () => void) {
     isAnimating: () => requested && !ui || !!ui?.isAnimating(),
     pauseFor(ms:number,since?:number){ui?.pauseFor(ms,since)},
     render(...args: Parameters<UI['render']>) { ui?.render(...args); },
-    progress: (now?: number) => ui?.progress(now) || (requested ? .1 : 0),
+    progress: (now?: number) => ui?.progress(now) ?? 0,
     refreshLanguage() { close.setAttribute('aria-label',t('chess.close'));label.textContent = t('chess.loadingGame'); ui?.refreshLanguage(); },
     closeForNavigation(fn: () => void) { if (ui) ui.closeForNavigation(fn); else { closePending(); fn(); } },
     setOnClosed(fn: () => void) { onClosed = fn; },

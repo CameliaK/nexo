@@ -1,3 +1,4 @@
+import { mobileSystemBox } from './mobile-layout';
 import { createCameraGestures, clampZoom } from './camera-gestures';
 import { formationPhase } from './node-forming';
 import { motion as MOTION, easeOut, resumeStart } from './motion';
@@ -110,14 +111,21 @@ systemScene.nodes=system.architecture.components.map(component=>{
   return{id:component.id,name:component.label,meta:component.tech,description:component.what+(component.contribution?t('content.contribution',{text:component.contribution}):''),component,color:colors[kindColors[component.kind]||'mint'],x:-.66+component.layer*.285,y:(index-(peers.length-1)/2)*.29,r:(component.layer===4?27:33)+tier*3,type:tier===3?'orb':tier===2?'system':'oct',weightTier:tier,children:null,system:true};
 });
 systemScene.edges=system.architecture.edges.map(edge=>[systemScene.nodes.findIndex(n=>n.id===edge.from),systemScene.nodes.findIndex(n=>n.id===edge.to),{label:edge.label,text:edge.label,directed:true,event:edge.kind==='event'}]);
-let systemReturn=null,systemTravel=null,disposed=false;
+let systemReturn=null,systemTravel=null,disposed=false,chessJourney=null;
 const systemPopulation=instantiate(systemScene);let apertureHover=false;
 function distantSystemBounds(view=camera()){
+  const target=systemFrame(view),u=system.chess?.progress?.()||0;
+  if(!chessJourney||!system.chess?.isOpen()||document.body.classList.contains('mobile-system-expanded'))return target;
+  const from=chessJourney.systemFrom;
+  // FLIP: preserve the current box, interpolate its position and scale to the
+  // game's box, using the same geometry for canvas and DOM hit area.
+  return Object.fromEntries(['left','top','width','height'].map(key=>[key,lerp(from[key],target[key],easeOut(u))]));
+}
+function systemFrame(view=camera()){
   if(document.body.classList.contains('mobile-chess')){
     const top=(Number(document.body.dataset.safeTop)||0)+(Number(document.body.dataset.mobileTop)||0),h=Number(document.body.dataset.mobileHeight)||height;
     if(document.body.classList.contains('mobile-system-expanded'))return{left:12,top:top+h*.25+56,width:width-24,height:h*.60-70};
-    if(document.body.classList.contains('mobile-chess-chat'))return{left:width>height?8:12,top:top+2,width:width>height?140:width-24,height:26};
-    return width>height?{left:8,top:top+8,width:140,height:90}:{left:12,top:top+4,width:width-24,height:80};
+    return mobileSystemBox({width,height:h,safeTop:Number(document.body.dataset.safeTop)||0,offsetTop:Number(document.body.dataset.mobileTop)||0,chat:document.body.classList.contains('mobile-chess-chat'),landscape:width>height});
   }
   const mobile=width<650,scale=view.zoom;
   const w=(mobile?138:218)*scale,h=(mobile?88:120)*scale;
@@ -135,7 +143,12 @@ function renderDistantSystem(expanded=false){
   if(level.system||systemTravel)return;
   const bounds=distantSystemBounds(),items=apertureNodes(bounds);
   if(expanded){ctx.fillStyle='#0b161efc';ctx.fillRect(0,bounds.top-56,width,height-bounds.top+56);ctx.strokeStyle='#b6f3dc44';ctx.strokeRect(bounds.left,bounds.top,bounds.width,bounds.height);}
-  if(system.portal.element){const style=system.portal.element.style;style.left=bounds.left+'px';style.top=bounds.top+'px';style.width=bounds.width+'px';style.height=bounds.height+'px'}
+  if(system.portal.element){
+    const style=system.portal.element.style,flip=chessJourney&&system.chess?.isOpen()&&!expanded;
+    const destination=flip?systemFrame():bounds;
+    style.left=destination.left+'px';style.top=destination.top+'px';style.width=destination.width+'px';style.height=destination.height+'px';style.transformOrigin='0 0';
+    style.transform=flip?`translate(${bounds.left-destination.left}px,${bounds.top-destination.top}px) scale(${bounds.width/destination.width},${bounds.height/destination.height})`:'';
+  }
   const clipMini=document.body.classList.contains('mobile-chess')&&!expanded;if(clipMini){ctx.save();ctx.beginPath();ctx.rect(bounds.left,bounds.top,bounds.width,bounds.height);ctx.clip()}
   drawEdges(systemScene,items,apertureHover?.9:.65);for(const n of items){drawNode(n,apertureHover?1:.75);if(expanded){ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillStyle='#c9ded8';ctx.fillText(n.name,n.sx,n.sy+n.sr+14)}}
   if(clipMini)ctx.restore();
@@ -172,13 +185,13 @@ if(chessTarget){
   chessTarget.addEventListener('focus',()=>chessHover=true);chessTarget.addEventListener('blur',()=>chessHover=false);
   chessTarget.addEventListener('click',openChess);
   chessTarget.addEventListener('pointerenter',()=>system.chess.preload?.());chessTarget.addEventListener('focus',()=>system.chess.preload?.());
-  system.chess.setOnClosed(()=>{chessTarget.setAttribute('aria-expanded','false');chessTarget.hidden=level!==root||!system.chessNodeVisible;last=performance.now()});
+  system.chess.setOnClosed(()=>{chessJourney=null;document.body.style.removeProperty('--chess-world-reveal');chessTarget.setAttribute('aria-expanded','false');chessTarget.hidden=level!==root||!system.chessNodeVisible;last=performance.now()});
 }
 function openChess(){
   if(!chessTarget||travel||systemTravel||chatMorph)return;
   if(system.onChessAccess&&!system.onChessAccess())return;
   const source=()=>{const node=chessOrbit();return{x:node.sx,y:node.sy,r:node.sr,faces:meshFaces(node)}};
-  drag=null;system.chess.open(source(),source);chessTarget.setAttribute('aria-expanded','true');chessTarget.hidden=true;
+  drag=null;chessJourney={source:source(),systemFrom:distantSystemBounds(),snapshot:null,soft:null};system.chess.open(chessJourney.source,source);chessTarget.setAttribute('aria-expanded','true');chessTarget.hidden=true;
 }
 let worldLayoutKey='',worldLayout=new Map();
 function rootWorldLayout(population){
@@ -645,7 +658,7 @@ function updateUI(){
   syncMediaLevel();syncOwnerPagination();
   const crumbs=$('breadcrumbs');crumbs.replaceChildren();const items=level.system?[root,level]:[...stack.map(s=>s.level),level];
   items.forEach((item,i)=>{if(i){const slash=document.createElement('span');slash.className='slash';slash.textContent='/';crumbs.append(slash)}if(i<items.length-1){const b=document.createElement('button');b.textContent=i===0?t('common.home'):item.title;b.addEventListener('click',()=>level.system?exitSystem():goBackTo(i));crumbs.append(b)}else{const span=document.createElement('span');span.setAttribute('aria-current','location');span.textContent=i===0?'⌘  '+t('common.home'):item.title;crumbs.append(span)}});
-  $('level-title').textContent=level.title;$('level-description').textContent=level.description;$('example-badge').hidden=!(level.system&&system.simulated);$('example-badge').textContent=t('common.simulated');$('depth-number').textContent=String(level.system?1:stack.length).padStart(2,'0');$('depth-label').textContent=level.system?t('nav.system'):stack.length?t('nav.inner'):t('nav.overview');$('scene-number').textContent=String(stack.length+1).padStart(2,'0');$('node-count').textContent=t('nav.nodeCount',{count:nodes.filter(n=>!n.reference).length})+(nodes.some(n=>n.reference)?t('nav.linkCount',{count:nodes.filter(n=>n.reference).length}):'');$('edge-count').textContent=t('nav.edgeCount',{count:level.edges.length});$('back').hidden=!stack.length&&!level.system;$('back').innerHTML=level.system?'← '+t('common.back'):'<span aria-hidden="true">↖</span> '+t('common.back')+' <kbd>ESC</kbd>';flowLegend.hidden=!level.system;document.body.classList.toggle('system-scene',!!level.system);$('announcement').textContent=t('nav.announcement',{title:level.title,count:nodes.length,depth:stack.length});document.title='Nexo — '+level.title;document.body.classList.toggle('architecture-scene',!!level.architecture);renderSceneFacts();syncZoomUI();if(level.generated)showGenerated({generated:level.generatedRecord,generatedParent:level.id});syncFocusControls();
+  $('level-title').textContent=level.title;$('level-description').textContent=level.description;$('example-badge').hidden=!(level.system&&system.simulated);$('example-badge').textContent=t('common.simulated');$('depth-number').textContent=String(level.system?1:stack.length).padStart(2,'0');$('depth-label').textContent=level.system?t('nav.system'):stack.length?t('nav.inner'):t('nav.overview');$('scene-number').textContent=String(stack.length+1).padStart(2,'0');$('node-count').textContent=t('nav.nodeCount',{count:nodes.filter(n=>!n.reference).length})+(nodes.some(n=>n.reference)?t('nav.linkCount',{count:nodes.filter(n=>n.reference).length}):'');$('edge-count').textContent=t('nav.edgeCount',{count:level.edges.length});$('back').hidden=!stack.length&&!level.system;$('back').innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg><span>'+t('common.back')+'</span><kbd>ESC</kbd>';flowLegend.hidden=!level.system;document.body.classList.toggle('system-scene',!!level.system);$('announcement').textContent=t('nav.announcement',{title:level.title,count:nodes.length,depth:stack.length});document.title='Nexo — '+level.title;document.body.classList.toggle('architecture-scene',!!level.architecture);renderSceneFacts();syncZoomUI();if(level.generated)showGenerated({generated:level.generatedRecord,generatedParent:level.id});syncFocusControls();
 }
 function activate(n,keyboard=false){if(travel||systemTravel||n.disabled)return;if(system.chess?.isOpen()){system.chess.closeForNavigation?.(()=>activate(n,keyboard));return}if(n.ownerGame){const source=()=>({x:n.sx,y:n.sy,r:n.sr,faces:meshFaces(n)});system.onOwnerGame?.(n.ownerGame.id,source(),source);return}if(n.privateEmpty)return;if(n.record?.type==='system'){enterSystem();return}if(n.record?.type==='live_chat'){system.onLiveOpen?.();return}if(n.reference){navigateTo(n.id);return}if(!n.children||(n.generated&&!n.children.nodes.length)){setHover(n);say(n.name,n.description,'node:'+level.title+':'+n.id,0);n.hover=1;showContent(n);return}startTravel(n,keyboard)}
 function startTravel(n,keyboard){
@@ -787,12 +800,12 @@ function drawMorph(t,u,mesh=morphMesh(t,u)){
   // Original seams remain visible while their surfaces unfold into smaller faces.
   if(edges<1){ctx.save();for(const f of t.parentFaces){const part={source:f,target:f,points:f.points};const transformed=morphTriangle(t,part,u);trianglePath(transformed.points);ctx.lineWidth=.7+clamp((f.z+1)*.5)*.25;ctx.strokeStyle=rgba(t.entry.color,(.15+clamp((f.z+1)*.5)*.4+t.entry.hover*.24)*(1-edges));ctx.stroke()}ctx.restore()}
 }
-function drawBackground(tint=colors[level.tint]){
+function drawBackground(tint=colors[level.tint],includeSystem=true){
   ctx.fillStyle='#080b10';ctx.fillRect(0,0,width,height);
   const g=ctx.createRadialGradient(width*.51,height*.52,0,width*.51,height*.52,width*.62);g.addColorStop(0,rgba(tint,.036));g.addColorStop(.55,'rgba(16,25,39,.07)');g.addColorStop(1,'rgba(7,9,15,0)');ctx.fillStyle=g;ctx.fillRect(0,0,width,height);
   for(const s of stars){const x=(Math.abs(s.x)*width+parallax.x*s.z*4+Math.sin(clock*.015+s.z)*3+width)%width,y=(Math.abs(s.y)*height+parallax.y*s.z*4+height)%height;ctx.beginPath();ctx.arc(x,y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(159,190,207,${.07+s.z*.14+Math.sin(clock*.28+s.x*80)*.035})`;ctx.fill()}
   ctx.strokeStyle='rgba(169,202,210,.065)';ctx.lineWidth=.65;for(const[x,y]of[[.23,.34],[.79,.68],[.16,.73],[.72,.32]]){const px=width*x,py=height*y;ctx.beginPath();ctx.moveTo(px-3,py);ctx.lineTo(px+3,py);ctx.moveTo(px,py-3);ctx.lineTo(px,py+3);ctx.stroke()}
-  renderDistantSystem();
+  if(includeSystem)renderDistantSystem();
 }
 function bezier(a,b,t,bend){const mx=(a.sx+b.sx)/2-(b.sy-a.sy)*bend,my=(a.sy+b.sy)/2+(b.sx-a.sx)*bend;return{x:(1-t)**2*a.sx+2*(1-t)*t*mx+t*t*b.sx,y:(1-t)**2*a.sy+2*(1-t)*t*my+t*t*b.sy,mx,my}}
 function drawSystemEdges(scene,items,alpha){
@@ -818,7 +831,25 @@ function drawEdges(scene,items,alpha=1){
     if(!a.pending&&!b.pending&&!note?.related&&scene.confidence!=='low'){const q=bezier(a,b,(clock*.055+i*.173)%1,bend),pulse=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,8);pulse.addColorStop(0,rgba(c,.7));pulse.addColorStop(.14,rgba(c,.6));pulse.addColorStop(.4,rgba(c,.15));pulse.addColorStop(1,rgba(c,0));ctx.fillStyle=pulse;ctx.fillRect(q.x-8,q.y-8,16,16)}ctx.restore();
   }
 }
-function placeTargets(alpha){for(const n of nodes){const forming=n.formation?formationPhase(performance.now()-n.formation.start,reduced.matches||paused):null;const opacity=alpha*(forming?forming.build:1)*(hoverId&&hoverId!==n.id?.55:1)*(n.ownerGame?(n.ownerGame.status!=='active'?.45:n.ownerGame.turn==='owner'?1:.65):1);n.el.style.transform=`translate(${n.sx}px,${n.sy}px) translate(-50%,-50%)`;const size=Math.max(48,n.sr*2)+'px';if(n.el.style.width!==size)n.el.style.width=n.el.style.height=size;n.el.style.setProperty('--radius',n.sr+'px');n.el.style.setProperty('--node-label-zoom',level===root?zoom:1);n.el.style.setProperty('--label-gap',(width<650?12:19)*(level===root?zoom:1)+'px');if(forming)n.el.disabled=!forming.done;n.el.style.opacity=opacity;n.el.style.visibility=opacity<.02?'hidden':'visible'}}
+function placeTargets(alpha,transform){for(const n of nodes){const projected=transform?{sx:width/2+(n.sx-width/2)*transform.scale+transform.x,sy:height*.53+(n.sy-height*.53)*transform.scale+transform.y,sr:n.sr*transform.scale}:n;const forming=n.formation?formationPhase(performance.now()-n.formation.start,reduced.matches||paused):null;const opacity=alpha*(forming?forming.build:1)*(hoverId&&hoverId!==n.id?.55:1)*(n.ownerGame?(n.ownerGame.status!=='active'?.45:n.ownerGame.turn==='owner'?1:.65):1);n.el.style.transform=`translate(${projected.sx}px,${projected.sy}px) translate(-50%,-50%)`;const size=Math.max(48,projected.sr*2)+'px';if(n.el.style.width!==size)n.el.style.width=n.el.style.height=size;n.el.style.setProperty('--radius',projected.sr+'px');n.el.style.setProperty('--node-label-zoom',level===root?zoom:1);n.el.style.setProperty('--label-gap',(width<650?12:19)*(level===root?zoom:1)+'px');if(forming)n.el.disabled=!forming.done;n.el.style.opacity=opacity;n.el.style.visibility=opacity<.02?'hidden':'visible'}}
+function entryTransform(entry,u){const move=smooth(u/.5);return{scale:1+.6*move,x:(width/2-entry.sx)*move,y:(height*.53-entry.sy)*move}}
+function drawChessWorld(now){
+  const reveal=system.chess.progress(now),mobile=document.body.classList.contains('mobile-chess');
+  if(!chessJourney){drawBackground();return}
+  const journey=chessJourney;
+  if(!journey.snapshot){
+    // Capture once, excluding the system window. Its renderer stays live above
+    // this frozen backdrop. Blur is prepared once, never animated per frame.
+    project({level,nodes,camera:camera()});drawBackground(undefined,false);drawEdges(level,nodes);for(const n of nodes)drawNode(n);
+    journey.snapshot=document.createElement('canvas');journey.snapshot.width=width;journey.snapshot.height=height;journey.snapshot.getContext('2d').drawImage(canvas,0,0,width,height);
+    journey.soft=document.createElement('canvas');journey.soft.width=width;journey.soft.height=height;const layer=journey.soft.getContext('2d');layer.filter='blur(3px)';layer.drawImage(journey.snapshot,0,0);
+  }
+  drawBackground(undefined,false);
+  const alpha=1-reveal*(mobile?1:.88),transform=entryTransform({sx:journey.source.x,sy:journey.source.y},reduced.matches?0:reveal);
+  if(alpha>.001){ctx.save();ctx.translate(width/2+transform.x,height*.53+transform.y);ctx.scale(transform.scale,transform.scale);ctx.translate(-width/2,-height*.53);ctx.globalAlpha=alpha*(1-reveal);ctx.drawImage(journey.snapshot,0,0,width,height);ctx.globalAlpha=alpha*reveal;ctx.drawImage(journey.soft,0,0,width,height);ctx.restore()}
+  placeTargets(alpha,transform);
+  document.body.style.setProperty('--chess-world-reveal',String(reveal));
+}
 function renderTravel(now){
   const t=travel,p=clamp((now-t.start)/t.duration),u=t.kind==='in'?easeOut(p):1-easeOut(p);
   if(p>=.55&&!t.switched)switchLevel();
@@ -826,8 +857,8 @@ function renderTravel(now){
   if(reduced.matches){const state=t.switched?(t.kind==='in'?t.child:t.parent):(t.kind==='in'?t.parent:t.child),alpha=t.switched?smooth((p-.55)/.45):1-smooth(p/.55);drawEdges(state.level,state.nodes,alpha);for(const n of state.nodes)drawNode(n,alpha);placeTargets(alpha)}
   else{
     const parentAlpha=1-smooth(u/.42),childAlpha=smooth((u-.56)/.44);
-    const scale=1+.6*smooth(u/.5),move=smooth(u/.5);
-    const parentBackdrop=t.parent.nodes.map(n=>({...n,sx:width/2+(n.sx-width/2)*scale+(width/2-t.entry.sx)*move,sy:height*.53+(n.sy-height*.53)*scale+(height*.53-t.entry.sy)*move,sr:n.sr*scale}));
+    const {scale,x:moveX,y:moveY}=entryTransform(t.entry,u);
+    const parentBackdrop=t.parent.nodes.map(n=>({...n,sx:width/2+(n.sx-width/2)*scale+moveX,sy:height*.53+(n.sy-height*.53)*scale+moveY,sr:n.sr*scale}));
     drawEdges(t.parent.level,parentBackdrop,parentAlpha);
     for(const n of parentBackdrop)if(n.id!==t.entry.id)drawNode(n,parentAlpha);
     const mesh=morphMesh(t,u);
@@ -955,7 +986,7 @@ function render(now){
   gestures.flush();
   const obscured=(document.querySelectorAll?.('.welcome-overlay:not([hidden]), .access-overlay:not([hidden]), .account-overlay:not([hidden])')||[]).length>0;
   const restingChess=system.chess?.isOpen()&&!system.chess?.isAnimating?.();
-  const interval=obscured||restingChess||document.body.classList.contains('mobile-chess')?1000/MOTION.idleFps:0;
+  const interval=obscured||restingChess?1000/MOTION.idleFps:0;
   const cadence=interval?'30':'60';if(document.body.dataset.canvasFps!==cadence)document.body.dataset.canvasFps=cadence;
   if(now-lastPaint<interval-.5){frameId=requestAnimationFrame(render);return}
   lastPaint=now;
@@ -968,10 +999,12 @@ function render(now){
   if(!paused&&!document.hidden&&!travel)clock+=dt/60;
   system.traces.tick();system.portal.render();advanceGeneratedFocus(now);
   if(document.body.classList.contains('mobile-chess')){
-    drawBackground();system.chess?.render?.(ctx,now,{zoom,pan,paused});
+    drawChessWorld(now);system.chess?.render?.(ctx,now,{zoom,pan,paused});
+    if(!document.body.classList.contains('mobile-system-expanded'))renderDistantSystem();
     if(document.body.classList.contains('mobile-system-expanded'))renderDistantSystem(true);
     frameId=requestAnimationFrame(render);return;
   }
+  if(chessJourney&&system.chess?.isOpen()){drawChessWorld(now);system.chess.render(ctx,now,{zoom,pan,paused,systemBounds:systemFrame()});renderDistantSystem();placePanel();drawChatSatellite(now);frameId=requestAnimationFrame(render);return}
   if(systemTravel)renderSystemTravel(now);else if(travel)renderTravel(now);
   else{
     if(!system.chess?.isOpen()){parallax.x=lerp(parallax.x,reduced.matches?0:pointer.x,.035*dt);parallax.y=lerp(parallax.y,reduced.matches?0:pointer.y,.035*dt)}zoom=lerp(zoom,targetZoom,.1*dt);physics(dt);

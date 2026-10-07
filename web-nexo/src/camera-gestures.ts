@@ -10,6 +10,8 @@ export function pinchView(view:GestureView,previous:Point,next:Point,ratio:numbe
 export function createCameraGestures(options:{root:Document;canvas:HTMLCanvasElement;eligible:(target:EventTarget|null)=>boolean;enabled:()=>boolean;read:()=>GestureView;apply:(view:GestureView)=>void;onStart:()=>void}){
  const {root,canvas}=options,points=new Map<number,Point>();
  let baseline:Point[]=[],dirty=false,moved=false,pinched=false,start:Point|null=null,suppressUntil=0;
+ let tap:{id:number;point:Point;started:number;valid:boolean;ended:boolean}|null=null;
+ const stamp=(e:PointerEvent)=>e.timeStamp??performance.now();
  const snapshot=()=>[...points.values()].map(p=>({...p}));
  const middle=(a:Point,b:Point)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
  const distance=(a:Point,b:Point)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -26,18 +28,21 @@ export function createCameraGestures(options:{root:Document;canvas:HTMLCanvasEle
  }
  const capture=(id:number)=>{try{canvas.setPointerCapture(id)}catch{/* A canceled pointer is no longer capturable. */}};
  function down(e:PointerEvent){
+  if(e.pointerType==='mouse'){suppressUntil=0;tap=options.eligible(e.target)?{id:e.pointerId,point:{x:e.clientX,y:e.clientY},started:stamp(e),valid:true,ended:false}:null;return}
   if(e.pointerType!=='touch'||!options.enabled()||!options.eligible(e.target)||points.size>=2)return;
   flush();points.set(e.pointerId,{x:e.clientX,y:e.clientY});baseline=snapshot();dirty=false;
-  if(points.size===1){suppressUntil=0;start={x:e.clientX,y:e.clientY};moved=false;pinched=false;options.onStart();}
-  else {moved=pinched=true;suppressUntil=Infinity;for(const id of points.keys())capture(id);e.preventDefault();options.onStart();}
+  if(points.size===1){tap={id:e.pointerId,point:{x:e.clientX,y:e.clientY},started:stamp(e),valid:true,ended:false};suppressUntil=0;start={x:e.clientX,y:e.clientY};moved=false;pinched=false;options.onStart();}
+  else {tap=null;moved=pinched=true;suppressUntil=Infinity;e.preventDefault();options.onStart();}
  }
  function move(e:PointerEvent){
+  if(tap?.id===e.pointerId&&distance(tap.point,{x:e.clientX,y:e.clientY})>8)tap.valid=false;
   if(!points.has(e.pointerId))return;
   points.set(e.pointerId,{x:e.clientX,y:e.clientY});dirty=true;
-  if(!moved&&start&&distance(start,{x:e.clientX,y:e.clientY})>6){moved=true;suppressUntil=Infinity;capture(e.pointerId);options.onStart();}
-  if(moved||pinched)e.preventDefault();
+  if(!moved&&start&&distance(start,{x:e.clientX,y:e.clientY})>8){moved=true;suppressUntil=Infinity;capture(e.pointerId);options.onStart();}
+  if(moved||pinched){for(const id of points.keys())capture(id);e.preventDefault();}
  }
  function end(e:PointerEvent){
+  if(tap?.id===e.pointerId){if(e.type==='pointerup'){tap.valid&&=stamp(e)-tap.started<500&&distance(tap.point,{x:e.clientX,y:e.clientY})<=8;tap.ended=true}else if(!tap.ended)tap=null}
   if(!points.has(e.pointerId))return;
   if(e.type==='pointerup'){points.set(e.pointerId,{x:e.clientX,y:e.clientY});dirty=true;flush();}
   points.delete(e.pointerId);baseline=snapshot();dirty=false;start=baseline[0]||null;
@@ -45,8 +50,11 @@ export function createCameraGestures(options:{root:Document;canvas:HTMLCanvasEle
   else {moved=true;pinched=true;}
  }
  function cancel(){const ids=[...points.keys()];points.clear();for(const id of ids){try{if(canvas.hasPointerCapture?.(id))canvas.releasePointerCapture(id)}catch{/* A canceled capture may already have been released. */}}baseline=[];dirty=false;start=null;if(moved||pinched)suppressUntil=performance.now()+800;moved=pinched=false;}
- function click(e:MouseEvent){if(e.detail!==0&&options.eligible(e.target)&&performance.now()<suppressUntil){e.preventDefault();e.stopImmediatePropagation();}}
+ function click(e:MouseEvent){if(e.detail!==0&&options.eligible(e.target)&&(performance.now()<suppressUntil||tap?.valid===false)){e.preventDefault();e.stopImmediatePropagation();}}
+ const reset=()=>{cancel();tap=null;suppressUntil=0};
+ const visibility=()=>{if(root.hidden)reset()};
+ root.defaultView?.addEventListener('blur',reset);root.addEventListener('visibilitychange',visibility);
  const listeners=[['pointerdown',down],['pointermove',move],['pointerup',end],['pointercancel',end],['lostpointercapture',end],['click',click]] as const;
  for(const [type,fn]of listeners)root.addEventListener(type,fn as EventListener,{capture:true,passive:false});
- return {flush,cancel,dispose(){cancel();for(const [type,fn]of listeners)root.removeEventListener?.(type,fn as EventListener,{capture:true})}};
+ return {flush,cancel,dispose(){reset();root.defaultView?.removeEventListener('blur',reset);root.removeEventListener?.('visibilitychange',visibility);for(const [type,fn]of listeners)root.removeEventListener?.(type,fn as EventListener,{capture:true})}};
 }

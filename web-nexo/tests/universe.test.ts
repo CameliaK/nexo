@@ -1,4 +1,5 @@
 // @ts-nocheck -- This lightweight DOM fixture exercises the unchanged Canvas renderer.
+import { mobileSystemBox } from '../src/mobile-layout';
 import { createCameraGestures, clampZoom } from '../src/camera-gestures';
 import { formationPhase } from '../src/node-forming';
 import { motion as MOTION, easeOut, resumeStart } from '../src/motion';
@@ -21,7 +22,7 @@ const satellite=vm.runInNewContext(satelliteSource+';({LivePreview,placeSatellit
 function fixture(withChess=false,reducedMotion=false,withMedia=false){
  let activeElement,now=0,raf,blocked=false;
  class Element{
-  children=[];handlers={};attributes={};style={setProperty(k,v){this[k]=v}};dataset={};hidden=false;textContent='';classes=new Set();offsetWidth=260;offsetHeight=125;
+  children=[];handlers={};attributes={};style={setProperty(k,v){this[k]=v},removeProperty(k){delete this[k]}};dataset={};hidden=false;textContent='';classes=new Set();offsetWidth=260;offsetHeight=125;
   classList={add:x=>this.classes.add(x),remove:x=>this.classes.delete(x),toggle:(x,v)=>v?this.classes.add(x):this.classes.delete(x),contains:x=>this.classes.has(x)};
   append(...c){this.children.push(...c);for(const child of c)if(typeof child==='object')child.parent=this}replaceChildren(){this.children=[]}setAttribute(k,v){this.attributes[k]=v}addEventListener(k,f){this.handlers[k]=f}focus(){activeElement=this;this.handlers.focus?.()}click(){this.handlers.click?.({detail:1,preventDefault(){}})}setPointerCapture(){}
   getBoundingClientRect(){
@@ -39,12 +40,13 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  el('space').getContext=()=>context;
  const listeners={},listen=(k,f)=>{const previous=listeners[k];listeners[k]=previous?e=>{previous(e);f(e)}:f},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
- if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
- const sandbox={createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
+ if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,progress:()=>chessOpen?1:0,isAnimating:()=>false,render(){},open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
+ const sandbox={mobileSystemBox,createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let mediaFrame;
  if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { motion as MOTION, easeOut, resumeStart } from './motion';",'').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
+ source=source.replace("import { mobileSystemBox } from './mobile-layout';",'');
  source=source.replace("import { createCameraGestures, clampZoom } from './camera-gestures';",'');
  source=source.replace("import { formationPhase } from './node-forming';",'');
  source=source.replace("import { LivePreview, placeSatellite, satelliteFootprint } from './live-satellite.js';",'');

@@ -52,7 +52,7 @@ try{
    if(width<650||height<600)assert.ok(result.minTouch>=44,'Every mobile grid hit target is at least 44px');
    assert.ok(result.players.every(p=>p.rect.y>=0&&p.rect.x>=0&&p.rect.x+p.rect.width<=width+1));
    assert.deepEqual(f.errors,[]);reports.push({width,height,lang,...result});
-   if(lang==='en'&&[390,1366,844].includes(width))await f.page.screenshot({path:`${output}/performance-layout-${width}.png`,scale:'css'});
+   if(process.env.QA_CAPTURE!=='0'&&lang==='en'&&[390,1366,844].includes(width))await f.page.screenshot({path:`${output}/performance-layout-${width}.png`,scale:'css'});
    await f.context.close();
   }
  }
