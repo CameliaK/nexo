@@ -2,6 +2,7 @@
 export const motion = {
   hover: 150, panel: 245, language: 196,
   enter: 1715, exit: 1575, system: 1540, livePanel: 504, generated: 840,
+  formingThreads: 360, formingBuild: 560, formingPulse: 320, formingWait: 15000,
   chessOpen: 1085, chessClose: 805, chessMove: 364, chessReady: 140,
   reduced: 100, idleFps: 30, maxDpr: 2,
   rotation: .085, faceAlphaTop: .48, faceAlphaBottom: .58,
@@ -9,7 +10,7 @@ export const motion = {
 } as const;
 export const easeOut = (value: number) => 1 - Math.pow(1 - Math.max(0, Math.min(1, value)), 3);
 export function applyMotionTokens(doc: Document = document) {
-  for (const key of ['hover','panel','language','enter','exit','system','livePanel','generated','chessOpen','chessClose','chessMove','chessReady','reduced'] as const) { const value=motion[key]; doc.documentElement.style.setProperty('--motion-' + key, value + 'ms'); }
+  for (const key of ['hover','panel','language','enter','exit','system','livePanel','generated','formingThreads','formingBuild','formingPulse','chessOpen','chessClose','chessMove','chessReady','reduced'] as const) { const value=motion[key]; doc.documentElement.style.setProperty('--motion-' + key, value + 'ms'); }
   doc.documentElement.style.setProperty('--motion-ease-out', motion.easeOut);
 }
 

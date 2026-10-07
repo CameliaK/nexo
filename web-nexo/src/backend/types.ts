@@ -221,6 +221,9 @@ export type RoutePlanEvent = Envelope<
 export type RouteStepEvent = Envelope<"route.step", { node_id: string; index: number }>;
 export type RagSearchEvent = Envelope<"rag.search", { query: string }>;
 export type RagResultEvent = Envelope<"rag.result", { hits: RagHit[]; used: boolean }>;
+export type NodeFormingEvent = Envelope<"node.forming", { sources: string[] }>;
+/** Local sequence marker; never emitted on the public wire contract. */
+export type IgnoredEvent = Envelope<"event.ignored", Record<string, never>>;
 export type NodeSpawnEvent = Envelope<
   "node.spawn",
   { anchor: string | null; node: GeneratedNode }
@@ -251,6 +254,8 @@ export type BackendEvent =
   | RouteStepEvent
   | RagSearchEvent
   | RagResultEvent
+  | NodeFormingEvent
+  | IgnoredEvent
   | NodeSpawnEvent
   | AnswerChunkEvent
   | LiveMessageEvent
@@ -264,6 +269,7 @@ export type ChessMoveEvent = Envelope<"chess.move", { game: ChessGame }>;
 export type OwnerChessEvent = Envelope<"owner.chess", { game: OwnerChessGame; reason: "new" | "move" | "resign" }>;
 
 export const EVENT_TYPES = [
+  "node.forming",
   "chess.move",
   "owner.chess",
   "run.start",
@@ -291,6 +297,10 @@ export function isBackendEvent(x: unknown): x is BackendEvent {
       Array.isArray(data.game.moves) && (data.game.color === 'w' || data.game.color === 'b') &&
       ['player', 'owner'].includes(data.game.turn) && ['active', 'checkmate', 'stalemate', 'draw', 'resigned'].includes(data.game.status) &&
       (e.type !== 'owner.chess' || typeof (data.game as OwnerChessGame).tag === 'string' && typeof (data.game as OwnerChessGame).player_hint === 'string' && ['new', 'move', 'resign'].includes(data.reason || ''));
+  }
+  if (e.type === 'node.forming') {
+    const sources = (e.data as { sources?: unknown } | null)?.sources;
+    if (!Array.isArray(sources) || !sources.every(id => typeof id === 'string')) return false;
   }
   return (
     e.v === CONTRACT_VERSION &&

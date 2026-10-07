@@ -1,5 +1,5 @@
 import { t, translateText } from '../i18n';
-import { isBackendEvent } from '../backend/types';
+import { readBackendEvent } from '../backend/wire-events';
 import type { BackendArchitecture, BackendEvent, RunKind } from '../backend/types';
 export type LightState = 'idle' | 'active' | 'done' | 'error';
 export interface Hop { run: string; id: string; from: string; to: string; phase: LightState; label: string; detail: string; started: number; expires: number; duration?: number; }
@@ -30,9 +30,10 @@ export class TracePlayer {
       existing.preauth = [];
     }
   }
-  receive(value: unknown) {
+  receive(input: unknown) {
+    const value = readBackendEvent(input);
     if (typeof value === 'object' && value && 'type' in value && (value.type === 'chess.move' || value.type === 'owner.chess')) return;
-    if (!isBackendEvent(value) || !Number.isSafeInteger(value.seq) || value.seq < 1 || this.rejected.has(value.run_id)) return;
+    if (!value || !Number.isSafeInteger(value.seq) || value.seq < 1 || this.rejected.has(value.run_id)) return;
     const event = value;
     let run = this.runs.get(event.run_id);
     if (!run) {
@@ -43,6 +44,7 @@ export class TracePlayer {
     run.buffer.set(event.seq, event);
     while (run.buffer.has(run.expected)) {
       const current = run.buffer.get(run.expected)!; run.buffer.delete(run.expected++);
+      if (current.type === 'event.ignored') continue;
       if (current.type === 'run.start') {
         run.kind = current.data.kind;
         run.allowed = this.known.has(current.run_id) || current.data.kind === 'live_in' || current.data.kind === 'chess';
