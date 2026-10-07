@@ -1,0 +1,450 @@
+{
+ "passed": 13,
+ "cases": 19,
+ "llm_calls": 38,
+ "summary": {
+  "route_answers": 19,
+  "claims": 133,
+  "unsupported": 10,
+  "unsupported_rate": 0.075,
+  "answers_with_unsupported": 6,
+  "route_answer_ms_p50": 1082,
+  "route_answer_ms_p95": 1418
+ },
+ "results": [
+  {
+   "id": "v03",
+   "q": "¿Qué experiencia tiene Kirbith como desarrollador backend?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "experiencia"
+   ],
+   "node": null,
+   "answer": "Kirbith es un desarrollador backend egresado que ha realizado una internship y ha trabajado en proyectos de desarrollo. Te llevé al nodo Experiencia, donde se detalla dónde ha trabajado y los proyectos en los que ha contribuido.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 807,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 2,
+   "unsupported": []
+  },
+  {
+   "id": "v04",
+   "q": "What experience does Kirbith have with C#?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "experiencia"
+   ],
+   "node": null,
+   "answer": "Kirbith has experience with C# through his internship, where he worked on projects involving the language. I've taken you to the Experience node, which covers where he has worked and the projects he has contributed to.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1258,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 3,
+   "unsupported": [
+    "C# @ internship (tecnología atribuida a un lugar sin evidencia ahí)",
+    "C# @ internship (tecnología atribuida a un lugar sin evidencia ahí)"
+   ]
+  },
+  {
+   "id": "v07",
+   "q": "Is Kirbith a student or does she already work?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "aprendizaje",
+    "experiencia"
+   ],
+   "node": null,
+   "answer": "Kirbith is both a student and already gaining professional experience: I pointed you to the \"Aprendizaje\" node, where his university coursework, extra training, and academic projects are detailed. I also took you to the \"Experiencia\" node, which covers where he has worked and the projects he has contributed to.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1486,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 3,
+   "unsupported": [
+    "is both a student (estado temporal falso: Kirbith es egresado)"
+   ]
+  },
+  {
+   "id": "g01",
+   "q": "¿Qué estudió Kirbith?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "aprendizaje",
+    "aprendizaje.universidad",
+    "aprendizaje.universidad.carrera"
+   ],
+   "node": null,
+   "answer": "Kirbith estudió Ingeniería de Software en la Universidad Veracruzana y egresó con el EGEL-IS Sobresaliente. Te llevé a los nodos de Aprendizaje, Universidad y \"Dónde y qué estudié\", donde se detalla su formación académica y capacitación extra.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 862,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 11,
+   "unsupported": []
+  },
+  {
+   "id": "g02",
+   "q": "What did Kirbith study?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "aprendizaje",
+    "aprendizaje.universidad",
+    "aprendizaje.universidad.carrera"
+   ],
+   "node": null,
+   "answer": "I took you to the \"Aprendizaje\" and \"Universidad\" nodes, where Kirbith studied Software Engineering at Universidad Veracruzana. He graduated with an outstanding EGEL-IS result, and his learning also includes extra training and academic projects.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1222,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 9,
+   "unsupported": []
+  },
+  {
+   "id": "g03",
+   "q": "¿Qué hizo Kirbith con C#?",
+   "ok": false,
+   "fails": [
+    "missing /hermes|astralis|financial management|sistema financiero/",
+    "/c#/ with /internship|infosys|intern|pasant/: te lleve a los nodos de experiencia y aprendizaje donde se detalla que kirbith trabajo con c# durant"
+   ],
+   "outcome": "route",
+   "path": [
+    "experiencia",
+    "aprendizaje"
+   ],
+   "node": null,
+   "answer": "Te llevé a los nodos de Experiencia y Aprendizaje, donde se detalla que Kirbith trabajó con C# durante su internship y en proyectos académicos de su formación universitaria. En ellos desarrolló aplicaciones y soluciones de software utilizando ese lenguaje.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 935,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 4,
+   "unsupported": [
+    "C# @ internship (tecnología atribuida a un lugar sin evidencia ahí)"
+   ]
+  },
+  {
+   "id": "g04",
+   "q": "What has Kirbith done with C#?",
+   "ok": false,
+   "fails": [
+    "missing /hermes|astralis|financial management|financial system/",
+    "/c#/ with /internship|infosys|intern/: there you ll find that he has used c# in projects during his internship and university coursework"
+   ],
+   "outcome": "route",
+   "path": [
+    "experiencia",
+    "aprendizaje"
+   ],
+   "node": null,
+   "answer": "I've taken you to the Experience and Learning nodes, which cover Kirbith's work and academic background. There, you'll find that he has used C# in projects during his internship and university coursework.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 918,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 4,
+   "unsupported": [
+    "C# @ internship (tecnología atribuida a un lugar sin evidencia ahí)"
+   ]
+  },
+  {
+   "id": "g05",
+   "q": "¿Kirbith sigue estudiando?",
+   "ok": false,
+   "fails": [
+    "says /sigue estudiando/"
+   ],
+   "outcome": "route",
+   "path": [
+    "aprendizaje",
+    "aprendizaje.universidad"
+   ],
+   "node": null,
+   "answer": "Sí, Kirbith sigue estudiando: es egresado de Ingeniería de Software por la Universidad Veracruzana y continúa formándose con capacitación extra y proyectos académicos. Te llevé a los nodos Aprendizaje y Universidad para mostrarte ese detalle de su formación.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 834,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 9,
+   "unsupported": [
+    "estudiando (estado temporal falso: Kirbith es egresado)",
+    "sigue (estado temporal que las fuentes no dan)"
+   ]
+  },
+  {
+   "id": "g06",
+   "q": "Is he still studying?",
+   "ok": false,
+   "fails": [
+    "missing /graduat|don t have (that|more verified) detail/",
+    "says /is still studying/"
+   ],
+   "outcome": "route",
+   "path": [
+    "aprendizaje",
+    "aprendizaje.universidad"
+   ],
+   "node": null,
+   "answer": "Yes, Kirbith is still studying. I pointed the visitor to the \"Aprendizaje\" and \"Universidad\" nodes, where it shows he is pursuing a Software Engineering degree at Universidad Veracruzana, along with additional training and academic projects.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1201,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 10,
+   "unsupported": [
+    "studying (estado temporal falso: Kirbith es egresado)",
+    "still (estado temporal que las fuentes no dan)",
+    "pursuing (estado temporal falso: Kirbith es egresado)"
+   ]
+  },
+  {
+   "id": "g07",
+   "q": "¿Dónde trabajó Kirbith como desarrollador backend?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "experiencia",
+    "experiencia.dgti"
+   ],
+   "node": null,
+   "answer": "Kirbith trabajó como Backend Software Engineer en la DGTI UV, en Xalapa, de agosto de 2024 a enero de 2025. Te llevé al nodo de Experiencia y al nodo de DGTI UV para mostrarte ese rol.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1273,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 12,
+   "unsupported": []
+  },
+  {
+   "id": "g08",
+   "q": "What was Kirbith's role at Infosys?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "experiencia",
+    "experiencia.infosys"
+   ],
+   "node": null,
+   "answer": "I took you to the Infosys node under Experience. Kirbith worked as a Software Engineer Intern at Infosys in Bangalore, India, from February to August 2025.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 897,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 13,
+   "unsupported": []
+  },
+  {
+   "id": "g09",
+   "q": "¿Qué hizo Kirbith en la DEST?",
+   "ok": false,
+   "fails": [
+    "missing /accesib/"
+   ],
+   "outcome": "route",
+   "path": [
+    "experiencia",
+    "experiencia.dest"
+   ],
+   "node": null,
+   "answer": "Te llevé al nodo DEST UV, donde se detalla que Kirbith trabajó como Full Stack Software Engineer en Xalapa, de agosto de 2025 a febrero de 2026. Puedes ver más sobre esa experiencia en el nodo de Experiencia, que repasa sus trabajos y proyectos.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1211,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 11,
+   "unsupported": []
+  },
+  {
+   "id": "g10",
+   "q": "Tell me about the Astralis project",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "aprendizaje",
+    "aprendizaje.proyectos-academicos",
+    "aprendizaje.proyectos-academicos.astralis"
+   ],
+   "node": null,
+   "answer": "Astralis is one of Kirbith's three academic projects, where he learned by building. It's an online turn-based card game for 1v1 or 2v2 matches, developed in C#. I've taken you to the Astralis node for more details.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 977,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 5,
+   "unsupported": []
+  },
+  {
+   "id": "g11",
+   "q": "¿En qué estado está FleetFix?",
+   "ok": false,
+   "fails": [
+    "missing /construccion/"
+   ],
+   "outcome": "route",
+   "path": [
+    "proyectos-personales",
+    "proyectos-personales.negocios-ia"
+   ],
+   "node": null,
+   "answer": "Te llevé al nodo FleetFix, dentro de los proyectos personales de Kirbith. Ahí se presenta como una plataforma de gestión de negocios con inteligencia artificial que él está construyendo por su cuenta. El portafolio no especifica un estado de avance más detallado.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 920,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 1,
+   "unsupported": []
+  },
+  {
+   "id": "g12",
+   "q": "What rank does Kirbith have in Rocket League?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "hobbies",
+    "hobbies.videojuegos",
+    "hobbies.videojuegos.rocket-league"
+   ],
+   "node": null,
+   "answer": "Kirbith holds the rank of Champion in Rocket League, which falls under his interest in competitive video games. I pointed you to the Rocket League node within his gaming hobbies to confirm this.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1082,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 5,
+   "unsupported": []
+  },
+  {
+   "id": "g13",
+   "q": "¿Qué deportes practica Kirbith?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "hobbies",
+    "hobbies.deportes"
+   ],
+   "node": null,
+   "answer": "Kirbith practica natación, básquetbol, béisbol, fútbol y voleibol, y ahora también tenis en serio. Te llevé al nodo de Deportes, donde él mismo lo cuenta.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1397,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 1,
+   "unsupported": []
+  },
+  {
+   "id": "g14",
+   "q": "What languages does Kirbith speak?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "personal",
+    "personal.datos",
+    "personal.datos.idiomas"
+   ],
+   "node": null,
+   "answer": "Kirbith speaks native Spanish and working technical English at around a B2 level. I pointed you to his Personal Information, Data, and Languages nodes, where he describes his background and language skills in his own words.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1418,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 8,
+   "unsupported": []
+  },
+  {
+   "id": "g15",
+   "q": "¿Qué resultado obtuvo Kirbith en el EGEL?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "aprendizaje",
+    "aprendizaje.universidad",
+    "aprendizaje.universidad.carrera"
+   ],
+   "node": null,
+   "answer": "Kirbith egresó de Ingeniería de Software en la Universidad Veracruzana con un resultado Sobresaliente en el EGEL-IS. Para responder esto, te llevé al nodo \"Dónde y qué estudié\", que forma parte de su aprendizaje y trayectoria universitaria.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 895,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 9,
+   "unsupported": []
+  },
+  {
+   "id": "g16",
+   "q": "When did Kirbith work at DGTI?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "experiencia",
+    "experiencia.dgti"
+   ],
+   "node": null,
+   "answer": "I pointed you to the DGTI UV node for this. Kirbith worked at DGTI UV as a Backend Software Engineer in Xalapa from August 2024 to January 2025.",
+   "hits": [],
+   "error": null,
+   "answer_ms": 1171,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0,
+   "claims": 13,
+   "unsupported": []
+  }
+ ]
+}

@@ -99,6 +99,18 @@ class SkillsIndex:
                 return sid
         return None
 
+    def facts_at(self, nodes: set[str]) -> list[Fact]:
+        """Usable evidence (needs_review dropped, same CV-listing rule as
+        lookup) whose portfolio node is one of these."""
+        facts = []
+        for s in self.skills:
+            usable = [e for e in s["evidence"] if not e.get("needs_review")]
+            if any(e["level"] != "mencion" for e in usable):
+                usable = [e for e in usable if e["level"] != "mencion"]
+            facts += [Fact(s["id"], s["name"], list(s.get("aliases", [])), s["kind"], list(s["domains"]),
+                           e["level"], e["node"], e.get("note", "")) for e in usable if e["node"] in nodes]
+        return facts
+
     def lookup(self, *, techs: list[str], domains: list[str], kinds: list[str],
                terms: list[str]) -> Lookup:
         """Skills selected by explicit ids, by domain (optionally narrowed by

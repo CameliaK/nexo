@@ -18,6 +18,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 
+from . import lexicon
 from .skills import normalize
 
 log = logging.getLogger(__name__)
@@ -71,7 +72,16 @@ def _tokens(text: str) -> list[str]:
 
 
 def _content(text: str) -> list[str]:
-    return [t for t in _tokens(text) if t not in _GENERIC and not t.isdigit() and len(t) > 1]
+    # English phrases become their Spanish equivalents first ("video games"
+    # → "videojuegos"): the sources are Spanish, the node may be English.
+    return [t for t in lexicon.to_spanish(normalize(text)).split()
+            if t not in _GENERIC and not t.isdigit() and len(t) > 1]
+
+
+def _known(word: str, ev: "Evidence") -> bool:
+    """The word, or one of its Spanish equivalents (app/lexicon.py), is in
+    the sources. The lexicon has no tech names, years or levels."""
+    return any(_stem(w) in ev.stems for w in lexicon.stems(word))
 
 
 def _numbers(text: str) -> set[str]:
@@ -144,7 +154,7 @@ def _supported(text: str, ev: Evidence, coverage: float, qualify_mentions: bool 
     words = [w for w in _content(text) if not any(w in n.split() for n in named)]
     if not words:
         return bool(named) or not _content(text)
-    found = sum(_stem(w) in ev.stems for w in words)
+    found = sum(_known(w, ev) for w in words)
     return found / len(words) >= coverage
 
 
@@ -152,7 +162,7 @@ def _tag_supported(tag: str, ev: Evidence) -> bool:
     n = normalize(tag)
     if n in ev.mention_only:
         return False  # a bare tag cannot carry the CV qualifier
-    if n in ev.names or f" {n} " in ev.text:
+    if n in ev.names or f" {n} " in ev.text or lexicon.in_text(n, ev.text):
         return True
     return _supported(tag, ev, 1.0)
 

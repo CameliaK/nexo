@@ -36,6 +36,11 @@ from app.llm.deepseek import DeepSeekProvider
 from app.portfolio import load_portfolio
 from app.skills import SkillsIndex, normalize
 
+try:  # absent in older code: the "before" run collects, --judge measures
+    from app import route_check
+except ImportError:
+    route_check = None
+
 CASES = "/docs/eval/peticiones.json"
 TIMEOUT_S = 150
 
@@ -85,6 +90,31 @@ def node_texts(node: dict | None) -> list[str]:
 THEY = re.compile(r"\b(they|them|their|theirs)\b", re.IGNORECASE)
 
 
+def judge_route(case: dict, res: dict, portfolio: dict, skills: SkillsIndex) -> None:
+    """Risky claims of a route answer and those its sources do not support
+    (app/route_check.py) — the same judge for the "before" and "after"."""
+    if route_check is None or res["outcome"] != "route":
+        return
+    terms = re.findall(r"[\w#+.]+", case["q"])
+    ctx = route_check.build(res["path"], portfolio, skills, terms)
+    res["claims"] = route_check.claims(res["answer"], skills, portfolio)
+    res["unsupported"] = [f"{f.claim} ({f.why})" for f in route_check.verify(res["answer"], ctx, portfolio, skills)]
+
+
+def summary(report: list[dict]) -> dict:
+    routes = [r for r in report if "claims" in r]
+    lat = sorted(r["answer_ms"] for r in report if r.get("outcome") == "route" and r.get("answer_ms") is not None)
+
+    def pct(p):
+        return lat[min(len(lat) - 1, int(round(p * (len(lat) - 1))))] if lat else None
+    claims = sum(r["claims"] for r in routes)
+    unsupported = sum(len(r["unsupported"]) for r in routes)
+    return {"route_answers": len(routes), "claims": claims, "unsupported": unsupported,
+            "unsupported_rate": round(unsupported / claims, 3) if claims else None,
+            "answers_with_unsupported": sum(bool(r["unsupported"]) for r in routes),
+            "route_answer_ms_p50": pct(0.5), "route_answer_ms_p95": pct(0.95)}
+
+
 def check(case: dict, res: dict) -> list[str]:
     fails = []
     if res["outcome"] not in case["outcome"]:
@@ -94,9 +124,13 @@ def check(case: dict, res: dict) -> list[str]:
     answer = normalize(res["answer"])
     if case.get("first_person") and not FIRST_PERSON.search(answer):
         fails.append("does not say it understood the question is about Kirbith")
+    absent = [normalize(t) for t in case.get("absent", [])]
     for term in case.get("must_not_deny", []):
         t = normalize(term)
         for s in sentences(res["answer"]):
+            # "no record of Rust at Infosys" denies Rust, not Infosys
+            if any(re.search(rf"\b{re.escape(a)}\b", s) for a in absent):
+                continue
             if re.search(rf"\b{re.escape(t)}\b", s) and DENIAL.search(s):
                 fails.append(f"denies '{term}': {s[:120]}")
     # Third person for the owner, on what the visitor actually received.
@@ -106,6 +140,16 @@ def check(case: dict, res: dict) -> list[str]:
     for t in node_texts(res["node"]):
         for v in voice.check(t, lang, "node"):
             fails.append(f"voice ({v.rule}) in node: {v.text}")
+    for pattern in case.get("must_contain", []):
+        if not re.search(pattern, answer):
+            fails.append(f"missing /{pattern}/")
+    for pattern in case.get("must_not", []):
+        if re.search(pattern, answer):
+            fails.append(f"says /{pattern}/")
+    for a, b in case.get("must_not_together", []):
+        for s in sentences(res["answer"]):
+            if re.search(a, s) and re.search(b, s):
+                fails.append(f"/{a}/ with /{b}/: {s[:100]}")
     if res["node"]:
         node_text = normalize(json.dumps(res["node"], ensure_ascii=False))
         for claim in case.get("node_must_not_claim", []):
@@ -125,7 +169,7 @@ async def run_case(case, *, rdb, llm, counting, portfolio, pool, skills, cfg) ->
         run_id=run_id, visitor_id=visitor, input_text=case["q"], seq_start=4, rdb=rdb, llm=llm,
         portfolio=portfolio, db_pool=pool, rag_model=None, route_threshold=cfg.route_confidence_threshold,
         n8n_webhook_url=cfg.n8n_webhook_url, skills=skills, lang=case.get("lang")))
-    res = {"outcome": None, "path": [], "node": None, "answer": "", "hits": [], "error": None}
+    res = {"outcome": None, "path": [], "node": None, "answer": "", "hits": [], "error": None, "answer_ms": None}
     try:
         async with asyncio.timeout(TIMEOUT_S):
             async for msg in pubsub.listen():
@@ -135,6 +179,8 @@ async def run_case(case, *, rdb, llm, counting, portfolio, pool, skills, cfg) ->
                 t, d = ev["type"], ev["data"]
                 if t == "route.plan":
                     res["path"] = d["path"]
+                elif t == "trace.hop" and d.get("hop_id") == "h4" and d.get("to") == "llm" and d["phase"] == "end":
+                    res["answer_ms"] = d.get("duration_ms")
                 elif t == "node.spawn":
                     res["node"] = d["node"]
                 elif t == "rag.result":
@@ -158,7 +204,29 @@ async def run_case(case, *, rdb, llm, counting, portfolio, pool, skills, cfg) ->
     return res
 
 
+def rejudge(path: str) -> None:
+    """--judge FILE: measure an earlier run (e.g. with main's code) with
+    this code's checks, without calling anything."""
+    cfg = load()
+    portfolio, skills = load_portfolio(cfg.portfolio_path), SkillsIndex(cfg.skills_path)
+    cases = {c["id"]: c for c in json.load(open(CASES, encoding="utf-8"))["cases"]}
+    data = json.load(open(path, encoding="utf-8"))
+    for r in data["results"]:
+        case = cases.get(r["id"], {"q": r["q"], "outcome": [r["outcome"]]})
+        judge_route(case, r, portfolio, skills)
+        r["fails"] = check(case, r)
+        r["ok"] = not r["fails"]
+        print(f"{r['id']} {'OK  ' if r['ok'] else 'FAIL'} {r['outcome']:9} unsupported={r.get('unsupported')} "
+              f"{'; '.join(r['fails'])}", file=sys.stderr)
+    data["passed"] = sum(r["ok"] for r in data["results"])
+    data["summary"] = summary(data["results"])
+    print(json.dumps(data["summary"]), file=sys.stderr)
+    json.dump(data, sys.stdout, ensure_ascii=False, indent=1)
+
+
 async def main() -> None:
+    if sys.argv[1:2] == ["--judge"]:
+        return rejudge(sys.argv[2])
     cfg = load()
     only = set(sys.argv[1:])
     cases = [c for c in json.load(open(CASES, encoding="utf-8"))["cases"] if not only or c["id"] in only]
@@ -173,6 +241,7 @@ async def main() -> None:
     for case in cases:
         res = await run_case(case, rdb=rdb, llm=llm, counting=counting, portfolio=portfolio,
                              pool=pool, skills=skills, cfg=cfg)
+        judge_route(case, res, portfolio, skills)
         fails = check(case, res)
         passed += not fails
         res["they"] = len(THEY.findall(res["answer"] + " " + " ".join(node_texts(res["node"]))))
@@ -185,7 +254,9 @@ async def main() -> None:
     total_day = sum(r["llm_calls_day_delta"] for r in report)
     print(f"{passed}/{len(report)} OK — llamadas al LLM: {total_day} en total "
           f"({total_eval} de este proceso, {total_day - total_eval} de design_node)", file=sys.stderr)
-    json.dump({"passed": passed, "cases": len(report), "llm_calls": total_day,
+    stats = summary(report)
+    print(json.dumps(stats), file=sys.stderr)
+    json.dump({"passed": passed, "cases": len(report), "llm_calls": total_day, "summary": stats,
                "results": report}, sys.stdout, ensure_ascii=False, indent=1)
     await pool.close()
     await rdb.aclose()
