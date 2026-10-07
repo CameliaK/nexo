@@ -1,7 +1,7 @@
 {
- "passed": 14,
- "cases": 14,
- "llm_calls": 32,
+ "passed": 21,
+ "cases": 22,
+ "llm_calls": 52,
  "results": [
   {
    "id": "c01",
@@ -11,63 +11,43 @@
    "outcome": "generated",
    "path": [],
    "node": {
-    "id": "gen_435122b9551a",
-    "label": "AI and ML Experience",
-    "summary": "Kirbith's AI/ML work: RAG pipelines, LLM agents, and ML models across internships and projects.",
+    "id": "gen_6b9ca79b87ca",
+    "label": "AI Experience",
+    "summary": "Kirbith's AI work: RAG search, predictive maintenance, accessible education platforms, and Infosys training.",
     "sources": [
      {
-      "title": "RAG · IA y ML en Infosys",
-      "ref": "aprendizaje.extras.infosys-ia"
-     },
-     {
-      "title": "LangChain · Buscador industrial de herramientas",
-      "ref": "experiencia.infosys.buscador"
-     },
-     {
-      "title": "RAG · Plataformas educativas accesibles con IA",
+      "title": "FAISS · Plataformas educativas accesibles con IA",
       "ref": "experiencia.dest.plataforma"
      },
      {
-      "title": "Isolation Forest · Mantenimiento predictivo (Digital Twin)",
-      "ref": "experiencia.infosys.digital-twin"
+      "title": "Python · IA y ML en Infosys",
+      "ref": "aprendizaje.extras.infosys-ia"
      },
      {
-      "title": "Python · Este portafolio",
+      "title": "RAG · Buscador industrial de herramientas",
+      "ref": "experiencia.infosys.buscador"
+     },
+     {
+      "title": "RAG · Este portafolio",
       "ref": "proyectos-personales.este-portafolio"
+     },
+     {
+      "title": "Python · Mantenimiento predictivo (Digital Twin)",
+      "ref": "experiencia.infosys.digital-twin"
      }
     ],
     "layout": "list",
     "content": {
      "items": [
-      "IA y ML en Infosys: training in agentic AI, ML, LLMs and RAG during internship in India.",
-      "Buscador industrial de herramientas: RAG search with LangChain and FAISS.",
-      "Plataformas educativas accesibles con IA: RAG pipeline with FAISS.",
-      "Mantenimiento predictivo (Digital Twin): orchestrated Isolation Forest and Gradient Boosting models; did not train them.",
-      "Este portafolio: RAG, LLMs and agents, Python, pgvector."
+      "Accessible education platforms with AI: RAG pipeline with FAISS for semantic retrieval of course content.",
+      "AI and ML at Infosys: training in agentic AI, ML, LLMs and RAG; he built a RAG system with LangChain and trained ML models with scikit-learn in Python."
      ]
     },
     "children": [
      {
-      "id": "gen_a59768dad2e5",
-      "label": "Infosys AI/ML Training",
-      "summary": "Training in agentic AI, ML, LLMs and RAG at Infosys campus in Mysore, India.",
-      "sources": [
-       {
-        "title": "RAG · IA y ML en Infosys",
-        "ref": "aprendizaje.extras.infosys-ia"
-       }
-      ],
-      "layout": "text",
-      "content": {
-       "body": "During my internship in India I received training at the Infosys campus in Mysore on agentic AI, machine learning, LLMs and RAG. I developed a RAG system with LangChain and trained different ML models with scikit-learn in Python."
-      },
-      "generated": true,
-      "created_at": "2026-10-07T17:16:52.772Z"
-     },
-     {
-      "id": "gen_58fcd1f5301e",
-      "label": "Industrial Tool Search",
-      "summary": "Industrial search engine with semantic retrieval using RAG, LangChain, and FAISS.",
+      "id": "gen_7f844a017aa3",
+      "label": "RAG and LLM Work",
+      "summary": "RAG pipelines and LLM/agent work in jobs, training, and this portfolio.",
       "sources": [
        {
         "title": "RAG · Buscador industrial de herramientas",
@@ -96,91 +76,36 @@
         "RAG",
         "LangChain",
         "FAISS",
+        "LLMs y agentes",
+        "pgvector",
         "Python"
        ]
       },
       "generated": true,
-      "created_at": "2026-10-07T17:16:52.772Z"
+      "created_at": "2026-10-07T17:34:13.608Z"
      },
      {
-      "id": "gen_314b670acd51",
-      "label": "Accessible Educational Platforms",
-      "summary": "RAG pipeline for digital courses using FAISS and Python.",
+      "id": "gen_50722d80c9e7",
+      "label": "AI Training at Infosys",
+      "summary": "Training in agentic AI, ML, LLMs and RAG during his internship in India.",
       "sources": [
-       {
-        "title": "RAG · Buscador industrial de herramientas",
-        "ref": "experiencia.infosys.buscador"
-       },
-       {
-        "title": "RAG · Plataformas educativas accesibles con IA",
-        "ref": "experiencia.dest.plataforma"
-       },
        {
         "title": "RAG · IA y ML en Infosys",
         "ref": "aprendizaje.extras.infosys-ia"
-       },
-       {
-        "title": "RAG · Este portafolio",
-        "ref": "proyectos-personales.este-portafolio"
-       },
-       {
-        "title": "Python · Mantenimiento predictivo (Digital Twin)",
-        "ref": "experiencia.infosys.digital-twin"
        }
       ],
-      "layout": "tags",
+      "layout": "text",
       "content": {
-       "tags": [
-        "RAG",
-        "FAISS",
-        "Python"
-       ]
+       "body": "During his internship in India, Kirbith received training at the Infosys campus in Mysore on agentic AI, machine learning, LLMs and RAG. He developed a RAG system with LangChain and trained different ML models with scikit-learn in Python."
       },
       "generated": true,
-      "created_at": "2026-10-07T17:16:52.772Z"
-     },
-     {
-      "id": "gen_f34e089f44cd",
-      "label": "Predictive Maintenance",
-      "summary": "Digital Twin project: orchestrated Isolation Forest and Gradient Boosting models; did not train them.",
-      "sources": [
-       {
-        "title": "Isolation Forest · Mantenimiento predictivo (Digital Twin)",
-        "ref": "experiencia.infosys.digital-twin"
-       },
-       {
-        "title": "Python · Buscador industrial de herramientas",
-        "ref": "experiencia.infosys.buscador"
-       },
-       {
-        "title": "Python · Plataformas educativas accesibles con IA",
-        "ref": "experiencia.dest.plataforma"
-       },
-       {
-        "title": "Python · IA y ML en Infosys",
-        "ref": "aprendizaje.extras.infosys-ia"
-       },
-       {
-        "title": "Python · Este portafolio",
-        "ref": "proyectos-personales.este-portafolio"
-       }
-      ],
-      "layout": "tags",
-      "content": {
-       "tags": [
-        "Isolation Forest",
-        "Gradient Boosting",
-        "Python"
-       ]
-      },
-      "generated": true,
-      "created_at": "2026-10-07T17:16:52.772Z"
+      "created_at": "2026-10-07T17:34:13.608Z"
      }
     ],
     "generated": true,
-    "created_at": "2026-10-07T17:16:52.772Z"
+    "created_at": "2026-10-07T17:34:13.608Z"
    },
-   "answer": "I understood you mean Kirbith, the portfolio owner. I created a new node called \"AI and ML Experience\" covering Kirbith's AI/ML work, including RAG pipelines and LLM agents at Infosys, a LangChain-based industrial tool finder, accessible AI education platforms, and Isolation Forest for predictive maintenance with a digital twin.",
+   "answer": "I understood you mean Kirbith, the portfolio owner. I created a new node, \"AI Experience,\" covering his AI work: RAG search, predictive maintenance with a Digital Twin, accessible education platforms, and his Infosys training in AI and ML. The sources come from his portfolio, including the industrial tool search engine, the accessible education platforms, and the predictive maintenance project.",
    "hits": [
     "Python · Buscador industrial de herramientas",
     "Python · Mantenimiento predictivo (Digital Twin)",
@@ -209,7 +134,8 @@
    ],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 3
+   "llm_calls_day_delta": 3,
+   "they": 0
   },
   {
    "id": "c02",
@@ -219,46 +145,75 @@
    "outcome": "generated",
    "path": [],
    "node": {
-    "id": "gen_e5b98f974779",
-    "label": "Experiencia en IA",
-    "summary": "IA y ML en Infosys, buscador industrial con RAG, mantenimiento predictivo y plataformas educativas con IA.",
+    "id": "gen_ba326c1b35f1",
+    "label": "Experiencia en IA de Kirbith",
+    "summary": "RAG, LLMs y agentes en proyectos profesionales, más capacitación en IA y ML en Infosys.",
     "sources": [
      {
-      "title": "LLMs y agentes · IA y ML en Infosys",
-      "ref": "aprendizaje.extras.infosys-ia"
-     },
-     {
-      "title": "FAISS · Buscador industrial de herramientas",
+      "title": "LangChain · Buscador industrial de herramientas",
       "ref": "experiencia.infosys.buscador"
-     },
-     {
-      "title": "Isolation Forest · Mantenimiento predictivo (Digital Twin)",
-      "ref": "experiencia.infosys.digital-twin"
      },
      {
       "title": "FAISS · Plataformas educativas accesibles con IA",
       "ref": "experiencia.dest.plataforma"
      },
      {
-      "title": "pgvector · Este portafolio",
+      "title": "Isolation Forest · Mantenimiento predictivo (Digital Twin)",
+      "ref": "experiencia.infosys.digital-twin"
+     },
+     {
+      "title": "Python · Este portafolio",
       "ref": "proyectos-personales.este-portafolio"
+     },
+     {
+      "title": "LangChain · IA y ML en Infosys",
+      "ref": "aprendizaje.extras.infosys-ia"
      }
     ],
     "layout": "list",
     "content": {
      "items": [
-      "IA y ML en Infosys: capacitación en IA agéntica, ML, LLMs y RAG durante mi internship en India.",
-      "Buscador industrial de herramientas: backend con FastAPI y RAG, orquestación con LangChain e índice vectorial con FAISS.",
-      "Mantenimiento predictivo (Digital Twin): backend con FastAPI y modelos de ML; participé en la orquestación de los modelos (Isolation Forest, Gradient Boosting), no los entrené.",
+      "Buscador industrial de herramientas: backend con FastAPI y RAG, orquestación de la recuperación semántica con LangChain e índice vectorial con FAISS.",
       "Plataformas educativas accesibles con IA: pipeline de RAG con FAISS para el contenido de los cursos.",
-      "Este portafolio: sistema con RAG, LLMs y agentes, y pgvector (visible en la ventana al sistema)."
+      "Mantenimiento predictivo (Digital Twin): backend con FastAPI y modelos de ML; participó en la orquestación de los modelos (Isolation Forest y Gradient Boosting), no los entrenó.",
+      "Este portafolio: RAG, LLMs y agentes, Python y pgvector en el sistema del portafolio.",
+      "IA y ML en Infosys: capacitación en IA agéntica, ML, LLMs y RAG; sistema RAG con LangChain y modelos de ML con scikit-learn, sin proyecto propio asociado."
      ]
     },
     "children": [
      {
-      "id": "gen_a2548f5037d5",
-      "label": "IA y ML en Infosys",
-      "summary": "Capacitación en IA agéntica, ML, LLMs y RAG durante mi internship en India.",
+      "id": "gen_cbf750310d7c",
+      "label": "Proyectos con IA",
+      "summary": "RAG y ML aplicados en trabajos y prácticas profesionales.",
+      "sources": [
+       {
+        "title": "LangChain · Buscador industrial de herramientas",
+        "ref": "experiencia.infosys.buscador"
+       },
+       {
+        "title": "RAG · Plataformas educativas accesibles con IA",
+        "ref": "experiencia.dest.plataforma"
+       },
+       {
+        "title": "Isolation Forest · Mantenimiento predictivo (Digital Twin)",
+        "ref": "experiencia.infosys.digital-twin"
+       }
+      ],
+      "layout": "list",
+      "content": {
+       "items": [
+        "Buscador industrial de herramientas: backend con FastAPI y RAG; recuperación semántica con LangChain y FAISS.",
+        "Plataformas educativas accesibles con IA: pipeline de RAG con FAISS para cursos digitales.",
+        "Mantenimiento predictivo (Digital Twin): backend con FastAPI y modelos de ML; participó en la orquestación de los modelos, no los entrenó."
+       ]
+      },
+      "generated": true,
+      "created_at": "2026-10-07T17:34:19.373Z"
+     },
+     {
+      "id": "gen_6323b42b4a1f",
+      "label": "Capacitación en IA y ML",
+      "summary": "Formación en Infosys, sin proyecto propio asociado.",
       "sources": [
        {
         "title": "LLMs y agentes · IA y ML en Infosys",
@@ -267,15 +222,15 @@
       ],
       "layout": "text",
       "content": {
-       "body": "Durante mi internship en India recibí capacitación en el campus de Infosys en Mysore sobre IA agéntica, machine learning, LLMs y RAG. Desarrollé un sistema RAG con LangChain y entrené distintos modelos de ML con scikit-learn en Python."
+       "body": "Durante su internship en India, Kirbith recibió capacitación en el campus de Infosys en Mysore sobre IA agéntica, machine learning, LLMs y RAG. Desarrolló un sistema RAG con LangChain y entrenó distintos modelos de ML con scikit-learn en Python. Esta formación no tiene un proyecto propio asociado."
       },
       "generated": true,
-      "created_at": "2026-10-07T17:16:58.698Z"
+      "created_at": "2026-10-07T17:34:19.373Z"
      },
      {
-      "id": "gen_e591431c6bd0",
-      "label": "Buscador industrial de herramientas",
-      "summary": "Backend con FastAPI y RAG; orquestación con LangChain e índice vectorial con FAISS.",
+      "id": "gen_08b21b1aa1e9",
+      "label": "Tecnologías de IA",
+      "summary": "Herramientas y prácticas de IA que aparecen en su portafolio.",
       "sources": [
        {
         "title": "Python · Buscador industrial de herramientas",
@@ -302,95 +257,24 @@
       "content": {
        "tags": [
         "Python",
-        "FastAPI",
-        "RAG",
         "LangChain",
-        "FAISS"
-       ]
-      },
-      "generated": true,
-      "created_at": "2026-10-07T17:16:58.698Z"
-     },
-     {
-      "id": "gen_7d7a23e647e5",
-      "label": "Mantenimiento predictivo (Digital Twin)",
-      "summary": "Backend con FastAPI y modelos de ML; participé en la orquestación de los modelos, no los entrené.",
-      "sources": [
-       {
-        "title": "Python · Buscador industrial de herramientas",
-        "ref": "experiencia.infosys.buscador"
-       },
-       {
-        "title": "Python · Mantenimiento predictivo (Digital Twin)",
-        "ref": "experiencia.infosys.digital-twin"
-       },
-       {
-        "title": "Python · Plataformas educativas accesibles con IA",
-        "ref": "experiencia.dest.plataforma"
-       },
-       {
-        "title": "Python · IA y ML en Infosys",
-        "ref": "aprendizaje.extras.infosys-ia"
-       },
-       {
-        "title": "Python · Este portafolio",
-        "ref": "proyectos-personales.este-portafolio"
-       }
-      ],
-      "layout": "tags",
-      "content": {
-       "tags": [
-        "Python",
-        "FastAPI",
+        "FAISS",
+        "scikit-learn",
         "Isolation Forest",
-        "Gradient Boosting"
-       ]
-      },
-      "generated": true,
-      "created_at": "2026-10-07T17:16:58.698Z"
-     },
-     {
-      "id": "gen_8d3e083c8958",
-      "label": "Plataformas educativas accesibles con IA",
-      "summary": "Pipeline de RAG con FAISS para el contenido de los cursos.",
-      "sources": [
-       {
-        "title": "Python · Buscador industrial de herramientas",
-        "ref": "experiencia.infosys.buscador"
-       },
-       {
-        "title": "Python · Mantenimiento predictivo (Digital Twin)",
-        "ref": "experiencia.infosys.digital-twin"
-       },
-       {
-        "title": "Python · Plataformas educativas accesibles con IA",
-        "ref": "experiencia.dest.plataforma"
-       },
-       {
-        "title": "Python · IA y ML en Infosys",
-        "ref": "aprendizaje.extras.infosys-ia"
-       },
-       {
-        "title": "Python · Este portafolio",
-        "ref": "proyectos-personales.este-portafolio"
-       }
-      ],
-      "layout": "tags",
-      "content": {
-       "tags": [
-        "Python",
+        "Gradient Boosting",
+        "pgvector",
         "RAG",
-        "FAISS"
+        "LLMs y agentes"
        ]
       },
       "generated": true,
-      "created_at": "2026-10-07T17:16:58.698Z"
+      "created_at": "2026-10-07T17:34:19.373Z"
      }
     ],
     "generated": true,
-    "created_at": "2026-10-07T17:16:58.698Z"
+    "created_at": "2026-10-07T17:34:19.373Z"
    },
-   "answer": "Entendí que te refieres a Kirbith, el dueño de este portafolio. Creé un nodo nuevo titulado \"Experiencia en IA\" con su trabajo en IA y ML en Infosys, el buscador industrial de herramientas con RAG, el mantenimiento predictivo con Digital Twin y las plataformas educativas accesibles con IA. Las fuentes de este nodo son LLMs y agentes, FAISS, Isolation Forest, pgvector y este mismo portafolio.",
+   "answer": "Entendí que te refieres a Kirbith, así que creé un nodo nuevo llamado \"Experiencia en IA de Kirbith\". Reúne su trabajo con RAG, LLMs y agentes en proyectos profesionales, además de su capacitación en IA y ML en Infosys, según las fuentes del portafolio.",
    "hits": [
     "Python · Buscador industrial de herramientas",
     "Python · Mantenimiento predictivo (Digital Twin)",
@@ -419,7 +303,8 @@
    ],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 3
+   "llm_calls_day_delta": 3,
+   "they": 0
   },
   {
    "id": "c03",
@@ -432,11 +317,12 @@
     "experiencia.infosys"
    ],
    "node": null,
-   "answer": "There's already a node for that, so I took you to the Infosys node instead of creating a duplicate. It covers his Software Engineer Intern role in Bangalore (Feb–Aug 2025), including an AI-powered industrial tool search platform and a digital twin predictive maintenance system. If you want a node on something that doesn't exist yet, like the specific technologies he used at Infosys, I can create that for you.",
+   "answer": "There's already a node for that, so I took you to the Infosys node instead of creating a duplicate. It covers his Software Engineer Internship in Bangalore (Feb – Aug 2025), where he worked on an AI-powered industrial tool finder with semantic retrieval and recommendations, plus a digital-twin predictive maintenance system with time-series analysis. If you want a cross-cutting node that doesn't exist yet, like the technologies he used at Infosys, I can create that one.",
    "hits": [],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
   },
   {
    "id": "c04",
@@ -449,11 +335,12 @@
     "experiencia.infosys"
    ],
    "node": null,
-   "answer": "Ya existe un nodo sobre eso (\"Infosys\"), así que te llevé ahí en lugar de crear un duplicado. Resume su pasantía como Software Engineer Intern en Bangalore (feb–ago 2025), con un buscador industrial de herramientas con IA y un sistema de mantenimiento predictivo basado en gemelo digital. Si quieres un cruce que no exista, por ejemplo las tecnologías que usó en Infosys, dímelo y te creo un nodo nuevo.",
+   "answer": "Ya existe un nodo sobre eso, así que te llevé ahí en lugar de crear uno duplicado. Ahí se resume su internship en Infosys como Software Engineer Intern en Bangalore (feb – ago 2025), con un buscador industrial de herramientas con IA y un sistema de mantenimiento predictivo basado en gemelo digital. Si quieres un cruce que no existe, por ejemplo las tecnologías que usó en Infosys, puedo crear un nodo nuevo.",
    "hits": [],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
   },
   {
    "id": "c05",
@@ -467,11 +354,12 @@
     "experiencia.dgti.hermes"
    ],
    "node": null,
-   "answer": "There's already a node about that — \"HERMES: sistema de correspondencia\" — so I took you there instead of duplicating it. It covers the modules and optimization of the HERMES correspondence system. If you want a new node for an angle that isn't covered, like the technologies used in HERMES: sistema de correspondencia, just say so and I'll create it.",
+   "answer": "There's already a node for that: \"HERMES: sistema de correspondencia,\" so I took you there instead of creating a duplicate. It covers the modules and optimization of the HERMES correspondence system. If you'd like a new node for a connection that doesn't exist yet, such as the technologies Kirbith used in that system, I can create one.",
    "hits": [],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
   },
   {
    "id": "c06",
@@ -485,11 +373,12 @@
     "experiencia.dgti.hermes"
    ],
    "node": null,
-   "answer": "Ya existe un nodo sobre eso: \"HERMES: sistema de correspondencia\", así que te llevé ahí en lugar de crear un duplicado. Ese nodo reúne los módulos y la optimización del sistema de correspondencia HERMES. Si quieres un cruce que aún no existe, por ejemplo las tecnologías que usó en ese sistema, con gusto te creo un nodo nuevo.",
+   "answer": "Ya existe un nodo sobre eso: \"HERMES: sistema de correspondencia\", así que te llevé ahí. Contiene los módulos y la optimización del sistema de correspondencia HERMES que trabajó Kirbith. Si quieres un cruce que aún no existe, por ejemplo las tecnologías que usó en ese sistema, puedo crearte un nodo nuevo.",
    "hits": [],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
   },
   {
    "id": "c07",
@@ -499,9 +388,9 @@
    "outcome": "generated",
    "path": [],
    "node": {
-    "id": "gen_e890d458f272",
+    "id": "gen_bd1c66415be3",
     "label": "Tecnologías en Infosys",
-    "summary": "Capacitación en AWS, IA agéntica, ML, LLMs y RAG durante su internship en India.",
+    "summary": "Tecnologías que Kirbith usó durante su internship en Infosys (Bangalore, India, feb – ago 2025).",
     "sources": [
      {
       "title": "AWS en Infosys",
@@ -516,34 +405,67 @@
       "ref": "experiencia.infosys"
      },
      {
-      "title": "Plataformas educativas accesibles con IA",
-      "ref": "experiencia.dest.plataforma"
-     },
-     {
       "title": "Este portafolio",
       "ref": "proyectos-personales.este-portafolio"
+     },
+     {
+      "title": "Dónde y qué estudié",
+      "ref": "aprendizaje.universidad.carrera"
      }
     ],
     "layout": "tags",
     "content": {
      "tags": [
-      "aws",
-      "ec2",
-      "s3",
-      "lambda",
-      "bedrock",
-      "sagemaker",
-      "ia",
-      "ml",
-      "agentic ai",
-      "llm",
-      "rag",
-      "langchain"
+      "AWS",
+      "EC2",
+      "S3",
+      "Lambda",
+      "Bedrock",
+      "SageMaker",
+      "IA agéntica",
+      "ML",
+      "LLMs",
+      "RAG",
+      "LangChain",
+      "scikit-learn"
      ]
     },
     "children": [
      {
-      "id": "gen_571b6c73656a",
+      "id": "gen_6f26300a9a2a",
+      "label": "IA y ML en Infosys",
+      "summary": "Capacitación en IA agéntica, ML, LLMs y RAG durante su internship en India.",
+      "sources": [
+       {
+        "title": "IA y ML en Infosys",
+        "ref": "aprendizaje.extras.infosys-ia"
+       },
+       {
+        "title": "Infosys",
+        "ref": "experiencia.infosys"
+       },
+       {
+        "title": "Este portafolio",
+        "ref": "proyectos-personales.este-portafolio"
+       }
+      ],
+      "layout": "list",
+      "content": {
+       "items": [
+        "IA agéntica",
+        "Machine learning",
+        "LLMs",
+        "RAG",
+        "LangChain",
+        "scikit-learn",
+        "Python"
+       ]
+      },
+      "generated": true,
+      "created_at": "2026-10-07T17:34:35.426Z"
+     },
+     {
+      "id": "gen_a19df62336e1",
       "label": "AWS en Infosys",
       "summary": "Capacitación técnica en servicios de AWS: EC2, S3, Lambda, Bedrock y SageMaker.",
       "sources": [
@@ -563,59 +485,45 @@
        ]
       },
       "generated": true,
-      "created_at": "2026-10-07T17:17:14.206Z"
+      "created_at": "2026-10-07T17:34:35.427Z"
      },
      {
-      "id": "gen_f20b278d8d92",
-      "label": "IA y ML en Infosys",
-      "summary": "Capacitación en IA agéntica, ML, LLMs y RAG; sistema RAG con LangChain y modelos con scikit-learn.",
+      "id": "gen_6480f31910b8",
+      "label": "Infosys",
+      "summary": "Software Engineer Intern en Bangalore, India (feb – ago 2025).",
       "sources": [
-       {
-        "title": "IA y ML en Infosys",
-        "ref": "aprendizaje.extras.infosys-ia"
-       },
        {
         "title": "Infosys",
         "ref": "experiencia.infosys"
        },
        {
-        "title": "Este portafolio",
-        "ref": "proyectos-personales.este-portafolio"
-       },
-       {
-        "title": "Plataformas educativas accesibles con IA",
-        "ref": "experiencia.dest.plataforma"
+        "title": "Dónde y qué estudié",
+        "ref": "aprendizaje.universidad.carrera"
        }
       ],
-      "layout": "list",
+      "layout": "text",
       "content": {
-       "items": [
-        "IA agéntica",
-        "Machine learning",
-        "LLMs",
-        "RAG",
-        "LangChain",
-        "scikit-learn"
-       ]
+       "body": "Rol: Software Engineer Intern. Periodo: Febrero 2025 – Agosto 2025. Lugar: Bangalore, India."
       },
       "generated": true,
-      "created_at": "2026-10-07T17:17:14.206Z"
+      "created_at": "2026-10-07T17:34:35.427Z"
      }
     ],
     "generated": true,
-    "created_at": "2026-10-07T17:17:14.206Z"
+    "created_at": "2026-10-07T17:34:35.427Z"
    },
-   "answer": "Listo, creé un nodo nuevo llamado \"Tecnologías en Infosys\" que reúne las tecnologías que Kirbith usó durante su internship en India: capacitación en AWS, IA agéntica, ML, LLMs y RAG. La información proviene de las fuentes del portafolio, como AWS en Infosys, IA y ML en Infosys, Infosys y Plataformas educativas accesibles con IA.",
+   "answer": "Listo, creé un nodo nuevo llamado \"Tecnologías en Infosys\" con las tecnologías que Kirbith usó durante su internship en Infosys (Bangalore, India, feb – ago 2025). El nodo reúne la información de las fuentes del portafolio: AWS en Infosys, IA y ML en Infosys, Infosys, Este portafolio y Dónde y qué estudió.",
    "hits": [
     "AWS en Infosys",
     "IA y ML en Infosys",
     "Infosys",
-    "Este portafolio",
-    "Plataformas educativas accesibles con IA"
+    "Dónde y qué estudié",
+    "Este portafolio"
    ],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 3
+   "llm_calls_day_delta": 3,
+   "they": 0
   },
   {
    "id": "c08",
@@ -625,21 +533,13 @@
    "outcome": "generated",
    "path": [],
    "node": {
-    "id": "gen_f21125c7fb5f",
+    "id": "gen_9232aeadd6ca",
     "label": "RAG Experience",
-    "summary": "RAG used in jobs, projects, and training: industrial search, accessible education, portfolio, and Infosys training.",
+    "summary": "Kirbith has applied RAG in jobs, projects and training: industrial search, accessible education, this portfolio and Infosys training.",
     "sources": [
-     {
-      "title": "RAG · Buscador industrial de herramientas",
-      "ref": "experiencia.infosys.buscador"
-     },
      {
       "title": "RAG · Plataformas educativas accesibles con IA",
       "ref": "experiencia.dest.plataforma"
-     },
-     {
-      "title": "RAG · Este portafolio",
-      "ref": "proyectos-personales.este-portafolio"
      },
      {
       "title": "RAG · IA y ML en Infosys",
@@ -649,17 +549,15 @@
     "layout": "list",
     "content": {
      "items": [
-      "Buscador industrial de herramientas — Buscador industrial con recuperación semántica.",
-      "Plataformas educativas accesibles con IA — Pipeline de RAG para cursos digitales.",
-      "Este portafolio — Usado en el sistema de este portafolio (visible en la ventana al sistema).",
-      "IA y ML en Infosys — Capacitación en RAG."
+      "Accessible educational platforms with AI: RAG pipeline for digital courses, with Python and FAISS.",
+      "AI and ML at Infosys: RAG training, with LangChain and scikit-learn; no project of his own."
      ]
     },
     "children": [
      {
-      "id": "gen_a5622af16b24",
+      "id": "gen_185b784673da",
       "label": "RAG in Training",
-      "summary": "RAG learned during Infosys training.",
+      "summary": "Kirbith learned RAG in AI and ML at Infosys, with LangChain and scikit-learn, with no project of his own.",
       "sources": [
        {
         "title": "RAG · IA y ML en Infosys",
@@ -668,16 +566,16 @@
       ],
       "layout": "text",
       "content": {
-       "body": "IA y ML en Infosys — Capacitación en RAG."
+       "body": "In AI and ML at Infosys, Kirbith learned RAG with LangChain and scikit-learn, with no project of his own."
       },
       "generated": true,
-      "created_at": "2026-10-07T17:17:19.464Z"
+      "created_at": "2026-10-07T17:34:41.119Z"
      }
     ],
     "generated": true,
-    "created_at": "2026-10-07T17:17:19.464Z"
+    "created_at": "2026-10-07T17:34:41.119Z"
    },
-   "answer": "I understood you mean Kirbith, the portfolio owner, so I created a new node called \"RAG Experience\" covering his RAG work across jobs, projects, and training. It draws on the portfolio sources for the industrial tool search engine, accessible AI education platforms, this portfolio itself, and his AI/ML training at Infosys.",
+   "answer": "I understood you mean Kirbith, the portfolio owner. I created a new node called \"RAG Experience\" covering how he has applied RAG across his jobs, projects, and training — including industrial search, accessible education platforms, this portfolio, and his Infosys training.",
    "hits": [
     "RAG · Buscador industrial de herramientas",
     "RAG · Plataformas educativas accesibles con IA",
@@ -706,7 +604,8 @@
    ],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 3
+   "llm_calls_day_delta": 3,
+   "they": 0
   },
   {
    "id": "c09",
@@ -718,11 +617,12 @@
     "proyectos-personales"
    ],
    "node": null,
-   "answer": "Entendí que te refieres a Kirbith, así que te llevé al nodo \"Proyectos personales\", donde se describe lo que él está construyendo por su cuenta. Ahí encontrarás esa información directamente.",
+   "answer": "Entendí que te refieres a Kirbith, el dueño del portafolio. Lo llevé al nodo \"Proyectos personales\", donde se describe lo que él está construyendo por su cuenta. Ahí puedes ver esos proyectos en los que trabaja de forma independiente.",
    "hits": [],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
   },
   {
    "id": "c10",
@@ -735,11 +635,12 @@
     "experiencia.infosys"
    ],
    "node": null,
-   "answer": "Ya existe un nodo sobre tu experiencia en Infosys (Software Engineer Intern en Bangalore, feb–ago 2025), así que te llevé ahí. Ese nodo cubre el buscador industrial de herramientas con IA y el sistema de mantenimiento predictivo basado en gemelo digital y análisis de series de tiempo. Sobre Rust no tengo ningún registro, así que no puedo afirmar que lo usaras allí. Si quieres, puedo crear un nodo nuevo, por ejemplo con las tecnologías que sí usaste en Infosys.",
+   "answer": "Ya existe un nodo sobre la experiencia de Kirbith en Infosys, así que lo llevé ahí en lugar de crear un duplicado. Ese nodo cubre su internship como Software Engineer Intern en Bangalore (feb – ago 2025), con un buscador industrial de herramientas con IA y un sistema de mantenimiento predictivo basado en gemelo digital. No hay ningún registro de Rust en esa experiencia. Si quiere un cruce que no existe, por ejemplo las tecnologías que usó en Infosys, puedo crear un nodo nuevo.",
    "hits": [],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
   },
   {
    "id": "r01",
@@ -749,14 +650,15 @@
    "outcome": "unknown",
    "path": [],
    "node": null,
-   "answer": "Lo siento, no tengo registro de experiencia en Rust ni Haskell en el portafolio de Kirbith, así que no puedo crear ese nodo sin inventar información. Puedes preguntarme por otro tema o escribirle directamente a Kirbith por el chat en vivo.",
+   "answer": "Lo siento, no encuentro registro de experiencia de Kirbith en Rust ni en Haskell, así que no puedo crear ese nodo sin inventar información. Puedes preguntar por otro tema de su portafolio o escribirle directamente por el chat en vivo.",
    "hits": [
     "AWS en Infosys",
     "Bases de programación"
    ],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
   },
   {
    "id": "r02",
@@ -766,14 +668,15 @@
    "outcome": "unknown",
    "path": [],
    "node": null,
-   "answer": "No puedo afirmar algo que no está registrado en el portafolio de Kirbith; no hay información sobre Rust. Si quieres, pregúntame por otro tema o escríbele directamente por el chat en vivo.",
+   "answer": "No puedo afirmar que Kirbith tenga conocimientos de Rust, ya que no hay ningún registro de eso en su portafolio. Si quieres, puedes preguntar por otro tema o escribirle directamente por el chat en vivo.",
    "hits": [
     "HERMES: sistema de correspondencia",
     "Buscador industrial de herramientas"
    ],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
   },
   {
    "id": "r03",
@@ -783,15 +686,17 @@
    "outcome": "unknown",
    "path": [],
    "node": null,
-   "answer": "I can't create that node, since there's no record of Kubernetes experience in Kirbith's portfolio or CV, and I won't add unverified claims. Feel free to ask about another topic, or reach out to Kirbith directly through the live chat.",
+   "answer": "I can't create that node, since Kirbith's portfolio and CV don't record any Kubernetes experience or years of expertise, and I won't state unverified claims. Feel free to ask about another topic, or reach out to him directly through the live chat.",
    "hits": [
+    "Nombre",
     "Correo",
     "LinkedIn",
-    "Nombre"
+    "SMITE"
    ],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
   },
   {
    "id": "r04",
@@ -801,13 +706,326 @@
    "outcome": "unknown",
    "path": [],
    "node": null,
-   "answer": "No puedo crear un nodo con años de experiencia o niveles de dominio, porque esa información no forma parte de lo que puedo afirmar. Lo que sí encontré es el nodo de la arquitectura real de este sitio, donde puedes ver cómo tu pregunta recorre los servicios del sistema en tiempo real. Si quieres, pregúntame por ese nodo por su nombre y te lo muestro.",
+   "answer": "Gracias por tu interés en el portafolio de Kirbith. Encontré un nodo sobre la arquitectura real de este sitio, donde se ve el recorrido de cada pregunta por los servicios del sistema. No puedo crear un nodo con años de experiencia en Go y Haskell, pero sí puedo mostrarte lo que hay registrado sobre Go y sobre este portafolio si me preguntas por ellos por su nombre.",
    "hits": [
     "Go · Este portafolio"
    ],
    "error": null,
    "llm_calls_eval": 2,
-   "llm_calls_day_delta": 2
+   "llm_calls_day_delta": 2,
+   "they": 0
+  },
+  {
+   "id": "v01",
+   "q": "Créame un nodo con mis hobbies",
+   "ok": true,
+   "fails": [],
+   "outcome": "generated",
+   "path": [],
+   "node": {
+    "id": "gen_3325c46fc864",
+    "label": "Hobbies de Kirbith",
+    "summary": "Los hobbies de Kirbith son deportes, arte y videojuegos, según su portafolio.",
+    "sources": [
+     {
+      "title": "Hobbies",
+      "ref": "hobbies"
+     }
+    ],
+    "layout": "tags",
+    "content": {
+     "tags": [
+      "deportes",
+      "arte",
+      "videojuegos",
+      "tiempo libre"
+     ]
+    },
+    "children": [],
+    "generated": true,
+    "created_at": "2026-10-07T17:35:04.006Z"
+   },
+   "answer": "Entendí que te refieres a Kirbith, el dueño de este portafolio. Creé un nodo nuevo llamado \"Hobbies de Kirbith\", que contiene sus hobbies según el portafolio: deportes, arte y videojuegos.",
+   "hits": [
+    "Correo",
+    "Nombre",
+    "Hobbies",
+    "Proyectos académicos",
+    "Proyectos personales"
+   ],
+   "error": null,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 3,
+   "they": 0
+  },
+  {
+   "id": "v02",
+   "q": "What sports do I play? Tell me about my hobbies",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "hobbies",
+    "hobbies.deportes"
+   ],
+   "node": null,
+   "answer": "I understood you mean Kirbith, the portfolio owner. I took you to the Hobbies node, where his hobbies are sports, art, and video games, and to the Deportes node, which lists swimming, basketball, baseball, soccer, volleyball, and now tennis taken seriously.",
+   "hits": [],
+   "error": null,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0
+  },
+  {
+   "id": "v03",
+   "q": "¿Qué experiencia tiene Kirbith como desarrollador backend?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "experiencia"
+   ],
+   "node": null,
+   "answer": "Te llevé al nodo Experiencia, donde se detalla su trayectoria laboral y los proyectos en los que ha contribuido. Kirbith es egresado de Ingeniería de Sistemas y ha trabajado como desarrollador backend, incluyendo una internship en la que participó en el desarrollo de servicios y APIs.",
+   "hits": [],
+   "error": null,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0
+  },
+  {
+   "id": "v04",
+   "q": "What experience does Kirbith have with C#?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "experiencia"
+   ],
+   "node": null,
+   "answer": "I took you to the Experience node, which covers where Kirbith has worked and the projects he has contributed to. Kirbith gained C# experience during his internship, where he worked with it on real projects.",
+   "hits": [],
+   "error": null,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0
+  },
+  {
+   "id": "v05",
+   "q": "Créame un nodo con los deportes y los videojuegos de Kirbith",
+   "ok": true,
+   "fails": [],
+   "outcome": "generated",
+   "path": [],
+   "node": {
+    "id": "gen_20c2f9dbcd65",
+    "label": "Deportes y videojuegos de Kirbith",
+    "summary": "Kirbith practica deportes como natación, básquetbol, béisbol, fútbol, voleibol y tenis, y juega videojuegos competitivos y de supervivencia.",
+    "sources": [
+     {
+      "title": "Hobbies",
+      "ref": "hobbies"
+     },
+     {
+      "title": "Voleibol",
+      "ref": "hobbies.deportes.voleibol"
+     },
+     {
+      "title": "Deportes",
+      "ref": "hobbies.deportes"
+     },
+     {
+      "title": "Videojuegos",
+      "ref": "hobbies.videojuegos"
+     },
+     {
+      "title": "Rocket League",
+      "ref": "hobbies.videojuegos.rocket-league"
+     }
+    ],
+    "layout": "tags",
+    "content": {
+     "tags": [
+      "deportes",
+      "videojuegos",
+      "tenis",
+      "natación",
+      "basquetbol",
+      "beisbol",
+      "futbol",
+      "voleibol",
+      "rainbow six",
+      "rocket league",
+      "smite",
+      "ark"
+     ]
+    },
+    "children": [
+     {
+      "id": "gen_c8779243c39d",
+      "label": "Deportes",
+      "summary": "Kirbith ha practicado natación, básquetbol, béisbol, fútbol, voleibol y hoy tenis en serio.",
+      "sources": [
+       {
+        "title": "Deportes",
+        "ref": "hobbies.deportes"
+       },
+       {
+        "title": "Voleibol",
+        "ref": "hobbies.deportes.voleibol"
+       }
+      ],
+      "layout": "list",
+      "content": {
+       "items": [
+        "Natación",
+        "Básquetbol",
+        "Béisbol",
+        "Fútbol",
+        "Voleibol",
+        "Tenis en serio"
+       ]
+      },
+      "generated": true,
+      "created_at": "2026-10-07T17:35:16.656Z"
+     },
+     {
+      "id": "gen_a9b134d68f1a",
+      "label": "Videojuegos",
+      "summary": "Kirbith juega videojuegos competitivos y de supervivencia.",
+      "sources": [
+       {
+        "title": "Videojuegos",
+        "ref": "hobbies.videojuegos"
+       },
+       {
+        "title": "Rocket League",
+        "ref": "hobbies.videojuegos.rocket-league"
+       }
+      ],
+      "layout": "list",
+      "content": {
+       "items": [
+        "Rainbow Six",
+        "Rocket League",
+        "Smite",
+        "Ark",
+        "Minecraft",
+        "Stardew Valley"
+       ]
+      },
+      "generated": true,
+      "created_at": "2026-10-07T17:35:16.656Z"
+     },
+     {
+      "id": "gen_48030e26e89c",
+      "label": "Rocket League",
+      "summary": "Kirbith tiene rango Champion en Rocket League.",
+      "sources": [
+       {
+        "title": "Rocket League",
+        "ref": "hobbies.videojuegos.rocket-league"
+       }
+      ],
+      "layout": "text",
+      "content": {
+       "body": "Kirbith juega Rocket League de forma competitiva y tiene rango Champion."
+      },
+      "generated": true,
+      "created_at": "2026-10-07T17:35:16.656Z"
+     },
+     {
+      "id": "gen_840bbe6df20b",
+      "label": "Voleibol",
+      "summary": "Kirbith ha practicado voleibol, uno de los deportes que ha practicado.",
+      "sources": [
+       {
+        "title": "Voleibol",
+        "ref": "hobbies.deportes.voleibol"
+       }
+      ],
+      "layout": "text",
+      "content": {
+       "body": "Kirbith ha practicado voleibol, uno de los deportes que ha practicado."
+      },
+      "generated": true,
+      "created_at": "2026-10-07T17:35:16.656Z"
+     }
+    ],
+    "generated": true,
+    "created_at": "2026-10-07T17:35:16.656Z"
+   },
+   "answer": "Listo, creé un nodo nuevo llamado \"Deportes y videojuegos de Kirbith\" a partir de las fuentes de Hobbies, Voleibol, Deportes, Videojuegos y Rocket League. En él se reúne que Kirbith practica deportes como natación, básquetbol, béisbol, fútbol, voleibol y tenis, y que además juega videojuegos competitivos y de supervivencia.",
+   "hits": [
+    "Videojuegos",
+    "Hobbies",
+    "Voleibol",
+    "Deportes",
+    "Rocket League"
+   ],
+   "error": null,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 3,
+   "they": 0
+  },
+  {
+   "id": "v06",
+   "q": "Create a node with Kirbith's sports and video games",
+   "ok": false,
+   "fails": [
+    "outcome unknown not in ['generated']"
+   ],
+   "outcome": "unknown",
+   "path": [],
+   "node": null,
+   "answer": "I can't create a new node for that, but I did find related entries in Kirbith's portfolio: his hobbies include sports, art, and video games; he's played volleyball, and he enjoys swimming, basketball, baseball, soccer, volleyball, and now seriously, tennis. He also plays competitive and survival video games, including Rocket League at Champion rank. Feel free to ask me about any of these by name, like \"Hobbies,\" \"Deportes,\" or \"Rocket League.\"",
+   "hits": [
+    "Videojuegos",
+    "Hobbies",
+    "Voleibol",
+    "Deportes",
+    "Rocket League"
+   ],
+   "error": null,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 4,
+   "they": 0
+  },
+  {
+   "id": "v07",
+   "q": "Is Kirbith a student or does she already work?",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "aprendizaje",
+    "experiencia"
+   ],
+   "node": null,
+   "answer": "Kirbith is both a student and already working: he is pursuing his studies at university while also gaining experience through internships and projects. I pointed the visitor to the \"Aprendizaje\" and \"Experiencia\" nodes, where his academic training and professional work are detailed.",
+   "hits": [],
+   "error": null,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0
+  },
+  {
+   "id": "v08",
+   "q": "¿Y ella dónde estudió? Hablo de Kirbith",
+   "ok": true,
+   "fails": [],
+   "outcome": "route",
+   "path": [
+    "aprendizaje",
+    "aprendizaje.universidad"
+   ],
+   "node": null,
+   "answer": "Kirbith estudió Ingeniería de Software en la Universidad Veracruzana. Te llevé al nodo Universidad, donde está ese dato, y también al nodo Aprendizaje, que reúne su capacitación extra y proyectos académicos.",
+   "hits": [],
+   "error": null,
+   "llm_calls_eval": 2,
+   "llm_calls_day_delta": 2,
+   "they": 0
   }
  ]
 }

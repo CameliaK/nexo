@@ -27,6 +27,7 @@ import redis.asyncio as aioredis
 
 from app import db as db_mod
 from app import retention
+from app import voice
 from app.agent import router
 from app.config import load
 from app.llm.base import LLMProvider
@@ -67,6 +68,23 @@ def sentences(text: str) -> list[str]:
     return [normalize(s) for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
 
 
+def node_texts(node: dict | None) -> list[str]:
+    if not node:
+        return []
+    out = [node["label"], node["summary"]]
+    c = node["content"]
+    out += c.get("tags", []) + ([c["body"]] if "body" in c else [])
+    for i in c.get("items", []):
+        out += [i] if isinstance(i, str) else [i["label"]]
+    out += [e["what"] for e in c.get("entries", [])]
+    for ch in node.get("children", []):
+        out += node_texts({**ch, "children": []})
+    return out
+
+
+THEY = re.compile(r"\b(they|them|their|theirs)\b", re.IGNORECASE)
+
+
 def check(case: dict, res: dict) -> list[str]:
     fails = []
     if res["outcome"] not in case["outcome"]:
@@ -81,6 +99,13 @@ def check(case: dict, res: dict) -> list[str]:
         for s in sentences(res["answer"]):
             if re.search(rf"\b{re.escape(t)}\b", s) and DENIAL.search(s):
                 fails.append(f"denies '{term}': {s[:120]}")
+    # Third person for the owner, on what the visitor actually received.
+    lang = case.get("lang", "es")
+    for v in voice.check(res["answer"], lang, "answer"):
+        fails.append(f"voice ({v.rule}) in answer: {v.text}")
+    for t in node_texts(res["node"]):
+        for v in voice.check(t, lang, "node"):
+            fails.append(f"voice ({v.rule}) in node: {v.text}")
     if res["node"]:
         node_text = normalize(json.dumps(res["node"], ensure_ascii=False))
         for claim in case.get("node_must_not_claim", []):
@@ -150,6 +175,7 @@ async def main() -> None:
                              pool=pool, skills=skills, cfg=cfg)
         fails = check(case, res)
         passed += not fails
+        res["they"] = len(THEY.findall(res["answer"] + " " + " ".join(node_texts(res["node"]))))
         report.append({"id": case["id"], "q": case["q"], "ok": not fails, "fails": fails, **res})
         print(f"{case['id']} {'OK  ' if not fails else 'FAIL'} {res['outcome']:9} "
               f"{(res['path'] or [''])[-1]:32} llm={res['llm_calls_day_delta']} {'; '.join(fails)}",
