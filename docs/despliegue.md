@@ -1,7 +1,12 @@
 # Guía de despliegue — Nexo (producción)
 
-Stack: Docker Compose + Traefik v2.11 en un único VPS (Hetzner).
-TLS automático con Let's Encrypt (ACME HTTP-01).
+Stack: Docker Compose + Traefik v2.11 en un único VPS (Hetzner Cloud, Ashburn).
+TLS automático con Let's Encrypt (ACME HTTP-01). Dominio: `kirbith.dev` (DNS en Cloudflare,
+"solo DNS"). Correo: Resend.
+
+Orden: crear el servidor (1.1) → endurecerlo (2) → Docker (3) → repo (4) → DNS (5) → `.env`
+y correo (6) → respaldos (12.1–12.2) → `make prod-check` y `make prod-up` (8–9) → lista de
+comprobación (10.1).
 
 ---
 
@@ -30,13 +35,29 @@ amortigua picos como una construcción de la imagen del agente en el servidor.
 
 ### Software en el VPS
 - Ubuntu 24.04 LTS
-- Docker CE 26+ (ver paso 2)
-- Git
+- Docker CE (paso 3), Git, age (respaldos)
 
 ### Dominio
-Un dominio o subdominio con un registro A apuntando a la IP del VPS
-(p. ej. `nexo.kirbith.com → 1.2.3.4`).
+`kirbith.dev` y `www.kirbith.dev` apuntando a la IP del VPS (paso 5).
 **El DNS debe propagarse antes de levantar el stack** — Let's Encrypt lo verifica.
+
+### 1.1 Crear el servidor en Hetzner Cloud
+
+En console.hetzner.cloud → tu proyecto:
+
+1. **Security → SSH keys → Add SSH key**: pega tu llave pública
+   (`cat ~/.ssh/id_ed25519.pub`; si no tienes, `ssh-keygen -t ed25519`).
+2. **Firewalls → Create Firewall** `nexo-fw`. Reglas entrantes, origen *Any IPv4* y *Any
+   IPv6*: TCP 22, TCP 80, TCP 443 (y ICMP si quieres `ping`). Sin reglas salientes = toda la
+   salida permitida (la necesitan Let's Encrypt, PyPI, Telegram, DeepSeek y Resend por el
+   587). Este firewall actúa fuera del servidor, así que Docker no puede saltárselo (ver 2.3).
+3. **Servers → Add Server**: ubicación **Ashburn, VA (ash)**; imagen **Ubuntu 24.04**; tipo
+   de 4 vCPU / 8 GB / ~160 GB; IPv4 + IPv6 públicas; **SSH key**: la del paso 1 (así no se
+   crea contraseña de root); **Firewalls**: `nexo-fw`; nombre `nexo`.
+4. Anota la IPv4 (y la IPv6). Primera entrada: `ssh root@<IP>`.
+
+Opcional: activar los *Backups* de Hetzner (copia del disco entero, aparte de los respaldos
+cifrados de la base del §12).
 
 ---
 
@@ -96,8 +117,8 @@ contrario. Por eso:
   y el dashboard de Traefik no publican nada;
 - `docker-compose.override.yml` (puertos de depuración y mailpit) **nunca** se usa en el
   VPS: usa siempre `make prod-*`, que pasa los `-f` explícitos;
-- como segunda capa, crea en Hetzner un *Cloud Firewall* con solo 22, 80 y 443 entrantes
-  y asígnalo al servidor.
+- la capa que Docker no puede saltarse es el *Cloud Firewall* de Hetzner (1.1, solo 22, 80
+  y 443 entrantes); ufw queda como segunda capa para SSH y lo que no sea Docker.
 
 ### 2.4 Actualizaciones automáticas de seguridad
 
@@ -135,18 +156,17 @@ free -h
 ## 3. Instalar Docker en el VPS
 
 ```bash
-# Como root o con sudo
-apt-get update
-apt-get install -y ca-certificates curl
-install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-  -o /etc/apt/keyrings/docker.asc
-chmod a+r /etc/apt/keyrings/docker.asc
+# Como deploy (con sudo)
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl git make age
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
   https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
-  > /etc/apt/sources.list.d/docker.list
-apt-get update
-apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # Verificar
 docker --version
@@ -169,21 +189,40 @@ git clone https://github.com/<usuario>/nexo.git /opt/nexo
 cd /opt/nexo
 ```
 
+Si el repositorio es privado, crea en el VPS una llave solo para él
+(`ssh-keygen -t ed25519 -f ~/.ssh/nexo_deploy -N ''`), añádela en GitHub como *Deploy key*
+de solo lectura y clona por SSH
+(`GIT_SSH_COMMAND='ssh -i ~/.ssh/nexo_deploy' git clone git@github.com:<usuario>/nexo.git /opt/nexo`,
+luego `git config core.sshCommand 'ssh -i ~/.ssh/nexo_deploy'` dentro del repo).
+
 ---
 
-## 5. Configurar el DNS
+## 5. Configurar el DNS (Cloudflare, "solo DNS")
 
-En el panel de tu registrador, crea:
+En Cloudflare → `kirbith.dev` → DNS → Records:
 
-| Tipo | Nombre | Valor | TTL |
-|---|---|---|---|
-| A | nexo.kirbith.com | `<IP del VPS>` | 300 |
-| A | www.nexo.kirbith.com | `<IP del VPS>` | 300 |
+| Tipo | Nombre | Contenido | Proxy | TTL |
+|---|---|---|---|---|
+| A | `kirbith.dev` (`@`) | IPv4 del VPS | **DNS only** (nube gris) | Auto |
+| A | `www` | IPv4 del VPS | **DNS only** | Auto |
+| AAAA | `@` y `www` (opcional) | IPv6 del VPS | **DNS only** | Auto |
+| TXT / MX / CNAME | los que indique Resend al verificar el dominio (SPF, DKIM, rebotes) | — | **DNS only** | Auto |
+
+Por qué **solo DNS** y no el proxy naranja:
+- Traefik debe ver la IP real del visitante: los límites por IP del gateway confían solo en
+  Traefik (`TRUSTED_PROXIES=traefik`). Con el proxy, todas las visitas parecerían venir de
+  unas pocas IPs de Cloudflare y compartirían el límite.
+- Let's Encrypt valida por HTTP-01 contra el propio servidor, y el certificado lo sirve
+  Traefik de extremo a extremo; el WebSocket va directo.
+- Si algún día activas el proxy: añade los rangos de Cloudflare a
+  `--entrypoints.websecure.forwardedHeaders.trustedIPs` y a `TRUSTED_PROXIES`, y pon el modo
+  SSL en *Full (strict)*.
+
+Opcional (recomendado): un registro **CAA** `@` → `0 issue "letsencrypt.org"`.
 
 Verifica que propaga antes de continuar:
 ```bash
-dig +short nexo.kirbith.com
-# Debe devolver la IP del VPS
+dig +short kirbith.dev www.kirbith.dev     # la IP del VPS, dos veces (no IPs de Cloudflare)
 ```
 
 ---
@@ -197,8 +236,9 @@ nano .env   # o el editor que prefieras
 ```
 
 `.env.prod.example` lista **todas** las variables, qué servicio usa cada una y sus valores
-por defecto. Las marcadas *obligatoria* las exige `docker-compose.prod.yml`: si falta
-alguna, `make prod-config` falla en vez de arrancar con un valor de desarrollo.
+por defecto, y ya trae los valores no secretos de producción (`DOMAIN=kirbith.dev`,
+`PUBLIC_BASE_URL`, `GOOGLE_REDIRECT_URL`, Resend, `MAIL_FROM`). Las marcadas *obligatoria*
+las comprueba `make prod-check` (§8), que no imprime valores.
 
 | Variable | Cómo obtenerla |
 |---|---|
@@ -209,7 +249,10 @@ alguna, `make prod-config` falla en vez de arrancar con un valor de desarrollo.
 | `DEEPSEEK_API_KEY` | platform.deepseek.com → API keys |
 | `TELEGRAM_BOT_TOKEN` | @BotFather → /newbot |
 | `TELEGRAM_CHAT_ID` | Escribe al bot y consulta `getUpdates` (ver abajo) |
-| `DOMAIN`, `ACME_EMAIL`, `PUBLIC_BASE_URL` | Tu dominio, tu correo y `https://<dominio>` |
+| `ACME_EMAIL` | Tu correo (avisos de caducidad de Let's Encrypt) |
+| `OWNER_EMAIL` | Tu correo de Google: es el que concede el modo dueño |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google Cloud Console → APIs & Services → Credentials → OAuth client ID (*Web application*). *Authorized redirect URI*: `https://kirbith.dev/auth/google/callback` (exacto, igual que `GOOGLE_REDIRECT_URL`). Pantalla de consentimiento en modo *In production* (o tu correo como usuario de prueba) |
+| `SMTP_PASS` | API key de Resend (§6.1) |
 
 > **No reutilices** los valores por defecto de desarrollo que aparecen en
 > `docker-compose.yml` (`nexo-dev-change-in-prod`, `N3x0Dev2026!`, `nexo`): están
@@ -281,9 +324,13 @@ docker run --rm -v nexo_traefik_acme:/letsencrypt -v "$PWD/traefik:/old:ro" alpi
 ## 8. Validar la configuración antes de levantar
 
 ```bash
+make prod-check
+# Obligatorias (las ${VAR:?} de docker-compose.prod.yml + correo, Google y dueño), formatos
+# (DOMAIN, PUBLIC_BASE_URL, GOOGLE_REDIRECT_URL, PASETO, SMTP), valores de desarrollo del
+# repo, permisos 600 del .env y la clave pública de age. Solo imprime nombres, nunca valores.
 make prod-config
-# Valida el compose combinado (sintaxis y variables obligatorias) sin levantar nada.
-# No imprime la configuración: `docker compose … config` a secas muestra los secretos.
+# Valida el compose combinado (sintaxis) sin levantar nada ni imprimirlo
+# (`docker compose … config` a secas muestra los secretos).
 ```
 
 ---
@@ -344,8 +391,10 @@ Esto ejecuta:
 1. `make prod-config` (falla si falta una variable obligatoria)
 2. `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
 
-La primera vez, el agente tarda ~2 minutos en arrancar (descarga el modelo de embeddings).
-Traefik obtiene el certificado TLS en la primera petición HTTPS al dominio.
+La primera vez construye las imágenes (unos minutos; el agente es el más lento) y el agente
+tarda ~1–2 minutos en quedar *healthy* (carga el modelo, que ya viene dentro de la imagen).
+Traefik pide los certificados de `kirbith.dev` y `www.kirbith.dev` al arrancar; si fallan,
+mira `docker logs nexo-traefik-1` (DNS o puerto 80).
 
 ---
 
@@ -367,24 +416,25 @@ ss -tlnp | grep -E ':80|:443|:5678|:8888|:8080|:5432|:6379|:8000'
 ### Endpoints
 ```bash
 # Health check (HTTP → HTTPS redirect: 301)
-curl -I http://nexo.kirbith.com/health
+curl -I http://kirbith.dev/health
 # Con HTTPS
-curl https://nexo.kirbith.com/health
+curl https://kirbith.dev/health
 # {"status":"ok","service":"gateway"}
 
 # Guest token
-curl https://nexo.kirbith.com/auth/guest \
+curl https://kirbith.dev/auth/guest \
   -H "X-Visitor-Id: $(python3 -c 'import uuid; print(uuid.uuid4())')"
 # {"token":"v4.local...."}
 
 # Certificado TLS
-curl -v https://nexo.kirbith.com/health 2>&1 | grep -E "subject|expire|issuer"
+curl -v https://kirbith.dev/health 2>&1 | grep -E "subject|expire|issuer"
 
-# Cabeceras de seguridad (HSTS, nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy)
-curl -sI https://nexo.kirbith.com/ | grep -iE "strict-transport|x-content-type|x-frame|referrer|permissions"
+# Cabeceras de seguridad (HSTS, nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy,
+# CSP en Report-Only solo en el frontend)
+curl -sI https://kirbith.dev/ | grep -iE "strict-transport|x-content-type|x-frame|referrer|permissions|content-security"
 
 # www → raíz (301)
-curl -sI https://www.nexo.kirbith.com/algo | grep -iE "^HTTP|^location"
+curl -sI https://www.kirbith.dev/algo | grep -iE "^HTTP|^location"
 ```
 
 ### Puertos vistos desde fuera
@@ -401,20 +451,101 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 ```
 
 ### Frontend
-Abre `https://nexo.kirbith.com` en el navegador. El portafolio debe cargar sin
+Abre `https://kirbith.dev` en el navegador. El portafolio debe cargar sin
 errores de TLS ni de consola.
+
+### 10.1 Lista de comprobación tras el primer despliegue
+
+Marca cada punto desde **tu Mac** (salvo que diga VPS), contra el dominio real.
+
+**HTTPS y certificados**
+- [ ] `curl -sI https://kirbith.dev/ | head -1` → `HTTP/2 200`.
+- [ ] Emisor Let's Encrypt, nombre correcto y caducidad a ~90 días, para los dos nombres:
+  ```bash
+  for h in kirbith.dev www.kirbith.dev; do echo | openssl s_client -connect $h:443 -servername $h 2>/dev/null \
+    | openssl x509 -noout -issuer -subject -ext subjectAltName -enddate; done
+  ```
+- [ ] El certificado persiste: `docker compose -f docker-compose.yml -f docker-compose.prod.yml restart traefik`
+  en el VPS y repite (sin nuevas peticiones a Let's Encrypt en `docker logs nexo-traefik-1`).
+
+**Redirecciones** (todas 301 y conservando la ruta)
+- [ ] `curl -sI http://kirbith.dev/privacidad` → `Location: https://kirbith.dev/privacidad`
+- [ ] `curl -sI http://www.kirbith.dev/x` → `https://www.kirbith.dev/x`, y
+  `curl -sI https://www.kirbith.dev/x` → `Location: https://kirbith.dev/x`
+- [ ] `curl -s https://kirbith.dev/privacidad | grep -o '<title>[^<]*'` → el aviso de privacidad
+  (lo sirve nginx, no el gateway).
+
+**Cabeceras**
+- [ ] `curl -sI https://kirbith.dev/` trae `strict-transport-security: max-age=31536000; includeSubDomains`,
+  `x-content-type-options: nosniff`, `x-frame-options: DENY`, `referrer-policy`,
+  `permissions-policy` y `content-security-policy-report-only` con `connect-src 'self' wss://kirbith.dev`;
+  **no** trae `server:`.
+- [ ] `curl -sI https://kirbith.dev/health` trae HSTS y no trae CSP (es el gateway).
+- [ ] En el navegador (DevTools → Console) recorre el sitio: ningún aviso
+  `[Report Only] Refused to …`. Si aparece alguno, anótalo antes de pensar en imponer la CSP.
+
+**Puertos**
+- [ ] `nmap -Pn -p 22,80,443,5432,5678,6379,8000,8080,8888 <IP>` → solo 22, 80 y 443 `open`.
+- [ ] `ssh root@<IP>` es rechazado; `ssh deploy@<IP>` entra solo con llave.
+
+**Un mensaje de cada tipo desde https://kirbith.dev** (con la "ventana al sistema" abierta:
+cada uno debe iluminar su recorrido)
+- [ ] Pregunta de ruta rápida (p. ej. "¿Qué hizo en Infosys?") → `run.done` con `route`, la
+  cámara viaja por los nodos.
+- [ ] Pregunta que genera nodo (p. ej. "Crea un nodo sobre su experiencia con Python") →
+  el nodo se forma desde sus fuentes (`node.forming`) y nace (`node.spawn`); pasa por n8n.
+- [ ] Pregunta fuera de alcance (p. ej. "¿Cuál es la capital de Mongolia?") → `unknown`, sin
+  inventar.
+- [ ] Chat en vivo: un mensaje del visitante llega a tu Telegram con su etiqueta (`delivered`).
+- [ ] Responde en Telegram (función *responder*) → la burbuja aparece en el sitio
+  (`live_in`) sin que el visitante haga nada, y la arquitectura se ilumina sin mover la cámara.
+- [ ] `/ws?token=…` ya no funciona: el navegador abre `wss://kirbith.dev/ws?ticket=…`
+  (DevTools → Network → WS).
+- [ ] Límites: más de 20 preguntas en una hora desde el mismo visitante → `429` con
+  `Retry-After`.
+
+**Correo real**
+- [ ] VPS: `make mail-test TO=<tu correo>` → `sent OK`, y el correo llega (revisa spam) con
+  remitente `no-reply@kirbith.dev` y SPF/DKIM `pass` (Gmail → *Mostrar original*).
+- [ ] En el sitio, entra con tu correo: llega el enlace, abre `https://kirbith.dev/…` y la
+  sesión queda iniciada.
+
+**Inicio de sesión con Google**
+- [ ] Entrar con Google redirige a `accounts.google.com` y vuelve a
+  `https://kirbith.dev/auth/google/callback` sin `redirect_uri_mismatch`.
+- [ ] Con el correo de `OWNER_EMAIL` la cuenta queda en modo dueño (panel del dueño visible);
+  con otra cuenta de Google, modo usuario.
+- [ ] Cerrar sesión invalida el token (otra pestaña deja de ver el modo dueño al reconectar).
+
+**Respaldo y restauración**
+- [ ] VPS: `BACKUP_DIR=/opt/nexo/backups make backup-prod` → dos archivos `.age`, permisos 600;
+  `head -c 21 …sql.gz.age` → `age-encryption.org/v1`.
+- [ ] Mac: `rsync` de §12.3 los trae; `make restore-test FILE=~/nexo-backups/nexo_db_<fecha>.sql.gz.age`
+  lista las tablas con filas (`accounts`, `live_messages`, `rag_fragments`…).
+- [ ] Al día siguiente: `tail /opt/nexo/backups/backup.log` muestra el respaldo de las 03:00.
+
+**Salud y logs**
+- [ ] `docker compose -f docker-compose.yml -f docker-compose.prod.yml ps` → todos `(healthy)`.
+- [ ] `docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --since 30m | grep -iE "error|panic|traceback"`
+  → nada inesperado; ningún log con IPs de visitantes, tokens o ids completos (§12, *Registros*).
+- [ ] `docker stats --no-stream` → cada contenedor por debajo de su límite (§1).
+- [ ] n8n por el túnel (§11): los 3 flujos activos.
 
 ---
 
 ## 11. Acceder a la UI de n8n en producción
 
-El puerto 5678 **no está publicado al exterior**. Para acceder, abre un túnel SSH:
+El puerto 5678 **no está publicado**, ni al exterior ni en el host del VPS: solo existe en la
+red de Docker. El túnel SSH va a la IP del contenedor:
 
 ```bash
-# En tu máquina local:
-ssh -L 5678:localhost:5678 deploy@<IP-del-VPS> -N
+# En tu Mac:
+N8N_IP=$(ssh deploy@<IP-del-VPS> "docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' nexo-n8n-1")
+ssh -L 5678:$N8N_IP:5678 deploy@<IP-del-VPS> -N
 # En otro terminal, abre: http://localhost:5678
 ```
+
+(La IP cambia si el contenedor se recrea: repite la primera línea.)
 
 Las credenciales son `owner@nexo.local` y el valor de `N8N_OWNER_PASSWORD` de tu `.env`.
 
@@ -558,6 +689,7 @@ make backup-prod            # respaldo justo antes
 git fetch && git log --oneline HEAD..origin/main     # qué entra
 git diff HEAD..origin/main -- .env.prod.example      # ¿variables nuevas?
 git pull
+make prod-check             # ¿falta alguna variable nueva? (no imprime valores)
 make prod-up                # valida, construye con caché y recrea solo lo que cambió
 docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --since 10m | grep -iE "error|panic|traceback"
@@ -608,3 +740,9 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml down -v
 | n8n workflows no activos | `docker logs nexo-n8n-1 --tail 80` — revisar `N8N_ENCRYPTION_KEY` |
 | Traefik no obtiene el cert de `www` | Falta el registro DNS de `www.DOMAIN` |
 | `make prod-config` falla con "required variable … is missing" | Falta una variable obligatoria en `.env` — ver `.env.prod.example` |
+| `make prod-check` marca algo | Lee el nombre que indica; nunca imprime el valor. Compara con `.env.prod.example` |
+| `make mail-test` falla en `STARTTLS`/`dial` | Puerto distinto de 587 o `SMTP_TLS` ≠ `starttls`; Hetzner bloquea 25 y 465 |
+| `make mail-test` falla al autenticar o en el remitente | `SMTP_USER` debe ser `resend`; API key revocada; dominio sin verificar en Resend |
+| Google: `redirect_uri_mismatch` | La URI autorizada en Google Cloud no es exactamente `GOOGLE_REDIRECT_URL` |
+| Todas las visitas comparten el límite por IP | El proxy de Cloudflare está activado (nube naranja): vuelve a "DNS only" (§5) |
+| El túnel a n8n no conecta | Usa la IP del contenedor, no `localhost` (§11) |
