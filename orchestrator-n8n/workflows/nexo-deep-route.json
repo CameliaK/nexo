@@ -232,7 +232,7 @@
       "position": [2060, 320],
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { 'outcome': 'unknown', 'node': null, 'reason': 'insufficient', 'missing': $('Design Node').first().json.missing || [], 'found': $('RAG Search').first().json.found_terms || [] } }}",
+        "responseBody": "={{ { 'outcome': 'unknown', 'node': null, 'reason': 'insufficient', 'missing': $('Design Node').first().json.missing || [], 'found': $('RAG Search').first().json.found_terms || [], 'sources': $('RAG Search').first().json.sources || [] } }}",
         "options": {}
       }
     },
@@ -244,7 +244,7 @@
       "position": [1180, 440],
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { 'outcome': 'unknown', 'node': null, 'reason': $('RAG Search').first().json.limit_reached ? 'limit' : 'no_evidence', 'missing': $('RAG Search').first().json.missing_terms || [], 'found': $('RAG Search').first().json.found_terms || [] } }}",
+        "responseBody": "={{ { 'outcome': 'unknown', 'node': null, 'reason': $('RAG Search').first().json.limit_reached ? 'limit' : 'no_evidence', 'missing': $('RAG Search').first().json.missing_terms || [], 'found': $('RAG Search').first().json.found_terms || [], 'sources': $('RAG Search').first().json.sources || [] } }}",
         "options": {}
       }
     }

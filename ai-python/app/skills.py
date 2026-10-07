@@ -164,3 +164,17 @@ def to_hits(lookup: Lookup, labels: dict[str, str], lang: str) -> list[dict]:
             "level": f.level,
         })
     return hits
+
+
+def mentioned_in(terms: list[str], texts: list[str]) -> list[str]:
+    """The terms that appear, as whole words, in the given portfolio texts.
+    A term the index does not know is not a tech, but it may still be real:
+    "Infosys" or "HERMES" are a company and a project of the portfolio, so
+    they must never be reported as "no record of"."""
+    corpus = " " + " ".join(normalize(t) for t in texts) + " "
+    out = []
+    for term in terms:
+        n = normalize(term)
+        if n and re.search(rf"(?<![a-z0-9+#]){re.escape(n)}(?![a-z0-9+#])", corpus):
+            out.append(term)
+    return out
