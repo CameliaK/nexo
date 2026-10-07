@@ -40,7 +40,11 @@ async function main() {
     await new Promise(r => setTimeout(r, 2000));
   }
 
-  const ownerPassword = process.env.N8N_OWNER_PASSWORD || 'N3x0Dev2026!';
+  const ownerPassword = process.env.N8N_OWNER_PASSWORD;
+  if (!ownerPassword) {
+    process.stderr.write('activate-via-api: N8N_OWNER_PASSWORD is not set\n');
+    process.exit(1);
+  }
   const loginBody = JSON.stringify({ emailOrLdapLoginId: 'owner@nexo.local', password: ownerPassword });
   const loginRes = await request({
     hostname: 'localhost', port: 5678, path: '/rest/login', method: 'POST',
