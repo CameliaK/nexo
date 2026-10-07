@@ -2,9 +2,12 @@ import { t } from '../i18n';
 import type { BackendArchitecture, ConnectionState } from '../backend/types';
 import type { TracePlayer } from './traces';
 export function systemPositions(architecture: BackendArchitecture) {
+  // A compact topology of its own, shared by the root and chess aperture.
+  // Keep branches separated instead of shrinking the full desktop diagram.
+  const compact:Record<string,[number,number]>={browser:[22,70],traefik:[65,106],gateway:[114,70],redis:[114,25],agent:[172,70],n8n:[219,24],llm:[240,70],postgres:[172,120],owner_channel:[238,120]};
   return architecture.components.map(component => {
     const peers=architecture.components.filter(c=>c.layer===component.layer),index=peers.indexOf(component);
-    return {id:component.id,x:22+component.layer*53,y:67+(index-(peers.length-1)/2)*33};
+    const [x,y]=compact[component.id]||[22+component.layer*53,67+(index-(peers.length-1)/2)*33];return {id:component.id,x,y};
   });
 }
 /** Accessible entrance only: the universe draws the actual meshes, sharing its

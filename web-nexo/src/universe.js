@@ -1,3 +1,4 @@
+import { mobileSystemBox } from './mobile-layout';
 import { createCameraGestures, clampZoom } from './camera-gestures';
 import { formationPhase } from './node-forming';
 import { motion as MOTION, easeOut, resumeStart } from './motion';
@@ -124,8 +125,7 @@ function systemFrame(view=camera()){
   if(document.body.classList.contains('mobile-chess')){
     const top=(Number(document.body.dataset.safeTop)||0)+(Number(document.body.dataset.mobileTop)||0),h=Number(document.body.dataset.mobileHeight)||height;
     if(document.body.classList.contains('mobile-system-expanded'))return{left:12,top:top+h*.25+56,width:width-24,height:h*.60-70};
-    if(document.body.classList.contains('mobile-chess-chat'))return{left:width>height?8:12,top:top+2,width:width>height?140:width-24,height:26};
-    return width>height?{left:8,top:top+8,width:140,height:90}:{left:12,top:top+4,width:width-24,height:80};
+    return mobileSystemBox({width,height:h,safeTop:Number(document.body.dataset.safeTop)||0,offsetTop:Number(document.body.dataset.mobileTop)||0,chat:document.body.classList.contains('mobile-chess-chat'),landscape:width>height});
   }
   const mobile=width<650,scale=view.zoom;
   const w=(mobile?138:218)*scale,h=(mobile?88:120)*scale;

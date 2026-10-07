@@ -25,5 +25,5 @@ export async function mobileFixture(browser,options,language='es'){
  });
  await page.goto(origin);await page.waitForFunction(()=>document.querySelector('#floating-chess')?.getAttribute('aria-label')?.includes(' · ')&&!document.querySelector('#floating-chess')?.classList.contains('is-locked'));
  await page.waitForTimeout(300);
- return {context,page,errors,requests,send(type,seq,data,run_id='mobile-trace'){socket.send(JSON.stringify({v:2,type,seq,data,run_id,ts:new Date().toISOString()}))},async chess(){await page.locator('#floating-chess').tap({force:true});await page.locator('.chess-scene.is-ready').waitFor();await page.waitForTimeout(1200)}};
+ return {context,page,errors,requests,send(type,seq,data,run_id='mobile-trace'){socket.send(JSON.stringify({v:2,type,seq,data,run_id,ts:new Date().toISOString()}))},async chess(){const box=await page.locator('#floating-chess').boundingBox();const hit=await page.evaluate(({x,y})=>document.elementFromPoint(x,y)?.outerHTML,{x:box.x+box.width/2,y:box.y+box.height/2});if(!hit?.includes('floating-chess'))throw Error('Chess input intercepted: '+hit);await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);await page.locator('.chess-scene.is-ready').waitFor().catch(error=>{console.error(errors);throw error});await page.waitForFunction(()=>document.querySelector('.chess-scene')?.dataset.transition==='resting')}};
 }

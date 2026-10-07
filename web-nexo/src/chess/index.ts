@@ -42,7 +42,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
         </div>
         <aside class="chess-aside">
           <div class="chess-status"><span class="chess-eyebrow">${t('chess.status')}</span><h2 class="chess-status-title"></h2><p class="chess-status-detail"></p></div>
-          <details class="chess-history"><summary class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span></summary><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></details>
+          <details class="chess-history"><summary class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span><span class="chess-last-move">—</span></summary><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></details>
           <div class="chess-actions"><button type="button" class="chess-flip">⇄ <span>${t('chess.flip')}</span></button><button type="button" class="chess-restart">↻ <span>${t('chess.new')}</span></button><button type="button" class="chess-claim" hidden>${t('chess.claim')}</button></div>
           <p class="chess-local-note">${t('chess.note')}</p>
         </aside>
@@ -78,10 +78,12 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   function applyLayout(){
     const data=document.body.dataset;
     const mobile=document.body.classList.contains('mobile-chess');
-    if(mobile&&dialog.dataset.mobile!=='true')($<HTMLDetailsElement>('.chess-history')).open=true;dialog.dataset.mobile=String(mobile);dialog.dataset.compactChat=String(mobile&&document.body.classList.contains('mobile-chess-chat')&&Number(data.mobileHeight)<480);
+    const status=$('.chess-status'),statusParent=mobile?$('.chess-shell'):$('.chess-aside');if(status.parentElement!==statusParent)statusParent.prepend(status);
+    if(mobile&&dialog.dataset.mobile!=='true')($<HTMLDetailsElement>('.chess-history')).open=innerHeight>700;dialog.dataset.mobile=String(mobile);dialog.dataset.compactChat=String(mobile&&document.body.classList.contains('mobile-chess-chat')&&Number(data.mobileHeight)<480&&innerWidth<innerHeight);
     const layout=document.body.classList.contains('mobile-chess')?mobileChessLayout({width:innerWidth,height:Number(data.mobileHeight)||innerHeight,safeTop:Number(data.safeTop)||0,safeBottom:Number(data.safeBottom)||0,offsetTop:Number(data.mobileTop)||0,chat:document.body.classList.contains('mobile-chess-chat'),landscape:innerWidth>innerHeight}):chessLayout({width:innerWidth,height:innerHeight},currentView);
     const changed=JSON.stringify(camera)!==JSON.stringify(layout.camera);camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';dialog.dataset.density=layout.compact?'compact':'normal';
     const {header,close,black,white,help,aside}=layout;
+    if(mobile){const status=(layout as ReturnType<typeof mobileChessLayout>).status;for(const [key,value] of Object.entries(status))dialog.style.setProperty('--chess-status-'+key,value+'px')}
     if(systemBounds&&!layout.stacked&&aside.left+aside.width>systemBounds.left&&aside.left<systemBounds.left+systemBounds.width){aside.top=Math.max(aside.top,systemBounds.top+systemBounds.height+28);aside.height=Math.max(80,innerHeight-104-aside.top)}
     for(const [prefix,region] of Object.entries({header,close,black:flipped?white:black,white:flipped?black:white,help,aside}))for(const [key,value] of Object.entries(region))dialog.style.setProperty('--chess-'+prefix+'-'+key,value+'px');
     if(changed||!buttons.size)placeBoard();
@@ -171,7 +173,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     if(record){
       const history=$('.chess-moves');history.replaceChildren();
       for(let i=0;i<record.moves.length;i+=2){const row=document.createElement('li');for(const value of [String(i/2+1).padStart(2,'0'),record.moves[i].san,record.moves[i+1]?.san||'—']){const span=document.createElement('span');span.textContent=value;row.append(span)}history.append(row)}
-      $('.chess-empty').hidden=record.moves.length>0;$('.chess-move-count').textContent=String(record.moves.length).padStart(2,'0');
+      $('.chess-empty').hidden=record.moves.length>0;$('.chess-move-count').textContent=String(record.moves.length).padStart(2,'0');$('.chess-last-move').textContent=record.moves.at(-1)?.san||'—';
       for(const color of ['w','b'] as const){const player=$(`[data-color="${color}"]`),own=color===remote.side;player.querySelector('strong')!.textContent=own?(remote.ownerId?'Kirbith':t('common.you')):(remote.ownerId?t('chess.player'):'Kirbith');player.querySelector('.chess-avatar')!.textContent=own?(remote.ownerId?'K':'V'):(remote.ownerId?'V':'K');player.querySelector('.chess-player-info>span')!.textContent=t(own?'chess.playerSide':remote.ownerId?'chess.opponentSide':'chess.hostSide',{color:t(color==='w'?'chess.white':'chess.black')});}
     }
   }
@@ -188,7 +190,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     }
     const history=game.history,list=$('.chess-moves');list.replaceChildren();
     for(let i=0;i<history.length;i+=2){const item=document.createElement('li');for(const text of [String(i/2+1).padStart(2,'0'),history[i].san,history[i+1]?.san||'—']){const s=document.createElement('span');s.textContent=text;item.append(s)}list.append(item)}
-    $('.chess-empty').hidden=history.length>0;$('.chess-move-count').textContent=String(history.length).padStart(2,'0');
+    $('.chess-empty').hidden=history.length>0;$('.chess-move-count').textContent=String(history.length).padStart(2,'0');$('.chess-last-move').textContent=history.at(-1)?.san||'—';
     const scroll=$('.chess-history-scroll');scroll.scrollTop=scroll.scrollHeight;
     $('.chess-claim').hidden=!(status.claimable||game.canAnnounceClaim||claimMode);
     $('.chess-claim').textContent=claimMode?t('chess.cancelClaim'):t('chess.claim');

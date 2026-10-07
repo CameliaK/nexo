@@ -38,7 +38,7 @@ test('Mobile board stays clear of system, player rows, control rail and safe are
  for(const [width,height]of [[390,844],[360,640],[844,390],[393,851],[851,393]]){
   const layout=mobileChessLayout({width,height,safeTop:12,safeBottom:8}),bounds=chessBounds(layout.camera);
   assert.ok(bounds.left>=0&&bounds.right<=width&&bounds.top>=layout.area.top-.001&&bounds.bottom<=layout.area.bottom+.001);
-  if(width<height){assert.ok(bounds.top>=12+84);assert.ok(layout.white.top>=bounds.bottom);assert.ok(layout.aside.top>=layout.white.top+layout.white.height)}
+  if(width<height){assert.ok(bounds.top>=12+84);assert.ok(layout.white.top+layout.white.height<=bounds.top);assert.ok(layout.status.top+layout.status.height<=bounds.top);assert.ok(layout.aside.top>=bounds.bottom)}
   else {assert.ok(bounds.left>=148);assert.ok(bounds.right<=layout.aside.left)}
   assert.ok(layout.aside.top+layout.aside.height<=height-8);
  }
@@ -62,4 +62,14 @@ test('Chess unfolds over 1.4 seconds before its pieces fade in; the same phases 
  assert.equal(motion.chessApproach+motion.chessUnfold+motion.chessPieces,motion.chessOpen);assert.equal(motion.chessOpen,1400);assert.equal(motion.chessClose,1400);
  assert.equal(chessPhase(0).board,0);assert.equal(chessPhase(.2).pieces,0);assert.ok(chessPhase(.6).unfold>0);assert.equal(chessPhase(.6).pieces,0);assert.equal(chessPhase(1).pieces,1);
  assert.deepEqual(chessPhase(.4,true),{approach:0,unfold:1,board:.4,pieces:.4,pulse:0});
+});
+
+import {mobileSystemBox} from '../src/mobile-layout';
+test('Mobile chess reuses a legible window, with no bar and no board/chat overlap',()=>{
+ for(const [width,height]of [[360,640],[390,844],[844,390],[412,839],[839,412]])for(const chat of [false,true]){
+  const viewport={width,height,chat},window=mobileSystemBox(viewport),layout=mobileChessLayout(viewport),bounds=chessBounds(layout.camera);
+  assert.ok(window.width>=110&&window.height>=72);assert.ok(Math.abs(window.width/window.height-138/88)<1e-10);
+  assert.ok(window.left+window.width<=bounds.left||window.left>=bounds.right||window.top+window.height<=bounds.top);
+  if(chat)assert.ok(window.top+window.height<=height-Math.min(height*.5,360));
+ }
 });
