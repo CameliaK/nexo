@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { Chats } from '../src/chat';
 import { RealBackend } from '../src/backend/real';
 import { AUTH_TOKEN_KEY } from '../src/backend/identity';
-import { languageStore, t } from '../src/i18n';
+import { languageStore, t, translateUI } from '../src/i18n';
 
 function setup(response:(path:string,request:any)=>Response){
  const oldDocument=globalThis.document,oldStorage=globalThis.localStorage,oldFetch=globalThis.fetch;
@@ -84,7 +84,20 @@ test('Three localized discovery suggestions only fill the draft; they never send
  try{
   await f.ready();const group=f.els.get('.panel-compose').querySelector('.chat-suggestions'),buttons=group.children;
   assert.equal(buttons.length,3);assert.equal(group.getAttribute('role'),'group');
-  for(const language of ['es','en']){languageStore.set(language);f.chats.refreshLanguage();for(const [index,key]of ['chat.suggestFrontend','chat.suggestAI','chat.suggestData'].entries()){const before=f.requests.length;buttons[index].onclick();assert.equal(f.chats.agentInput.value,t(key));assert.equal(f.requests.length,before);assert.equal(buttons[index].type,'button')}}
+  const expected={
+   es:['Créame un nodo con las tecnologías de frontend de Kirbith','Créame un nodo con la experiencia de Kirbith en IA','Créame un nodo con las bases de datos de Kirbith'],
+   en:["Create a node with Kirbith's frontend technologies","Create a node with Kirbith's AI experience","Create a node with Kirbith's databases"]
+  };
+  for(const language of ['es','en']){
+   languageStore.set(language);f.chats.refreshLanguage();
+   // The minimal DOM keeps panel-compose outside companion-panel; relabel that subtree too.
+   translateUI(group);
+   for(const [index,label]of expected[language].entries()){
+    const before=f.requests.length;assert.equal(buttons[index].textContent,label);
+    buttons[index].onclick();assert.equal(f.chats.agentInput.value,label);
+    assert.equal(f.requests.length,before);assert.equal(buttons[index].type,'button');
+   }
+  }
  }finally{f.dispose()}
 });
 test('Ordered forming/spawn real events reach the universe with their run ID; malformed sources and terminal events are handled',async()=>{

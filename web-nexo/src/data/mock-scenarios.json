@@ -192,7 +192,7 @@
             "data": {
               "step": "search_nodes",
               "status": "active",
-              "label": "Buscando en mis nodos"
+              "label": "Buscando en los nodos de Kirbith"
             }
           }
         },
@@ -575,7 +575,7 @@
             "data": {
               "step": "search_nodes",
               "status": "active",
-              "label": "Buscando en mis nodos"
+              "label": "Buscando en los nodos de Kirbith"
             }
           }
         },
@@ -1255,7 +1255,7 @@
             "data": {
               "step": "search_nodes",
               "status": "active",
-              "label": "Buscando en mis nodos"
+              "label": "Buscando en los nodos de Kirbith"
             }
           }
         },
@@ -1467,7 +1467,7 @@
             "seq": 23,
             "ts": "{{now}}",
             "data": {
-              "text": "No tengo información sobre eso en mi portafolio. "
+              "text": "No tengo información sobre eso en el portafolio de Kirbith. "
             }
           }
         },
@@ -1480,7 +1480,7 @@
             "seq": 24,
             "ts": "{{now}}",
             "data": {
-              "text": "Si quieres, escríbeme por el chat en vivo o por LinkedIn y lo platicamos."
+              "text": "Si quieres, escríbele a Kirbith por el chat en vivo o por LinkedIn para platicarlo."
             }
           }
         },
@@ -1844,7 +1844,7 @@
               "from": "n8n",
               "to": "owner_channel",
               "phase": "start",
-              "label": "Lo envía a mi teléfono"
+              "label": "Lo envía al teléfono de Kirbith"
             }
           }
         },
@@ -1945,7 +1945,7 @@
               "from": "owner_channel",
               "to": "n8n",
               "phase": "start",
-              "label": "Llega mi respuesta"
+              "label": "Llega la respuesta de Kirbith"
             }
           }
         },
