@@ -1,19 +1,12 @@
-<!--
-BORRADOR. Antes de publicar:
-1. Rellena todo lo que está entre [corchetes].
-2. Confirma que cada plazo de conservación sea REAL (el sistema debe cumplirlo).
-3. No es asesoría legal; si quieres cumplimiento estricto, que lo revise un abogado.
--->
-
 # Aviso de privacidad (español)
 
-**Última actualización:** [fecha de publicación]
+**Última actualización:** 7 de octubre de 2026
 
 ## 1. Quién es el responsable
 
 Kirbith Alberto Cubillas Hernández ("yo"), persona física.
 Domicilio: Ahuehuete 27, Magueyitos, Banderilla, Veracruz, México.
-Contacto para temas de privacidad: contacto@kirbith.dev [confirmar que el reenvío funciona antes de publicar].
+Contacto para temas de privacidad: contacto@kirbith.dev.
 
 Este sitio es mi portafolio profesional (Nexo). No es una tienda ni vendo nada.
 
@@ -43,12 +36,12 @@ No vendo tus datos, no hago publicidad y no elaboro perfiles sobre ti.
 
 Para que el sitio funcione, algunos datos pasan por proveedores que los tratan por mi cuenta:
 
-- **Hetzner** ([Estados Unidos: confirmar al crear el servidor]): aloja el sitio y la base de datos.
+- **Hetzner** (Alemania): aloja el sitio y la base de datos.
 - **DeepSeek**: procesa el texto de tus preguntas al asistente para generar la respuesta.
   Puede procesarse fuera de México.
 - **Telegram**: los mensajes del chat en vivo me llegan por Telegram.
 - **Google**: si eliges iniciar sesión con Google, solo recibo tu correo electrónico verificado.
-- **[Proveedor de correo]**: envía los correos de acceso y de avisos de ajedrez.
+- **Resend** (Estados Unidos): envía los correos de acceso y de avisos de ajedrez.
 
 Algunos de estos proveedores están fuera de México. No comparto tus datos con nadie más,
 salvo que una autoridad competente me lo exija.
@@ -73,7 +66,7 @@ Puedes pedir acceso, rectificación, cancelación u oposición al tratamiento de
   quieres ejercer y cómo identificarte. Te responderé dentro de los plazos que marca la ley.
 - Puedes dejar de recibir avisos por correo con el enlace de baja de cada mensaje o desde
   tu cuenta.
-- Sin cuenta, el botón "Borrar mis datos" de esta página elimina los nodos, mensajes y la sesión asociados a tu navegador. [Pendiente de implementar en la interfaz.]
+- Sin cuenta, el botón "Borrar mis datos" de esta página elimina los nodos, mensajes y la sesión asociados a tu navegador.
 - Para borrar los datos locales de tu navegador, limpia el almacenamiento del sitio.
 
 Si consideras que tu derecho no fue atendido, puedes acudir a la Secretaría Anticorrupción
@@ -109,13 +102,13 @@ usas tus datos, te lo avisaré y, cuando corresponda, te pediré tu consentimien
 
 # Privacy notice (English)
 
-**Last updated:** [publication date]
+**Last updated:** October 7, 2026
 
 ## 1. Who is responsible
 
 Kirbith Alberto Cubillas Hernández ("I"), an individual.
 Address: Ahuehuete 27, Magueyitos, Banderilla, Veracruz, Mexico.
-Privacy contact: contacto@kirbith.dev [confirm forwarding works before publishing].
+Privacy contact: contacto@kirbith.dev.
 
 This site is my professional portfolio (Nexo). I don't sell anything.
 
@@ -145,12 +138,12 @@ I don't sell your data, I don't run ads and I don't build profiles about you.
 
 To make the site work, some data goes through providers that process it on my behalf:
 
-- **Hetzner** ([United States: confirm when creating the server]): hosts the site and the database.
+- **Hetzner** (Germany): hosts the site and the database.
 - **DeepSeek**: processes the text of your questions to the assistant to generate the answer.
   It may be processed outside Mexico.
 - **Telegram**: live-chat messages reach me through Telegram.
 - **Google**: if you choose to sign in with Google, I only receive your verified email.
-- **[Email provider]**: sends sign-in and chess notification emails.
+- **Resend** (United States): sends sign-in and chess notification emails.
 
 Some of these providers are outside Mexico. I don't share your data with anyone else, unless
 a competent authority requires it.
@@ -175,7 +168,7 @@ your data, and to withdraw your consent at any time.
   and how to identify you. I'll reply within the deadlines set by law.
 - You can stop email notifications with the unsubscribe link in each message or from your
   account.
-- Without an account, the "Delete my data" button on this page removes the nodes, messages and session tied to your browser. [To be implemented in the interface.]
+- Without an account, the "Delete my data" button on this page removes the nodes, messages and session tied to your browser.
 - To delete your browser's local data, clear the site's storage.
 
 If you believe your right was not honored, you can go to the Mexican authority for the
