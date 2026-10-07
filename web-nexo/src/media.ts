@@ -7,6 +7,8 @@ export interface NodeMedia {
   alt: string;
   caption?: string;
   placeholder?: boolean;
+  width?: number;
+  height?: number;
 }
 type Point = {x:number;y:number};
 export type MediaRect = {left:number;right:number;top:number;bottom:number};
@@ -19,7 +21,8 @@ export function nodeMedia(value:unknown):NodeMedia[] {
   for(const entry of value){
     if(!entry||typeof entry.id!=='string'||!entry.id.trim()||ids.has(entry.id)||typeof entry.alt!=='string'||!entry.alt.trim()||typeof entry.src!=='string')continue;
     if(!/^\/media\/[\w.-]+\/[\w./-]+\.webp$/.test(entry.src)||entry.src.split('/').some((part:string)=>part==='..'||part==='.'))continue;
-    ids.add(entry.id);result.push({id:entry.id,src:entry.src,alt:entry.alt,...(typeof entry.caption==='string'?{caption:entry.caption}:{}),...(entry.placeholder===true?{placeholder:true}:{})});
+    const dimensions=Number.isInteger(entry.width)&&entry.width>0&&Number.isInteger(entry.height)&&entry.height>0?{width:entry.width,height:entry.height}:{};
+    ids.add(entry.id);result.push({id:entry.id,src:entry.src,alt:entry.alt,...dimensions,...(typeof entry.caption==='string'?{caption:entry.caption}:{}),...(entry.placeholder===true?{placeholder:true}:{})});
     if(result.length===6)break;
   }
   return result;
@@ -51,7 +54,7 @@ export function createMediaUI(doc:Document=document) {
   function show(tile:Tile){
     index=tiles.indexOf(tile);image.style.visibility='hidden';image.alt=tile.entry.alt;
     image.onload=()=>{image.style.visibility='visible'};image.onerror=()=>fail(tile);
-    image.src=tile.entry.src;
+    image.width=tile.entry.width||600;image.height=tile.entry.height||400;image.src=tile.entry.src;
     caption.textContent=(tile.entry.placeholder?t('media.prefix'):'')+(tile.entry.caption||tile.entry.alt);
     const visible=usable();counter.textContent=(visible.indexOf(tile)+1)+' / '+visible.length;
     previous.disabled=next.disabled=visible.length<2;
@@ -87,7 +90,7 @@ export function createMediaUI(doc:Document=document) {
     layer.dataset.node=node?.id||'';layer.setAttribute('aria-label',t('media.caption',{name:nodeLabel}));layer.style.setProperty('--media-rgb',color.join(','));
     for(const entry of entries){
       const button=create('button','media-window');button.type='button';button.hidden=true;button.dataset.mediaId=entry.id;button.setAttribute('aria-label',t('media.open',{alt:entry.alt}));
-      const thumbnail=create('img');thumbnail.width=600;thumbnail.height=400;thumbnail.loading='lazy';thumbnail.decoding='async';thumbnail.alt=entry.alt;
+      const thumbnail=create('img');thumbnail.width=entry.width||600;thumbnail.height=entry.height||400;thumbnail.loading='lazy';thumbnail.decoding='async';thumbnail.alt=entry.alt;
       const footer=create('span','media-window-caption',entry.caption||entry.alt);
       button.append(thumbnail,footer);if(entry.placeholder)button.append(create('span','media-placeholder',t('media.placeholder')));
       const tile:Tile={entry,button,image:thumbnail,failed:false,position:null,hovered:false};tiles.push(tile);layer.append(button);
@@ -107,7 +110,7 @@ export function createMediaUI(doc:Document=document) {
       const preferred=(tile.hovered||reduced||paused||viewer.open)&&tile.position?tile.position:{x:anchor.x+Math.sin(clock*.18+i*1.9)*10*drift,y:anchor.y+Math.cos(clock*.15+i*1.3)*12*drift};
       let size=width<650?116:170;
       const place=()=>placeSatellite({width,height,obstacles:[...obstacles,...occupied],preferred,previous:tile.position,footprint:{left:-size/2-3,right:size/2+3,top:-size/3-3,bottom:size/3+3},ease:reduced?1:1-Math.exp(-dt/450)});
-      let position=place();if(!position){size=96;position=place()}
+      let position=place();if(!position){size=96;position=place()}if(!position&&(width<650||height<600)){size=72;position=place()}
       tile.position=position;tile.button.hidden=!position;
       if(!position)continue;
       const box={left:position.x-size/2-3,right:position.x+size/2+3,top:position.y-size/3-3,bottom:position.y+size/3+3};occupied.push(box);

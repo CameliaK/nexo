@@ -245,8 +245,14 @@ function chatObstacles(includeCompanion=false){
     if(!Number.isFinite(n.sx)||!Number.isFinite(n.sy))continue;
     const reach=Math.max(24,n.sr*1.65);
     obstacles.push({left:n.sx-reach,right:n.sx+reach,top:n.sy-reach,bottom:n.sy+reach});
-    const z=level===root?zoom:1,half=(width<650?(n.privatePanel?67.5:n.generated?38:72.5):(n.privatePanel?75:80))*z;
-    obstacles.push({left:n.sx-half,right:n.sx+half,top:n.sy+n.sr+(width<650?12:19)*z,bottom:n.sy+n.sr+(width<650?12:19)*z+Math.max(n.labelHeight||0,n.generated&&width<650?32:55)*z});
+    const z=level===root?zoom:1;
+    // Leaf media uses measured label sizes rather than a 55 px blanket reserve.
+    // Cache sizes, not positions: panning needs no DOM reads or stale rectangles.
+    const label=includeCompanion?n.el?.querySelector('.node-label'):null,key=width+'|'+n.name+'|'+n.meta+'|'+z;
+    if(label&&n.mediaLabelKey!==key){const box=label.getBoundingClientRect();n.mediaLabelKey=key;n.mediaLabelSize={width:box.width,height:box.height}}
+    const measured=includeCompanion?n.mediaLabelSize:null,half=measured?.width>0?measured.width/2:(width<650?(n.privatePanel?67.5:n.generated?38:72.5):(n.privatePanel?75:80))*z;
+    const labelHeight=measured?.height>0?measured.height:(n.generated&&width<650?32:55)*z;
+    obstacles.push({left:n.sx-half,right:n.sx+half,top:n.sy+n.sr+(width<650?12:19)*z,bottom:n.sy+n.sr+(width<650?12:19)*z+labelHeight});
   }
   if(!level.system&&!systemTravel){const b=distantSystemBounds();add({...b,height:b.height+20})}
   // The moving companion yields to chat; media still avoids its body and speech.
@@ -372,17 +378,87 @@ function reconcileGenerated(){
   bindNodes();updateUI();
 }
 const formingRuns=new Map();
+// Generated-node focus uses the same projection, level travel and render clock.
+let generatedFocus=null,generatedRequest=null,generatedReturn=null,generatedPulse=null,generatedNotice=null,pinnedAgent=null;
+const focusControls=document.createElement('aside');focusControls.className='generated-camera-controls';focusControls.hidden=true;
+const focusNotice=document.createElement('span');focusNotice.setAttribute('role','status');
+const focusView=document.createElement('button');focusView.type='button';
+const focusBack=document.createElement('button');focusBack.type='button';focusControls.append(focusNotice,focusView,focusBack);document.body.append(focusControls);
+function syncFocusControls(){
+  focusControls.hidden=!generatedNotice&&!generatedReturn;
+  const orientation=!focusControls.hidden?document.querySelector('.orientation')?.getBoundingClientRect():null;if(orientation)focusControls.style.top=Math.min(height-80,Math.max(110,(orientation?(orientation.bottom??orientation.top+orientation.height):200)+12))+'px';focusNotice.hidden=!generatedNotice;focusView.hidden=!generatedNotice;focusBack.hidden=!generatedReturn;
+  focusNotice.textContent=generatedNotice?t('generated.created',{name:generatedRegistry.get(generatedNotice)?.record.label||''}):'';
+  focusView.textContent=t('generated.view');focusBack.textContent='← '+t('common.back');
+}
+function focusBlocked(){return !!system.chess?.isOpen()||!!system.media?.isOpen()||(document.querySelectorAll?.('.welcome-overlay:not([hidden]), .access-overlay:not([hidden]), .account-overlay:not([hidden]), dialog[open]')||[]).length>0}
+function cancelGeneratedFocus(){generatedRequest=null;generatedFocus=null;returnTarget=null}
+function captureGeneratedView(){return{path:stack.map(state=>state.entryId),system:!!level.system,view:camera(),targetZoom,panel:panelOpen?panelProjection():null}}
+function focusGenerated(id){
+  if(!generatedRegistry.has(id))return false;
+  cancelGeneratedFocus();
+  if(focusBlocked()){generatedNotice=id;syncFocusControls();return false}
+  generatedReturn??=captureGeneratedView();generatedNotice=null;
+  generatedRequest={id,returning:false,path:[],index:0};
+  if(panelOpen&&!pinnedAgent){pinnedAgent={x:width<650?Math.max(16,(width-320)/2):Math.max(16,width-366),y:width<650?height-Math.min(height*.26,220)-90:Math.max(100,height*.2)};document.body.classList.add('generated-camera-focused')}
+  syncFocusControls();advanceGeneratedFocus(performance.now());return true;
+}
+function backGenerated(){
+  if(!generatedReturn)return;const previous=generatedReturn;cancelGeneratedFocus();generatedNotice=null;
+  generatedRequest={id:null,returning:true,path:previous.path,index:0,previous};advanceGeneratedFocus(performance.now());
+}
+focusView.addEventListener('click',()=>{const id=generatedNotice;if(!id)return;for(const button of document.querySelectorAll?.('.account-overlay:not([hidden]) .access-close, .access-overlay:not([hidden]) .access-close, .welcome-overlay:not([hidden]) .welcome-skip')||[])button.click();system.media?.close();if(system.chess?.isOpen())system.chess.closeForNavigation?.(()=>focusGenerated(id));else focusGenerated(id)});
+focusBack.addEventListener('click',backGenerated);
+function advanceGeneratedFocus(now){
+  if(!generatedRequest&&!generatedFocus)return;
+  const active=generatedRequest||generatedFocus;
+  if(focusBlocked()){if(active.id)generatedNotice=active.id;cancelGeneratedFocus();syncFocusControls();return}
+  if(travel||systemTravel)return;
+  if(generatedRequest){
+    const request=generatedRequest;
+    if(level.system&&!(request.returning&&request.previous.systemReached)){exitSystem();return}
+    if(!request.returning&&stack.length){goBackTo(0);return}
+    if(request.returning){
+      // Walk the saved ancestry with ordinary node transitions (also works for
+      // generated groups and the private owner scene, without public IDs).
+      if(stack.length>request.index){goBackTo(request.index);return}
+      const nextId=request.path[request.index];
+      if(nextId){const next=nodes.find(n=>n.id===nextId);if(next?.children){request.index++;startTravel(next,false);return}request.path=[]}
+      if(request.previous.system&&!request.previous.systemReached){request.previous.systemReached=true;enterSystem();return}
+    }
+    const point=request.id?rootWorldLayout(nodes).get(request.id):null;
+    if(request.id&&!point){cancelGeneratedFocus();return}
+    const to=request.returning?request.previous.view:{zoom:width<650?1.65:1.2,pan:{x:0,y:0},parallax:{...parallax}};
+    if(point){const n=nodes.find(n=>n.id===request.id),position=projectWorld(point,to,n?.seed||0);to.pan={x:width/2-position.x,y:height/2-position.y}}
+    generatedFocus={...request,from:camera(),to,start:now};generatedRequest=null;
+  }
+  const move=generatedFocus;if(!move)return;
+  const progress=reduced.matches?1:clamp((now-move.start)/MOTION.generatedFocus,0,1),u=easeOut(progress);
+  pan={x:lerp(move.from.pan.x,move.to.pan.x,u),y:lerp(move.from.pan.y,move.to.pan.y,u)};zoom=targetZoom=lerp(move.from.zoom,move.to.zoom,u);syncZoomUI();
+  if(progress>=1){
+    generatedFocus=null;
+    if(move.returning){generatedReturn=null;pinnedAgent=null;document.body.classList.remove('generated-camera-focused');if(move.previous.panel&&panelOpen)anchorPanel(move.previous.panel.x,move.previous.panel.y)}
+    else{generatedPulse={id:move.id,start:now};$('announcement').textContent=t('generated.created',{name:generatedRegistry.get(move.id)?.record.label||''})}
+    syncFocusControls();
+  }
+}
+function drawGeneratedPulse(now){
+  if(!generatedPulse)return;const u=(now-generatedPulse.start)/MOTION.formingPulse;
+  if(u>=1||reduced.matches){generatedPulse=null;return}
+  const node=nodes.find(n=>n.id===generatedPulse.id);if(!node)return;
+  ctx.save();ctx.strokeStyle=rgba(colors.mint,(1-u)*.7);ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(node.sx,node.sy,node.sr*(1+u*.8),0,Math.PI*2);ctx.stroke();ctx.restore();
+}
+
 function formingSources(state){return nodes.filter(n=>state.sources.some(id=>id===n.id||id.startsWith(n.id+'.')))}
 function formGenerated(runId,sources){
   if(reduced.matches||formingRuns.has(runId)||formingRuns.size>=12)return;
-  const destination=level.system||level.generated?root:level,index=generatedRegistry.size+formingRuns.size;
+  const destination=root,index=generatedRegistry.size+formingRuns.size;
   const x=clamp((companion.x-width/2-pan.x)/(Math.min(width*.52,740)*zoom),-.48,.48),y=.28+index*.08;
   const ghost={id:'forming:'+runId,x,y,r:30,type:'ico',seed:nodes.length*1.7+2,generated:true,name:t('generated.forming'),meta:t('generated.badge'),dx:0,dy:0,hover:0,color:colors.mint};
   formingRuns.set(runId,{runId,sources:[...new Set(sources)].filter(id=>records.has(id)),scene:destination,start:performance.now(),x,y,ghost,nodeId:null,world:destination===root?rootWorldLayout([...nodes,ghost]).get(ghost.id):null,viewport:[width,height]});
   $('announcement').textContent=t('generated.forming');
 }
 function finishForming(runId){const state=formingRuns.get(runId);if(state&&!state.nodeId)formingRuns.delete(runId)}
-function clearFormations(){formingRuns.clear()}
+function clearFormations(){formingRuns.clear();cancelGeneratedFocus();generatedNotice=null;generatedReturn=null;pinnedAgent=null;document.body.classList.remove('generated-camera-focused');syncFocusControls()}
 function drawFormations(now){
   for(const [runId,state]of formingRuns){
     const phase=formationPhase(now-state.start,reduced.matches||paused);
@@ -395,7 +471,7 @@ function drawFormations(now){
       target.sx=position.x;target.sy=position.y;target.sr=p.r;
     }
     const opacity=(1-phase.build)*.7;
-    if(opacity>0&&!reduced.matches&&!paused){
+    if(phase.threads>0&&opacity>0&&!reduced.matches&&!paused){
       for(const source of formingSources(state)){
         ctx.save();ctx.strokeStyle=rgba(colors.mint,opacity);ctx.lineWidth=1.1;
         const x=lerp(source.sx,target.sx,phase.threads),y=lerp(source.sy,target.sy,phase.threads);
@@ -411,7 +487,7 @@ function drawFormations(now){
 function spawnGenerated(record,anchor=null,restored=false,runId=null){
   const existing=generatedRegistry.get(record.id);if(existing)return;
   const forming=restored?null:formingRuns.get(runId);
-  const destination=forming?.scene||(level.system||level.generated?root:level);
+  const destination=runId?root:forming?.scene||(level.system||level.generated?root:level);
   const anchorNode=destination.nodes.find(n=>n.id===anchor),target=anchorNode?{x:anchorNode.x+.20,y:anchorNode.y-.08}:{x:clamp((companion.x-width/2-pan.x)/(Math.min(width*.52,740)*zoom),-.48,.48),y:.28};
   const index=generatedRegistry.size;
   const x=restored?-.55+(index%4)*.35:target.x,y=restored?.51+Math.floor(index/4)*.22:target.y+index*.08;
@@ -419,9 +495,11 @@ function spawnGenerated(record,anchor=null,restored=false,runId=null){
   if(forming){forming.nodeId=record.id;visual.formation=forming}
   visual.birthOrigin=restored||anchorNode||forming||reduced.matches?null:{x:companion.x,y:companion.y};destination.nodes.push(visual);generatedRegistry.set(record.id,{record,scene:destination,visual});
   if(destination===level)reconcileGenerated();
+  if(!restored&&runId)focusGenerated(record.id);
 }
 function removeGenerated(id,refresh=true){
   if(disposed)return;
+  if(generatedNotice===id)generatedNotice=null;if(generatedRequest?.id===id||generatedFocus?.id===id)cancelGeneratedFocus();syncFocusControls();
   for(const [runId,state]of formingRuns)if(state.nodeId===id)formingRuns.delete(runId);if(travel||systemTravel){setTimeout(()=>removeGenerated(id,refresh),80);return}
   $('content-card').hidden=true;
   const parent=[...generatedRegistry.values()].find(item=>item.record.children?.some(child=>child.id===id));
@@ -554,7 +632,7 @@ function updateUI(){
   syncMediaLevel();syncOwnerPagination();
   const crumbs=$('breadcrumbs');crumbs.replaceChildren();const items=level.system?[root,level]:[...stack.map(s=>s.level),level];
   items.forEach((item,i)=>{if(i){const slash=document.createElement('span');slash.className='slash';slash.textContent='/';crumbs.append(slash)}if(i<items.length-1){const b=document.createElement('button');b.textContent=i===0?t('common.home'):item.title;b.addEventListener('click',()=>level.system?exitSystem():goBackTo(i));crumbs.append(b)}else{const span=document.createElement('span');span.setAttribute('aria-current','location');span.textContent=i===0?'⌘  '+t('common.home'):item.title;crumbs.append(span)}});
-  $('level-title').textContent=level.title;$('level-description').textContent=level.description;$('example-badge').hidden=!(level.system&&system.simulated);$('example-badge').textContent=t('common.simulated');$('depth-number').textContent=String(level.system?1:stack.length).padStart(2,'0');$('depth-label').textContent=level.system?t('nav.system'):stack.length?t('nav.inner'):t('nav.overview');$('scene-number').textContent=String(stack.length+1).padStart(2,'0');$('node-count').textContent=t('nav.nodeCount',{count:nodes.filter(n=>!n.reference).length})+(nodes.some(n=>n.reference)?t('nav.linkCount',{count:nodes.filter(n=>n.reference).length}):'');$('edge-count').textContent=t('nav.edgeCount',{count:level.edges.length});$('back').hidden=!stack.length&&!level.system;$('back').innerHTML=level.system?'← '+t('common.back'):'<span aria-hidden="true">↖</span> '+t('common.back')+' <kbd>ESC</kbd>';flowLegend.hidden=!level.system;document.body.classList.toggle('system-scene',!!level.system);$('announcement').textContent=t('nav.announcement',{title:level.title,count:nodes.length,depth:stack.length});document.title='Nexo — '+level.title;document.body.classList.toggle('architecture-scene',!!level.architecture);renderSceneFacts();syncZoomUI();if(level.generated)showGenerated({generated:level.generatedRecord,generatedParent:level.id});
+  $('level-title').textContent=level.title;$('level-description').textContent=level.description;$('example-badge').hidden=!(level.system&&system.simulated);$('example-badge').textContent=t('common.simulated');$('depth-number').textContent=String(level.system?1:stack.length).padStart(2,'0');$('depth-label').textContent=level.system?t('nav.system'):stack.length?t('nav.inner'):t('nav.overview');$('scene-number').textContent=String(stack.length+1).padStart(2,'0');$('node-count').textContent=t('nav.nodeCount',{count:nodes.filter(n=>!n.reference).length})+(nodes.some(n=>n.reference)?t('nav.linkCount',{count:nodes.filter(n=>n.reference).length}):'');$('edge-count').textContent=t('nav.edgeCount',{count:level.edges.length});$('back').hidden=!stack.length&&!level.system;$('back').innerHTML=level.system?'← '+t('common.back'):'<span aria-hidden="true">↖</span> '+t('common.back')+' <kbd>ESC</kbd>';flowLegend.hidden=!level.system;document.body.classList.toggle('system-scene',!!level.system);$('announcement').textContent=t('nav.announcement',{title:level.title,count:nodes.length,depth:stack.length});document.title='Nexo — '+level.title;document.body.classList.toggle('architecture-scene',!!level.architecture);renderSceneFacts();syncZoomUI();if(level.generated)showGenerated({generated:level.generatedRecord,generatedParent:level.id});syncFocusControls();
 }
 function activate(n,keyboard=false){if(travel||systemTravel||n.disabled)return;if(system.chess?.isOpen()){system.chess.closeForNavigation?.(()=>activate(n,keyboard));return}if(n.ownerGame){const source=()=>({x:n.sx,y:n.sy,r:n.sr,faces:meshFaces(n)});system.onOwnerGame?.(n.ownerGame.id,source(),source);return}if(n.privateEmpty)return;if(n.record?.type==='system'){enterSystem();return}if(n.record?.type==='live_chat'){system.onLiveOpen?.();return}if(n.reference){navigateTo(n.id);return}if(!n.children||(n.generated&&!n.children.nodes.length)){setHover(n);say(n.name,n.description,'node:'+level.title+':'+n.id,0);n.hover=1;showContent(n);return}startTravel(n,keyboard)}
 function startTravel(n,keyboard){
@@ -612,7 +690,7 @@ function paintFace(face,c,x,y,r,alpha=1,edge=1,h=0){
 }
 function drawNode(n,alpha=1,obstacle=true){
   const forming=n.formation,phase=forming?formationPhase(performance.now()-forming.start,reduced.matches||paused):null;
-  for(const state of formingRuns.values())if(state.scene===level&&formingSources(state).includes(n))n={...n,hover:Math.max(n.hover,formationPhase(performance.now()-state.start,reduced.matches||paused).light)};
+  for(const state of formingRuns.values())if(formingSources(state).includes(n))n={...n,hover:Math.max(n.hover,formationPhase(performance.now()-state.start,reduced.matches||paused).light)};
   if(n.ownerGame){
     if(n.ownerGame.status!=='active')alpha*=.45;
     else if(n.ownerGame.turn!=='owner')alpha*=.55;
@@ -750,7 +828,7 @@ let hoverEdge=null, panelOpen=false, speech=null, pendingSpeech=null;
 const panelWorld={x:0,y:0};let panelDrag=null;
 function panelProjection(){return{x:width/2+panelWorld.x*zoom+pan.x+parallax.x*6,y:height*.53+panelWorld.y*zoom+pan.y+parallax.y*6}}
 function anchorPanel(x,y){panelWorld.x=(x-width/2-pan.x-parallax.x*6)/zoom;panelWorld.y=(y-height*.53-pan.y-parallax.y*6)/zoom}
-function placePanel(){if(!panelOpen)return;const p=panelProjection();$('companion-panel').style.transform=`translate(${p.x}px,${p.y}px) scale(${zoom})`}
+function placePanel(){if(!panelOpen)return;if(pinnedAgent){anchorPanel(pinnedAgent.x,pinnedAgent.y);$('companion-panel').style.transform=`translate(${pinnedAgent.x}px,${pinnedAgent.y}px) scale(1)`;return}const p=panelProjection();$('companion-panel').style.transform=`translate(${p.x}px,${p.y}px) scale(${zoom})`}
 
 function say(title,text,key='context',duration=8500){
   if(!text)return;pendingSpeech=null;
@@ -776,7 +854,7 @@ function openPanel(keyboard=false){
   $('close-panel').focus({preventScroll:true});
 }
 function closePanel(keyboard=false){
-  panelOpen=false;$('companion-panel').hidden=true;
+  panelOpen=false;pinnedAgent=null;document.body.classList.remove('generated-camera-focused');$('companion-panel').hidden=true;
   $('companion-target').setAttribute('aria-expanded','false');$('companion-target').setAttribute('aria-label',t('guide.open'));
   companion.locked=keyboard;companion.keyboard=keyboard;
   if(keyboard)$('companion-target').focus({preventScroll:true});
@@ -871,9 +949,10 @@ function render(now){
   syncOwnerPagination();
   if(disposed)return;
   occupiedNodeBounds=[];occupiedMediaBounds=[];
-  const dt=Math.min((now-last)/16.667||1,2.5);last=now;
+  const elapsed=Math.max(0,now-last),dt=Math.min(elapsed/16.667||1,2.5);last=now;
+  if(travel||systemTravel)for(const state of formingRuns.values())if(state.nodeId===generatedRequest?.id)state.start+=elapsed;
   if(!paused&&!document.hidden&&!travel)clock+=dt/60;
-  system.traces.tick();system.portal.render();
+  system.traces.tick();system.portal.render();advanceGeneratedFocus(now);
   if(systemTravel)renderSystemTravel(now);else if(travel)renderTravel(now);
   else{
     if(!system.chess?.isOpen()){parallax.x=lerp(parallax.x,reduced.matches?0:pointer.x,.035*dt);parallax.y=lerp(parallax.y,reduced.matches?0:pointer.y,.035*dt)}zoom=lerp(zoom,targetZoom,.1*dt);physics(dt);
@@ -885,7 +964,7 @@ function render(now){
     for(const n of[...nodes].sort((a,b)=>a.r-b.r))drawNode(n,(hoverId&&hoverId!==n.id?.55:1)*(1-chessReveal*.25));
     placeTargets(1);
   }
-  drawFormations(now);placePanel();drawCompanion(dt);drawChessSatellite();renderGuide();system.chess?.render?.(ctx,now,{zoom,pan,paused,systemBounds:!level.system?distantSystemBounds():undefined});renderMedia(now);drawChatSatellite(now);drawLiveMorph(now);frameId=requestAnimationFrame(render);
+  drawFormations(now);drawGeneratedPulse(now);placePanel();drawCompanion(dt);drawChessSatellite();renderGuide();system.chess?.render?.(ctx,now,{zoom,pan,paused,systemBounds:!level.system?distantSystemBounds():undefined});renderMedia(now);drawChatSatellite(now);drawLiveMorph(now);frameId=requestAnimationFrame(render);
 }
 function setPaused(value){paused=value;$('pause').setAttribute('aria-pressed',String(value));$('pause').setAttribute('aria-label',value?t('motion.resume'):t('motion.pause'));$('pause').title=value?t('motion.resume'):t('motion.pause');$('pause').innerHTML=value?'<svg viewBox="0 0 24 24"><path d="m9 5 10 7-10 7Z"/></svg>':'<svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg>';$('motion-status').textContent=value?t('motion.paused'):t('motion.running');document.querySelector('.live-dot').style.background=value?'#7d8790':'var(--mint)'}
 function changeZoom(amount){if(travel||systemTravel)return;targetZoom=clamp(targetZoom+amount,.5,2);syncZoomUI()}
@@ -893,8 +972,10 @@ $('pause').addEventListener('click',()=>setPaused(!paused));$('back').addEventLi
 $('reset').addEventListener('click',()=>{if(travel||systemTravel)return;pan={x:0,y:0};if(panelOpen){panelWorld.x=(width<650?24:width-366)-width/2;panelWorld.y=Math.max(100,height*.32)-height*.53}targetZoom=1;changeZoom(0)});
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();if(travel||systemTravel)return;if(level.system){exitSystem();return}if(stack.length)goBackTo(0);else{pan={x:0,y:0};targetZoom=1;changeZoom(0)}});
 function trackPointer(e){if(system.chess?.isOpen())return;if(e.target?.closest?.('.floating-live-chat, .media-window, .media-viewer')){companion.locked=true;return}pointer={x:(e.clientX/width-.5)*2,y:(e.clientY/height-.5)*2};companion.tx=e.clientX;companion.ty=e.clientY;companion.present=true;companion.touch=e.pointerType==='touch';const d=Math.hypot(e.clientX-companion.x,e.clientY-companion.y),r=width<650?18:24;companion.keyboard=false;if(!panelOpen){if(d<r+15)companion.locked=true;else if(d>r+52)companion.locked=false}}
-addEventListener('pointermove',e=>{trackPointer(e);if(drag&&!travel&&!systemTravel){pan.x=clamp(drag.px+e.clientX-drag.x,-width*.5,width*.5);pan.y=clamp(drag.py+e.clientY-drag.y,-height*.4,height*.4)}else if(e.target===canvas&&!travel)setEdgeHover(hitEdge(e.clientX,e.clientY));else if(!travel)setEdgeHover(null)});
+addEventListener('pointermove',e=>{trackPointer(e);if(drag&&!travel&&!systemTravel){pan.x=clamp(drag.px+e.clientX-drag.x,Math.min(-width*.5,drag.px-width*.5),Math.max(width*.5,drag.px+width*.5));pan.y=clamp(drag.py+e.clientY-drag.y,Math.min(-height*.4,drag.py-height*.4),Math.max(height*.4,drag.py+height*.4))}else if(e.target===canvas&&!travel)setEdgeHover(hitEdge(e.clientX,e.clientY));else if(!travel)setEdgeHover(null)});
 addEventListener('pointerdown',trackPointer);
+const cancelFocusInput=()=>{if(generatedRequest||generatedFocus)cancelGeneratedFocus()};
+addEventListener('pointerdown',cancelFocusInput,{capture:true});addEventListener('wheel',cancelFocusInput,{capture:true,passive:true});addEventListener('keydown',cancelFocusInput,{capture:true});document.addEventListener('click',cancelFocusInput,{capture:true});
 canvas.addEventListener('pointerdown',e=>{if(travel||systemTravel)return;const edge=hitEdge(e.clientX,e.clientY);if(edge!==null){setEdgeHover(edge);const note=level.edges[edge][2];if(note?.text)say(note.label,note.text,'edge:'+level.title+':'+edge,10000);return}drag={x:e.clientX,y:e.clientY,px:pan.x,py:pan.y};canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';setHover(null);setEdgeHover(null)});
 const endDrag=()=>{drag=null;canvas.style.cursor='default'};canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',endDrag);
 document.addEventListener('mouseleave',()=>{pointer={x:0,y:0};companion.present=false});addEventListener('blur',()=>{endDrag();panelDrag=null;companion.present=false});
@@ -905,6 +986,7 @@ addEventListener('resize',resize);document.addEventListener('visibilitychange',(
   if(document.hidden){hiddenAt=now;if(typeof cancelAnimationFrame==='function')cancelAnimationFrame(frameId);frameId=null;return}
   const since=hiddenAt,elapsed=hiddenAt?now-hiddenAt:0;hiddenAt=0;last=now;lastPaint=0;
   for(const state of formingRuns.values())state.start=resumeStart(state.start,since,now);
+  if(generatedFocus)generatedFocus.start=resumeStart(generatedFocus.start,since,now);if(generatedPulse)generatedPulse.start=resumeStart(generatedPulse.start,since,now);
   if(travel)travel.start=resumeStart(travel.start,since,now);if(systemTravel)systemTravel.start=resumeStart(systemTravel.start,since,now);if(chatMorph)chatMorph.start=resumeStart(chatMorph.start,since,now);
   system.chess?.pauseFor?.(elapsed,since);if(frameId===null&&!disposed)frameId=requestAnimationFrame(render);
 });reduced.addEventListener('change',e=>setPaused(e.matches));
@@ -957,7 +1039,7 @@ $('close-content').addEventListener('click',closeContent);
 const handle=$('panel-handle');
 handle.addEventListener('pointerdown',event=>{
   if(event.button!==undefined&&event.button!==0)return;
-  event.preventDefault();event.stopPropagation();const position=panelProjection();
+  event.preventDefault();event.stopPropagation();pinnedAgent=null;document.body.classList.remove('generated-camera-focused');const position=panelProjection();
   panelDrag={id:event.pointerId,x:event.clientX,y:event.clientY,px:position.x,py:position.y};handle.setPointerCapture(event.pointerId);handle.focus({preventScroll:true});
 });
 handle.addEventListener('pointermove',event=>{if(!panelDrag||panelDrag.id!==event.pointerId)return;anchorPanel(panelDrag.px+event.clientX-panelDrag.x,panelDrag.py+event.clientY-panelDrag.y);placePanel()});
@@ -968,6 +1050,7 @@ handle.addEventListener('keydown',event=>{const step=event.shiftKey?30:10,delta=
 // Relabel the existing scene objects. Geometry, camera, travel endpoints and
 // open panel state keep their identity throughout a locale change.
 function refreshLanguage(){
+  syncFocusControls();
   fixedCache=null;
   ownerScene.title=t('owner.games');ownerScene.description=ownerScene.intro=ownerKnownGames.some(g=>g.status==='active')?t('owner.description'):t('owner.empty');
   syncOwnerPagination();
@@ -1083,5 +1166,5 @@ function openOwnerGame(id,isCurrent=()=>true){return new Promise(resolve=>{
 
 $('companion-target').setAttribute('aria-label',t('guide.open'));
 $('level-title').setAttribute('tabindex','-1');resize();nodes=instantiate(root);bindNodes();updateUI();setPaused(paused);say(t('guide.journey'),root.intro,'welcome',12000);frameId=requestAnimationFrame(render);
-return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){formingRuns.clear();disposed=true;if(typeof cancelAnimationFrame==='function')cancelAnimationFrame(frameId);ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id,formGenerated,finishForming,clearFormations};
+return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){formingRuns.clear();cancelGeneratedFocus();focusControls.remove();if(typeof removeEventListener==='function')removeEventListener('pointerdown',cancelFocusInput,{capture:true});if(typeof removeEventListener==='function')removeEventListener('wheel',cancelFocusInput,{capture:true});if(typeof removeEventListener==='function')removeEventListener('keydown',cancelFocusInput,{capture:true});document.removeEventListener?.('click',cancelFocusInput,{capture:true});disposed=true;if(typeof cancelAnimationFrame==='function')cancelAnimationFrame(frameId);ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>chatTarget.focus({preventScroll:true}),firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id,formGenerated,finishForming,clearFormations,focusGenerated,backGenerated,cancelGeneratedFocus};
 }

@@ -38,7 +38,8 @@ try{
   socket.send(JSON.stringify(event('run.done',6,{outcome:'generated',duration_ms:100})));
   const target=page.locator('[data-node="gen_browser_forming"]');await target.waitFor({state:'attached'});await page.waitForTimeout(100);
   if(reduced)assert.equal(await target.isDisabled(),false);else assert.equal(await target.isDisabled(),true);
-  await page.waitForFunction(()=>!document.querySelector('[data-node="gen_browser_forming"]').disabled);assert.equal(await target.count(),1);assert.ok((await page.locator('.agent-history').innerText()).includes('Node created.'));
+  await page.waitForFunction(()=>!document.querySelector('[data-node="gen_browser_forming"]').disabled);assert.equal(await target.count(),1);const nodeBounds=await target.boundingBox();assert.ok(Math.abs(nodeBounds.x+nodeBounds.width/2-viewport.width/2)<12,'created node is centered horizontally');assert.ok(Math.abs(nodeBounds.y+nodeBounds.height/2-viewport.height/2)<12,'created node is centered vertically');assert.ok((await page.locator('.agent-history').innerText()).includes('Node created.'));
+  const reply=await page.locator('.agent-history .chat-message.agent p').last().boundingBox(),body=await page.locator('#companion-panel .panel-body').boundingBox();assert.ok(reply.y>=body.y-2&&reply.y+reply.height<=body.y+body.height+2,'streaming answer remains visible in the focused view');
   assert.deepEqual(logs,['future.browser.test']);assert.deepEqual(errors,[]);assert.equal(tickets,1);assert.equal(connections,1);
   const bounds=await page.locator('#companion-panel .panel-surface').boundingBox();assert.ok(bounds.y+bounds.height<=viewport.height-40,'discovery panel leaves bottom controls reachable');
   if(process.env.FORMING_SCREENSHOT&&viewport.width===390)await page.screenshot({path:process.env.FORMING_SCREENSHOT});

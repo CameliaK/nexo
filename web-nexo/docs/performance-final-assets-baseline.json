@@ -1,0 +1,73 @@
+{
+  "interactiveMeasurement": "click-capture-raf-legal-selection-v2",
+  "at": "2026-10-07T03:38:28.415Z",
+  "url": "http://127.0.0.1:4193",
+  "browser": "154.0.8037.98",
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M2",
+    "cores": 8
+  },
+  "viewport": "1366x768",
+  "dpr": 2,
+  "generatedNodes": 12,
+  "openingWindowMs": 1800,
+  "summary": {
+    "interactiveMs": 42.26666667064031,
+    "cameraFps": 60.21227142849481,
+    "lostFrames": 21,
+    "unexpectedLostFrames": 1,
+    "longTasks": 0
+  },
+  "results": [
+    {
+      "run": 1,
+      "interactiveMs": 56.5,
+      "cameraFps": 60.17038346204513,
+      "unexpectedLostFrames": 1,
+      "lostFrames": 21,
+      "frameIntervals": 85,
+      "longTasks": [],
+      "maxFrameMs": 33.400000005960464,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 2,
+      "interactiveMs": 34.80000001192093,
+      "cameraFps": 60.236173511951904,
+      "unexpectedLostFrames": 1,
+      "lostFrames": 21,
+      "frameIntervals": 85,
+      "longTasks": [],
+      "maxFrameMs": 33.400000005960464,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 3,
+      "interactiveMs": 35.5,
+      "cameraFps": 60.23025731148739,
+      "unexpectedLostFrames": 1,
+      "lostFrames": 21,
+      "frameIntervals": 85,
+      "longTasks": [],
+      "maxFrameMs": 34.20000000298023,
+      "board": {
+        "x": 358.796875,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    }
+  ]
+}

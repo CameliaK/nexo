@@ -11,10 +11,10 @@ import { formationPhase } from '../src/node-forming';
 import { motion } from '../src/motion';
 const envelope=(type:string,seq:number,data:unknown)=>({v:2,type,run_id:'forming-contract',seq,ts:'2026-10-06T12:00:00Z',data});
 
-test('node.forming validates real sources; motion tokens progress through threads, wireframe and a closing pulse under 1.5 s',()=>{
+test('node.forming validates real sources; motion tokens progress through 600 ms sources, 800 ms threads, 600 ms wireframe and 400 ms pulse',()=>{
  assert.ok(EVENT_TYPES.includes('node.forming'));assert.equal(isBackendEvent(envelope('node.forming',2,{sources:['experiencia.infosys']})),true);assert.equal(isBackendEvent(envelope('node.forming',2,{sources:[null]})),false);
- const total=motion.formingThreads+motion.formingBuild+motion.formingPulse;assert.ok(total<1500);
- assert.equal(formationPhase(0).threads,0);assert.equal(formationPhase(motion.formingThreads).build,0);assert.equal(formationPhase(motion.formingThreads+motion.formingBuild/2).build,.5);
+ const total=motion.formingSources+motion.formingThreads+motion.formingBuild+motion.formingPulse;assert.equal(total,2400);
+ assert.equal(formationPhase(0).threads,0);assert.equal(formationPhase(600).sources,1);assert.equal(formationPhase(600).threads,0);assert.equal(formationPhase(1400).threads,1);assert.equal(formationPhase(motion.formingSources+motion.formingThreads).build,0);assert.equal(formationPhase(motion.formingSources+motion.formingThreads+motion.formingBuild/2).build,.5);
  assert.equal(formationPhase(total-motion.formingPulse/2).pulse,.5);assert.equal(formationPhase(total).done,true);assert.equal(formationPhase(total).light,0);assert.equal(formationPhase(0,true).done,true);
 });
 test('Real WS unknown types are sanitized and consume seq in both chat and traces; following forming/spawn/done still arrive in order',async()=>{

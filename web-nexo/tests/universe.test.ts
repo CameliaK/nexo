@@ -18,7 +18,7 @@ const satelliteSource=fs.readFileSync('src/live-satellite.js','utf8').replaceAll
 const satellite=vm.runInNewContext(satelliteSource+';({LivePreview,placeSatellite,satelliteFootprint,intersects})',{performance:{now:()=>0}});
 
 function fixture(withChess=false,reducedMotion=false,withMedia=false){
- let activeElement,now=0,raf;
+ let activeElement,now=0,raf,blocked=false;
  class Element{
   children=[];handlers={};attributes={};style={setProperty(k,v){this[k]=v}};dataset={};hidden=false;textContent='';classes=new Set();offsetWidth=260;offsetHeight=125;
   classList={add:x=>this.classes.add(x),remove:x=>this.classes.delete(x),toggle:(x,v)=>v?this.classes.add(x):this.classes.delete(x),contains:x=>this.classes.has(x)};
@@ -36,10 +36,10 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  const elements={},el=id=>elements[id]??=new Element(),gradient={addColorStop(){}};
  const context=new Proxy({createRadialGradient:()=>gradient,createLinearGradient:()=>gradient},{get:(t,k)=>t[k]||((...args)=>{for(const v of args)if(typeof v==='number')assert.ok(Number.isFinite(v),'Canvas coordinates stay finite')})});
  el('space').getContext=()=>context;
- const listeners={},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
+ const listeners={},listen=(k,f)=>{const previous=listeners[k];listeners[k]=previous?e=>{previous(e);f(e)}:f},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
  if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
- const sandbox={t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:(k,f)=>listeners[k]=f,document:{getElementById:el,querySelector:el,createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listeners['document:'+key]=fn,body:el('body'),hidden:false,get activeElement(){return activeElement}}};
+ const sandbox={t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listeners['document:'+key]=fn,body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let mediaFrame;
  if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
@@ -50,7 +50,7 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  source=source.trim().replace(/\}$/, '})(bridge);');vm.runInNewContext(source,sandbox);Object.assign(sandbox.api,sandbox.universe);
  const frames=(ms=2700)=>{const end=now+ms;while(now<end){now=Math.min(end,now+50);raf(now)}};
  const enter=id=>{el('node-targets').children.find(e=>e.dataset.node===id).click();frames()};
- return {api:sandbox.api,el,frames,enter,traces,sandbox,listeners,mediaFrame:()=>mediaFrame,mediaLayer:()=>el('body').children.find(e=>e.className==='media-windows'),mediaViewer:()=>el('body').children.find(e=>e.className==='media-viewer'),closeChess:()=>{chessOpen=false;closeChess()},chessTarget:()=>el('body').children.find(e=>e.id==='floating-chess')};
+ return {api:sandbox.api,el,frames,enter,traces,sandbox,listeners,setBlocked:value=>blocked=value,focusControls:()=>el('body').children.find(e=>e.className==='generated-camera-controls'),mediaFrame:()=>mediaFrame,mediaLayer:()=>el('body').children.find(e=>e.className==='media-windows'),mediaViewer:()=>el('body').children.find(e=>e.className==='media-viewer'),closeChess:()=>{chessOpen=false;closeChess()},chessTarget:()=>el('body').children.find(e=>e.id==='floating-chess')};
 }
 test('Chess satellite stays disconnected, freezes the camera, and returns without changing portfolio nodes',()=>{
  const {api,frames,chessTarget,closeChess,enter}=fixture(true);frames(100);
@@ -253,8 +253,8 @@ test('Free-zone search fits a bubble and rejects a drift that would cross an obs
 test('Media opens only in terminal architecture/project views, reserves connections and closes independently of navigation',()=>{
  const {api,el,frames,enter,mediaLayer,mediaViewer,mediaFrame,listeners,sandbox}=fixture(false,false,true);frames(100);
  assert.equal(mediaLayer().hidden,true);enter('aprendizaje');enter('aprendizaje.proyectos-academicos');assert.equal(mediaLayer().hidden,true);
- enter('aprendizaje.proyectos-academicos.astralis');assert.equal(mediaLayer().dataset.node,'aprendizaje.proyectos-academicos.astralis');assert.equal(mediaLayer().hidden,false);
- assert.equal(mediaLayer().children.length,3);assert.ok(api.getMediaBounds().length>0);
+ enter('aprendizaje.proyectos-academicos.fitness-app');assert.equal(mediaLayer().dataset.node,'aprendizaje.proyectos-academicos.fitness-app');assert.equal(mediaLayer().hidden,false);
+ assert.equal(mediaLayer().children.length,4);assert.ok(api.getMediaBounds().length>0);
  for(const rect of api.getMediaBounds())for(const obstacle of mediaFrame().obstacles)assert.equal(satellite.intersects(rect,obstacle),false,'Real scene components, labels, aperture, panels and connection curves remain uncovered');
  api.setCamera({x:70,y:-20},1.4);frames(100);
  for(const rect of api.getMediaBounds())for(const obstacle of mediaFrame().obstacles)assert.equal(satellite.intersects(rect,obstacle),false);
@@ -267,9 +267,9 @@ test('Media opens only in terminal architecture/project views, reserves connecti
  assert.equal(mediaViewer().open,true);listeners.keydown({key:'Escape',preventDefault(){assert.fail('Viewer ESC must not propagate into universe navigation')}});
  assert.equal(api.getLevel().id,level);assert.equal(JSON.stringify(api.camera()),camera);
  mediaViewer().handlers.keydown({key:'Escape',preventDefault(){},stopPropagation(){}});assert.equal(mediaViewer().open,false);
- api.goBack();frames();assert.equal(mediaLayer().hidden,true);api.goBack();frames();api.goBack();frames();enter('proyectos-personales');
- assert.equal(mediaLayer().hidden,true);enter('proyectos-personales.qfb-app');assert.equal(api.getLevel().id,'proyectos-personales');assert.equal(mediaLayer().dataset.node,'proyectos-personales.qfb-app');assert.ok(api.getMediaBounds().length>0);
- el('close-content').click();frames(100);assert.equal(mediaLayer().hidden,true);
+ api.goBack();frames();assert.equal(mediaLayer().hidden,true);api.goBack();frames();api.goBack();frames();enter('aprendizaje');enter('aprendizaje.proyectos-academicos');
+ assert.equal(mediaLayer().hidden,true);enter('aprendizaje.proyectos-academicos.sistema-financiero');assert.equal(mediaLayer().dataset.node,'aprendizaje.proyectos-academicos.sistema-financiero');assert.ok(api.getMediaBounds().length>0);
+ api.goBack();frames();assert.equal(mediaLayer().hidden,true);
  api.dispose();assert.equal(el('body').children.some(child=>child.className==='media-windows'),false);
 });
 
@@ -290,12 +290,12 @@ test('Language switch preserves camera, scene objects, depth, focused node and o
 
 test('Switching language in a terminal architecture keeps media viewer, active image and window positions',()=>{
  registerTranslations(english,englishArchitecture);languageStore.set('es');applyContent('es');
- const {api,frames,enter,mediaLayer,mediaViewer}=fixture(false,true,true);frames(100);enter('aprendizaje');enter('aprendizaje.proyectos-academicos');enter('aprendizaje.proyectos-academicos.astralis');frames(100);
+ const {api,frames,enter,mediaLayer,mediaViewer}=fixture(false,true,true);frames(100);enter('aprendizaje');enter('aprendizaje.proyectos-academicos');enter('aprendizaje.proyectos-academicos.fitness-app');frames(100);
  const layer=mediaLayer(),viewer=mediaViewer(),tiles=[...layer.children],positions=tiles.map(tile=>tile.style.transform);
  tiles[1].click();const image=viewer.children[0].children[1].children[0],src=image.src,camera=JSON.stringify(api.camera());
  try{
   languageStore.set('en');applyContent('en');api.refreshLanguage();
-  assert.equal(viewer.open,true);assert.equal(image.src,src);assert.equal(image.alt,english.nodes.find(node=>node.id==='aprendizaje.proyectos-academicos.astralis').media[1].alt);
+  assert.equal(viewer.open,true);assert.equal(image.src,src);assert.equal(image.alt,english.nodes.find(node=>node.id==='aprendizaje.proyectos-academicos.fitness-app').media[1].alt);
   assert.deepEqual(layer.children,tiles);assert.deepEqual(layer.children.map(tile=>tile.style.transform),positions);assert.equal(JSON.stringify(api.camera()),camera);
  }finally{api.dispose();languageStore.set('es');applyContent('es')}
 });
@@ -422,15 +422,15 @@ test('Hidden tabs stop canvas work and resume the shared clock without jumping t
  sandbox.document.hidden=false;listeners['document:visibilitychange']();frames(100);assert.ok(api.getClock()>clock);assert.ok(api.getClock()-clock<.2);api.dispose();
 });
 
-test('Forming reserves the actual generated position, projects with the camera, builds a wireframe and finishes within 1.5 seconds',()=>{
+test('Forming reserves the actual generated position, projects with the camera, builds a wireframe and finishes after the four 2.4 second phases',()=>{
  const {api,frames}=fixture();frames(100);const camera=JSON.stringify(api.camera());
  api.formGenerated('forming-run',['experiencia.infosys','aprendizaje.extras.infosys-ia']);frames(100);
  const state=api.formingRuns.get('forming-run');assert.equal(api.formingRuns.size,1);assert.ok(Number.isFinite(state.ghost.sx)&&Number.isFinite(state.ghost.sy));
  const ghost={x:state.ghost.sx,y:state.ghost.sy};api.setCamera({x:50,y:-20},1.25);frames(100);assert.notEqual(state.ghost.sx,ghost.x);
  const node={id:'gen_forming',generated:true,label:'New node',summary:'Summary',created_at:'2026-10-06T00:00:00Z',sources:[{title:'CV'}],layout:'text',content:{body:'Text'}};
  api.spawnGenerated(node,null,false,'forming-run');frames(100);const actual=api.getNodes().find(n=>n.id==='gen_forming');assert.equal(actual.formation,state);assert.equal(actual.birthOrigin,null);assert.equal(actual.el.disabled,true);
- const before=JSON.stringify(api.camera());frames(1100);assert.equal(api.formingRuns.size,0);assert.equal(actual.el.disabled,false);assert.equal(JSON.stringify(api.camera()),before);assert.notEqual(before,camera);
- assert.ok(MOTION.formingThreads+MOTION.formingBuild+MOTION.formingPulse<1500);api.dispose();
+ const before=JSON.stringify(api.camera());frames(2200);assert.equal(api.formingRuns.size,0);assert.equal(actual.el.disabled,false);assert.notEqual(JSON.stringify(api.camera()),before);assert.notEqual(before,camera);assert.ok(Math.abs(actual.sx-720)<10);assert.ok(Math.abs(actual.sy-450)<10);
+ assert.equal(MOTION.formingSources+MOTION.formingThreads+MOTION.formingBuild+MOTION.formingPulse,2400);api.dispose();
 });
 test('Reduced motion forms directly; orphan, error and disconnected formations can be cleared without a camera move',()=>{
  const reduced=fixture(false,true);reduced.frames(100);reduced.api.formGenerated('quiet',['experiencia']);assert.equal(reduced.api.formingRuns.size,0);
@@ -444,5 +444,35 @@ test('A forming node keeps its reserved scene when the visitor navigates before 
  const {api,frames,enter}=fixture();frames(100);api.formGenerated('navigation-forming',['experiencia.infosys']);const scene=api.getLevel();
  enter('experiencia');const current=api.getLevel();assert.notEqual(current,scene);
  const node={id:'gen_reserved',generated:true,label:'Reserved node',summary:'Summary',created_at:'2026-10-06T00:00:00Z',sources:[{title:'Portfolio'}],layout:'text',content:{body:'Body'}};
- api.spawnGenerated(node,null,false,'navigation-forming');assert.equal(api.generatedRegistry.get(node.id).scene,scene);assert.equal(api.getLevel(),current);assert.equal(api.getNodes().some(n=>n.id===node.id),false);api.goBack();frames();assert.ok(api.getNodes().some(n=>n.id===node.id));api.dispose();
+ api.spawnGenerated(node,null,false,'navigation-forming');assert.equal(api.generatedRegistry.get(node.id).scene,scene);assert.equal(api.getLevel(),current);assert.equal(api.getNodes().some(n=>n.id===node.id),false);frames(3000);assert.equal(api.getLevel(),scene);assert.ok(api.getNodes().some(n=>n.id===node.id));api.backGenerated();frames(4000);assert.equal(api.getLevel(),current);api.dispose();
+});
+
+const focusNode=(id='gen_focus')=>({id,generated:true,label:'Focus node',summary:'Summary',created_at:'2026-10-06T00:00:00Z',sources:[{title:'CV'}],layout:'text',content:{body:'Text'}});
+test('Spawn centers the latest node in 900 ms, keeps the answer panel visible and Back restores its camera',()=>{
+ const {api,frames,el,focusControls}=fixture();frames(100);api.setCamera({x:60,y:-25},.8);api.openAgent();const before=api.camera();
+ api.spawnGenerated(focusNode(),null,false,'focus-run');frames(450);assert.notEqual(JSON.stringify(api.camera()),JSON.stringify(before));assert.equal(api.panelOpen(),true);
+ api.spawnGenerated(focusNode('gen_latest'),null,false,'latest-run');frames(950);const node=api.getNodes().find(n=>n.id==='gen_latest');assert.ok(Math.abs(node.sx-720)<10);assert.ok(Math.abs(node.sy-450)<10);assert.equal(api.camera().zoom,1.2);assert.equal(el('companion-panel').hidden,false);assert.match(el('companion-panel').style.transform,/scale\(1\)/);
+ assert.equal(focusControls().hidden,false);api.backGenerated();frames(950);assert.equal(api.camera().zoom,before.zoom);assert.deepEqual(api.camera().pan,before.pan);assert.equal(focusControls().hidden,true);api.dispose();
+});
+test('Manual drag, wheel or click cancels automatic movement; errors and restored nodes do not move the camera',()=>{
+ for(const input of ['pointerdown','wheel','document:click']){
+  const {api,frames,listeners,el}=fixture();frames(100);api.spawnGenerated(focusNode(),null,false,'focus-run');frames(300);
+  listeners[input]({clientX:700,clientY:400,target:el('body')});const before=api.camera();frames(1000);assert.deepEqual(api.camera().pan,before.pan);assert.equal(api.camera().zoom,before.zoom);api.dispose();
+ }
+ const {api,frames}=fixture();frames(100);const before=api.camera();api.formGenerated('failed',['experiencia']);api.finishForming('failed');api.spawnGenerated(focusNode(),null,true);frames(3000);assert.deepEqual(api.camera().pan,before.pan);assert.equal(api.camera().zoom,before.zoom);api.dispose();
+});
+test('Blocking panels defer camera movement and View focuses the node after closing the panel',()=>{
+ const {api,frames,setBlocked,focusControls}=fixture();frames(100);setBlocked(true);const before=api.camera();api.spawnGenerated(focusNode(),null,false,'blocked-run');frames(3000);assert.deepEqual(api.camera().pan,before.pan);assert.equal(api.camera().zoom,before.zoom);assert.match(focusControls().children[0].textContent,/Nodo creado/);setBlocked(false);focusControls().children[1].click();frames(950);const node=api.getNodes().find(n=>n.id==='gen_focus');assert.ok(Math.abs(node.sx-720)<10);api.dispose();
+ const chess=fixture(true);chess.frames(100);chess.chessTarget().click();const view=chess.api.camera();chess.api.spawnGenerated(focusNode(),null,false,'chess-open');chess.frames(1000);assert.deepEqual(chess.api.camera().pan,view.pan);assert.equal(chess.api.camera().zoom,view.zoom);chess.api.dispose();
+});
+test('Reduced motion focuses instantly, and nested scenes use ordinary exit transitions before focusing',()=>{
+ const reduced=fixture(false,true);reduced.frames(100);reduced.api.spawnGenerated(focusNode(),null,false,'reduced-focus');assert.equal(reduced.api.camera().zoom,1.2);reduced.frames(50);const node=reduced.api.getNodes().find(n=>n.id==='gen_focus');assert.ok(Math.abs(node.sx-720)<1);assert.ok(Math.abs(node.sy-450)<1);reduced.api.dispose();
+ const {api,frames,enter}=fixture();frames(100);enter('experiencia');enter('experiencia.infosys');api.setCamera({x:24,y:15},1.1);const original=api.camera();api.spawnGenerated(focusNode(),null,false,'nested-focus');assert.equal(api.getTravel().kind,'out');frames(4200);assert.equal(api.getLevel().id,portfolio.root.id);assert.ok(Math.abs(api.getNodes().find(n=>n.id==='gen_focus').sy-450)<10);api.backGenerated();frames(4600);assert.equal(api.getLevel().id,'experiencia.infosys');assert.deepEqual(api.camera().pan,original.pan);assert.equal(api.camera().zoom,1.1);api.dispose();
+});
+
+test('Focus returns from the expanded system and Back restores the system and its original camera',()=>{
+ const {api,frames}=fixture();frames(100);api.enterSystem();frames();api.setCamera({x:35,y:19},1.1);const previous=api.camera();api.spawnGenerated(focusNode(),null,false,'system-focus');frames(2800);assert.equal(api.getLevel().id,portfolio.root.id);assert.ok(Math.abs(api.getNodes().find(n=>n.id==='gen_focus').sx-720)<10);api.backGenerated();frames(2800);assert.equal(api.getLevel().id,'system');assert.deepEqual(api.camera().pan,previous.pan);assert.equal(api.camera().zoom,previous.zoom);api.dispose();
+});
+test('Manual input during the root exit cancels the subsequent automatic focus, without consuming the formation',()=>{
+ const {api,frames,enter,listeners}=fixture();frames(100);enter('experiencia');enter('experiencia.infosys');api.formGenerated('exit-forming',['experiencia.infosys']);api.spawnGenerated(focusNode(),null,false,'exit-forming');frames(100);listeners['document:click']({});frames(4000);assert.equal(api.getLevel().id,'experiencia');assert.equal(api.camera().zoom,1);assert.ok(api.generatedRegistry.has('gen_focus'));api.dispose();
 });

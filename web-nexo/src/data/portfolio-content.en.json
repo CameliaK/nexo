@@ -810,29 +810,6 @@
     },
     {
       "id": "aprendizaje.proyectos-academicos.astralis",
-      "media": [
-        {
-          "id": "geometria",
-          "src": "/media/_placeholder/geometria.webp",
-          "alt": "Wireframe cube composition on a dark grid.",
-          "caption": "Neutral sample image · Replace with an image of the project.",
-          "placeholder": true
-        },
-        {
-          "id": "capas",
-          "src": "/media/_placeholder/capas.webp",
-          "alt": "Four geometric planes layered in perspective.",
-          "caption": "Neutral sample image · Replace with an image of the project.",
-          "placeholder": true
-        },
-        {
-          "id": "trama",
-          "src": "/media/_placeholder/trama.webp",
-          "alt": "Three octagonal rings connected by a radial mesh.",
-          "caption": "Neutral sample image · Replace with an image of the project.",
-          "placeholder": true
-        }
-      ],
       "parent": "aprendizaje.proyectos-academicos",
       "order": 1,
       "label": "Astralis",
@@ -1026,7 +1003,33 @@
             "label": "protects access"
           }
         ]
-      }
+      },
+      "media": [
+        {
+          "id": "panel",
+          "src": "/media/aprendizaje.proyectos-academicos.sistema-financiero/01-panel.webp",
+          "alt": "Financial dashboard with total balance, monthly income, expenses and savings, a month-by-month comparison chart, spending by category and recent transactions.",
+          "caption": "Financial dashboard",
+          "width": 1600,
+          "height": 1415
+        },
+        {
+          "id": "cuentas",
+          "src": "/media/aprendizaje.proyectos-academicos.sistema-financiero/02-cuentas.webp",
+          "alt": "Account management with net worth, deposit, investment and cash accounts, a credit card, recent activity and a quick transfer.",
+          "caption": "Account management",
+          "width": 1520,
+          "height": 1600
+        },
+        {
+          "id": "transaccion",
+          "src": "/media/aprendizaje.proyectos-academicos.sistema-financiero/03-transaccion.webp",
+          "alt": "Form to add a transaction with type, amount, description, category, account, date and notes.",
+          "caption": "Recording transactions",
+          "width": 1600,
+          "height": 1078
+        }
+      ]
     },
     {
       "id": "aprendizaje.proyectos-academicos.fitness-app",
@@ -1136,33 +1139,44 @@
         ]
       },
       "needs_review": true,
-      "review_note": "Confirm with the project repository which part was Java and which was C#: the current split of connections is an assumption (the owner remembers Java as backend and C# as frontend, with doubts; Flutter was the mobile client)."
+      "review_note": "Confirm with the project repository which part was Java and which was C#: the current split of connections is an assumption (the owner remembers Java as backend and C# as frontend, with doubts; Flutter was the mobile client).",
+      "media": [
+        {
+          "id": "resumen",
+          "src": "/media/aprendizaje.proyectos-academicos.fitness-app/01-resumen.webp",
+          "alt": "Three screens of Pulse: muscle group selection, activity and streaks, and routine builder.",
+          "caption": "The three main screens",
+          "width": 1062,
+          "height": 1358
+        },
+        {
+          "id": "entrenar",
+          "src": "/media/aprendizaje.proyectos-academicos.fitness-app/02-entrenar.webp",
+          "alt": "Training screen with an interactive body model to pick muscle groups, showing the number of exercises for each region.",
+          "caption": "Target muscle selection",
+          "width": 395,
+          "height": 1600
+        },
+        {
+          "id": "actividad",
+          "src": "/media/aprendizaje.proyectos-academicos.fitness-app/03-actividad.webp",
+          "alt": "Activity screen with the day streak, weekly goal, a training volume heatmap and the log of recent sessions.",
+          "caption": "Activity and streaks",
+          "width": 329,
+          "height": 1600
+        },
+        {
+          "id": "rutina",
+          "src": "/media/aprendizaje.proyectos-academicos.fitness-app/04-rutina.webp",
+          "alt": "Routine builder with the list of exercises, their sets, reps and rest times, and an estimated duration.",
+          "caption": "Routine builder",
+          "width": 459,
+          "height": 1600
+        }
+      ]
     },
     {
       "id": "proyectos-personales.qfb-app",
-      "media": [
-        {
-          "id": "geometria",
-          "src": "/media/_placeholder/geometria.webp",
-          "alt": "Wireframe cube composition on a dark grid.",
-          "caption": "Neutral sample image · Replace with an image of the project.",
-          "placeholder": true
-        },
-        {
-          "id": "capas",
-          "src": "/media/_placeholder/capas.webp",
-          "alt": "Four geometric planes layered in perspective.",
-          "caption": "Neutral sample image · Replace with an image of the project.",
-          "placeholder": true
-        },
-        {
-          "id": "trama",
-          "src": "/media/_placeholder/trama.webp",
-          "alt": "Three octagonal rings connected by a radial mesh.",
-          "caption": "Neutral sample image · Replace with an image of the project.",
-          "placeholder": true
-        }
-      ],
       "parent": "proyectos-personales",
       "order": 1,
       "label": "NKare",
@@ -1207,26 +1221,23 @@
       "label": "This portfolio",
       "type": "system",
       "status": "en_construccion",
-      "summary": "The real architecture of this site, live: whenever you use the chat, it lights up here.",
+      "summary": "The real architecture of this site, live. Every time you type in the chat, your request travels through the system's services (proxy, gateway, agent, language model, database and automation) and you see them light up here, in real time. It is not a simulation: it is the actual path of your question.",
       "keywords": [
-        "arquitectura",
-        "backend",
-        "go",
-        "fastapi",
-        "n8n",
-        "redis",
-        "postgres",
-        "pgvector",
+        "this portfolio",
+        "architecture",
+        "system",
+        "real time",
         "traefik",
-        "agente",
-        "rag",
-        "este portafolio"
+        "gateway",
+        "agent",
+        "pgvector",
+        "redis",
+        "n8n",
+        "how it works"
       ],
       "content": {
         "source": "backend-architecture.json"
-      },
-      "needs_review": true,
-      "review_note": "Confirm that this node belongs in Personal projects and define my contribution."
+      }
     },
     {
       "id": "experiencia.infosys",
@@ -1464,7 +1475,25 @@
             "label": "hosts"
           }
         ]
-      }
+      },
+      "media": [
+        {
+          "id": "flota",
+          "src": "/media/experiencia.infosys.digital-twin/01-flota.webp",
+          "alt": "Overview of the elevator fleet with its health status, the unit matrix, machine-learning anomaly detection and the live MQTT message stream.",
+          "caption": "Fleet overview (simulated data)",
+          "width": 1321,
+          "height": 1600
+        },
+        {
+          "id": "gemelo-digital",
+          "src": "/media/experiencia.infosys.digital-twin/02-gemelo-digital.webp",
+          "alt": "Digital twin of an elevator with the hoistway structure, vibration, temperature, load, position and door readings, and the sensor packet stream.",
+          "caption": "Digital twin of a unit (simulated data)",
+          "width": 1600,
+          "height": 1280
+        }
+      ]
     },
     {
       "id": "experiencia.dgti",

@@ -85,10 +85,22 @@ test('Media reflows safely after resize and crowded viewports never force an ove
  const placed=ui.render({...args,obstacles:[{left:0,right:1440,top:0,bottom:900}]});assert.equal(placed.length,0);assert.ok(layer.children.every(button=>button.hidden));
 });
 
-test('Three small WebP placeholders are attached to exactly two existing project nodes',()=>{
- const nodes=portfolio.nodes.filter(n=>n.media);assert.equal(nodes.length,2);
- assert.deepEqual(nodes.map(n=>n.id),['aprendizaje.proyectos-academicos.astralis','proyectos-personales.qfb-app']);
- const paths=new Set();for(const node of nodes)for(const item of nodeMedia(node.media)){assert.equal(item.placeholder,true);paths.add(item.src)}assert.equal(paths.size,3);
- for(const path of paths){const bytes=fs.readFileSync('public'+path);assert.equal(bytes.subarray(0,4).toString(),'RIFF');assert.equal(bytes.subarray(8,12).toString(),'WEBP');assert.ok(bytes.length<250*1024)}
+test('Real media matches node folders and encoded dimensions; placeholders are test fixtures only',()=>{
+ const nodes=portfolio.nodes.filter(n=>n.media);assert.equal(nodes.length,3);
+ let count=0;for(const node of nodes)for(const item of nodeMedia(node.media)){
+  count++;assert.equal(item.placeholder,undefined);assert.ok(item.src.startsWith('/media/'+node.id+'/'));
+  const bytes=fs.readFileSync('public'+item.src);assert.equal(bytes.subarray(0,4).toString(),'RIFF');assert.equal(bytes.subarray(8,12).toString(),'WEBP');
+  const frame=bytes.indexOf(Buffer.from([0x9d,0x01,0x2a]));assert.ok(frame>0);assert.equal(bytes.readUInt16LE(frame+3)&0x3fff,item.width);assert.equal(bytes.readUInt16LE(frame+5)&0x3fff,item.height);assert.ok(item.width<=1600);assert.ok(bytes.length<250*1024);
+ }
+ assert.equal(count,9);assert.equal(fs.existsSync('public/media/_placeholder'),false);assert.ok(fs.existsSync('tests/fixtures/media/geometria.webp'));
  const nginx=fs.readFileSync('nginx.conf','utf8');assert.match(nginx,/location \^~ \/media\//);assert.match(nginx,/try_files \$uri =404/);assert.match(nginx,/expires 1y/);assert.match(nginx,/public, immutable/);
+});
+
+test('Tall and wide images preserve their intrinsic dimensions in windows and every viewer arrow',()=>{
+ const entries=[[395,1600],[329,1600],[1600,1078]].map(([width,height],i)=>({...entry(i),width,height}));
+ const {ui,layer,image,nav}=fixture();ui.setNode({id:'test',label:'Images',media:entries});ui.render(args);
+ for(const [i,button]of layer.children.entries()){assert.equal(button.children[0].width,entries[i].width);assert.equal(button.children[0].height,entries[i].height);assert.equal(button.children[0].loading,'lazy')}
+ layer.children[0].dispatch('click');for(let i=0;i<3;i++){assert.equal(image.width,entries[i].width);assert.equal(image.height,entries[i].height);assert.equal(image.src,entries[i].src);nav.children[2].dispatch('click')}
+ const css=fs.readFileSync('src/media.css','utf8');assert.match(css,/\.media-window img\{[^}]*object-fit:contain/);assert.match(css,/\.media-viewer-image\{[^}]*object-fit:contain/);assert.match(css,/max-height:calc\(100dvh/);
+ assert.equal(nodeMedia([{...entry(),width:-1,height:1600}])[0].width,undefined);
 });
