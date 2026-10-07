@@ -3,6 +3,19 @@ import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 const origin = process.argv[2] || 'http://127.0.0.1:4187';
 const host = new URL(origin).host;
+const finalNotice = readFileSync(new URL('../../docs/aviso-de-privacidad.md', import.meta.url), 'utf8');
+const normalize = text => text.replace(/\s+/g, ' ').trim();
+function expectedText(language) {
+ const pattern=language==='es'?/^# Aviso de privacidad \(español\)\n[\s\S]*?(?=^## Avisos breves)/m:/^# Privacy notice \(English\)\n[\s\S]*?(?=^## Short notices)/m;
+ const markdown=finalNotice.match(pattern)?.[0];assert.ok(markdown);
+ return normalize(markdown.replace(/\n---\s*$/, '').split('\n').filter(line=>!/^\|(?:[-:\s]+\|)+$/.test(line)).map(line=>line.startsWith('|')?line.split('|').slice(1,-1).map(cell=>cell.trim()).join(' '):line.replace(/^#{1,2} |^- /,'')).join(' ').replace(/\*\*([^*]+)\*\*/g,'$1'));
+}
+async function checkNotice(page,language) {
+ assert.equal(normalize(await page.locator('article').innerText()),expectedText(language),'Every published word matches the final Markdown document');
+ assert.equal(await page.locator('article h2').count(),7);
+ assert.doesNotMatch(await page.locator('body').innerText(),/\[|\b(?:borrador|draft)\b|Avisos breves|Short notices/i);
+}
+
 const candidate = readFileSync(new URL('../nginx.conf', import.meta.url), 'utf8').match(/# add_header Content-Security-Policy-Report-Only "([^"]+)"/)[1].replace('wss://__PUBLIC_HOST__', `ws://${host}`);
 const browser = await chromium.launch({ headless: true });
 try {
@@ -34,11 +47,12 @@ try {
   await page.goto(origin+'/privacidad');await page.locator('h1').filter({hasText:'Aviso de privacidad'}).waitFor();
   assert.equal(sockets.length,0);assert.equal(requests.some(r=>r.path.startsWith('/api/')||r.path==='/auth/guest'),false);
   assert.equal(await page.locator('html').getAttribute('lang'),'es');assert.equal(await page.locator('table tbody tr').count(),8);
-  for(const text of ['90 días','180 días','30 días','7 días','[fecha de publicación]','[Proveedor de correo]'])assert.ok((await page.locator('article').innerText()).includes(text));
-  await page.locator('#privacy-language').click();assert.equal(await page.locator('html').getAttribute('lang'),'en');assert.match(await page.locator('h1').innerText(),/Privacy notice/);assert.ok((await page.locator('article').innerText()).includes('[publication date]'));
+  await checkNotice(page,'es');
+  await page.locator('#privacy-language').click();assert.equal(await page.locator('html').getAttribute('lang'),'en');
+  await checkNotice(page,'en');
   await page.locator('#privacy-delete').click();await page.keyboard.press('Escape');assert.equal(deletes,0);assert.equal(await page.locator('#privacy-delete').evaluate(e=>e===document.activeElement),true);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no mobile horizontal overflow');
-  await page.locator('#privacy-home').click();await page.locator('.account-node').waitFor();await page.locator('.account-node').click();await page.locator('.account-email').filter({hasText:'v***@example.com'}).waitFor();
+  await page.locator('#privacy-home').click();await page.locator('.account-node').waitFor();await page.waitForFunction(()=>document.querySelector('.account-email')?.textContent==='v***@example.com');await page.locator('.account-node').click();await page.locator('.account-email').filter({hasText:'v***@example.com'}).waitFor();
   assert.equal(await page.locator('.account-privacy').getAttribute('href'),'/privacidad');
   assert.ok((await page.locator('#companion-panel .privacy-notice').innerText()).includes('AI provider'));
   assert.ok((await page.locator('.live-panel .privacy-notice').textContent()).includes('Telegram'));
