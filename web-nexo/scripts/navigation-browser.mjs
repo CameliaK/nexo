@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium, devices, mobileFixture } from './mobile-fixture.mjs';
 
+const backOnly=process.argv.includes('--back');
 const browser = await chromium.launch();
 const cases = [['desktop', {viewport:{width:1366,height:768}}], ['iPhone 13', devices['iPhone 13']], ['Pixel 7', devices['Pixel 7']]];
 async function activate(page, selector, touch) {
@@ -10,11 +11,15 @@ async function activate(page, selector, touch) {
   assert.ok(await page.evaluate(({selector,x,y})=>document.querySelector(selector)?.contains(document.elementFromPoint(x,y)),{selector,x,y}), `${selector} receives a normal input`);
   if(touch)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);
 }
+async function rootBackHidden(page){assert.equal(await page.locator('#back').isVisible(),false);assert.equal(await page.locator('#back').boundingBox(),null);assert.equal(await page.locator('.back-wrap').boundingBox(),null)}
 async function visit(page,id,touch) {
+  await rootBackHidden(page);
   await activate(page,`[data-node="${id}"]`,touch);
   await page.waitForFunction(()=>document.querySelector('#depth-number').textContent==='01'&&!document.body.classList.contains('is-traveling'));
+  assert.equal(await page.locator('#back').isVisible(),true);
   await activate(page,'#back',touch);
   await page.waitForFunction(()=>document.querySelector('#depth-number').textContent==='00'&&!document.body.classList.contains('is-traveling'));
+  await rootBackHidden(page);
 }
 async function pinch(page) {
   const cdp=await page.context().newCDPSession(page);
@@ -27,7 +32,8 @@ try {
   for(const [name,options]of cases){
     const f=await mobileFixture(browser,options),{page}=f,touch=!!options.hasTouch;
     const ids=await page.locator('#node-targets .node-target').evaluateAll(nodes=>nodes.map(n=>n.dataset.node));
-    for(const id of ids)await visit(page,id,touch);
+    for(const id of (backOnly?ids.slice(0,1):ids))await visit(page,id,touch);
+    if(backOnly){assert.deepEqual(f.errors,[]);console.log(`Root back visibility OK: ${name}`);await f.context.close();continue}
     if(touch){
       const zoom=await page.locator('#zoom-label').textContent();await pinch(page);assert.notEqual(await page.locator('#zoom-label').textContent(),zoom);
     }else{await page.mouse.move(12,330);await page.mouse.wheel(0,-180);await page.waitForTimeout(300)}

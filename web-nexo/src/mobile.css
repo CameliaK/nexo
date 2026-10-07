@@ -104,3 +104,6 @@ body.mobile-system-expanded .chess-shell{visibility:hidden;pointer-events:none!i
 body.mobile-chess-chat #companion-panel .panel-body{display:flex;flex-direction:column}
 body.mobile-chess-chat[data-mobile-keyboard=true] .live-name,body.mobile-chess-chat[data-mobile-keyboard=true] .privacy-notice>span{display:none}
 body.mobile-chess .chess-scene[data-compact-chat=true] .chess-player,body.mobile-chess .chess-scene[data-compact-chat=true] .chess-aside{display:none}
+
+/* Component display rules must never override the native hidden state. */
+.back-button[hidden],.back-wrap:has(> .back-button[hidden]){display:none!important}
