@@ -142,7 +142,7 @@ function renderDistantSystem(expanded=false){
   const button=system.portal.button;button.style.opacity=level.system||systemTravel?'0':'1';button.disabled=!!level.system||!!systemTravel;button.style.pointerEvents=button.disabled?'none':'';
   if(level.system||systemTravel)return;
   const bounds=distantSystemBounds(),items=apertureNodes(bounds);
-  if(expanded){ctx.fillStyle='#0b161efc';ctx.fillRect(0,bounds.top-56,width,height-bounds.top+56);ctx.strokeStyle='#b6f3dc44';ctx.strokeRect(bounds.left,bounds.top,bounds.width,bounds.height);}
+  if(expanded){ctx.fillStyle='#0b161eef';ctx.beginPath();ctx.roundRect(0,bounds.top-56,width,height-bounds.top+56,[24,24,0,0]);ctx.fill();}
   if(system.portal.element){
     const style=system.portal.element.style,flip=chessJourney&&system.chess?.isOpen()&&!expanded;
     const destination=flip?systemFrame():bounds;

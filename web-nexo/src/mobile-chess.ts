@@ -15,7 +15,7 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  const summary=document.createElement('ul');summary.id='mobile-system-components';summary.className='sr-only';summary.dataset.i18nIgnore='';summary.hidden=true;portal.element.append(summary);
  const safe=document.createElement('div');safe.className='mobile-safe-probe';safe.setAttribute('aria-hidden','true');body.append(button,controls,safe);
  const hiddenState=new Map<HTMLElement,boolean>();
- let active=false,chat:'agent'|'live'|null=null,expanded=false,previous:HTMLElement|null=null,swipe:{id:number;y:number}|null=null;
+ let active=false,chat:'agent'|'live'|null=null,expanded=false,previous:HTMLElement|null=null,swipe:{id:number;y:number;surface:'chat'|'system'}|null=null;
  const isMobile=()=>innerWidth<=768||(matchMedia('(pointer: coarse)').matches&&innerHeight<=768);
  const emit=()=>dispatchEvent(new Event('nexo:mobile-layout'));
  function measure(){
@@ -79,8 +79,8 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
   if(chat&&event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();closeChat()}
  };
  const focus=(event:FocusEvent)=>{if(expanded&&!portal.element.contains(event.target as Node))systemClose.focus({preventScroll:true})};
- const down=(event:PointerEvent)=>{if(!chat||!(event.target as HTMLElement).closest('.panel-header, .mobile-chat-controls'))return;swipe={id:event.pointerId,y:event.clientY}};
- const up=(event:PointerEvent)=>{if(swipe?.id===event.pointerId&&event.clientY-swipe.y>55)closeChat();swipe=null};
+ const down=(event:PointerEvent)=>{const target=event.target as HTMLElement;if(expanded&&target.closest('.mobile-system-header'))swipe={id:event.pointerId,y:event.clientY,surface:'system'};else if(chat&&target.closest('.panel-header, .mobile-chat-controls'))swipe={id:event.pointerId,y:event.clientY,surface:'chat'}};
+ const up=(event:PointerEvent)=>{if(swipe?.id===event.pointerId&&event.clientY-swipe.y>55){if(swipe.surface==='system')systemSheet(false);else closeChat()}swipe=null};
  const cancel=()=>{swipe=null};
  const resize=()=>{measure();sync();if(active)emit()};
  const observer=new MutationObserver(()=>{
