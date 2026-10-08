@@ -1,4 +1,4 @@
-import { mobileSystemBox, type MobileViewport } from '../mobile-layout';
+import { mobileSystemBox, mobileViewport, type MobileViewport } from '../mobile-layout';
 import { box, project3D, type Camera } from './spatial';
 
 export interface Rect {left:number;right:number;top:number;bottom:number}
@@ -57,16 +57,16 @@ export function chessLayout({width,height}:ChessViewport,view:ChessView={zoom:1,
 }
 
 /** Mobile keeps the camera independent of the universe underneath the game. */
-export function mobileChessLayout({width,height,safeTop=0,safeBottom=0,offsetTop=0,chat=false,landscape=width>height}:MobileViewport){
+export function mobileChessLayout({width,height,safeTop=0,safeBottom=0,offsetTop=0,chat=false,landscape=width>height,browserInset}:MobileViewport){
  const compactChat=chat&&height<480,headerHeight=44,playerHeight=24;
- const dock=chat?Math.min(height*.5,360):0,bottom=offsetTop+height-safeBottom-dock;
+ const {bottom}=mobileViewport({width,height,safeBottom,offsetTop,chat,landscape,browserInset});
  const top=offsetTop+safeTop,system=mobileSystemBox({width,height,safeTop,offsetTop,chat,landscape});
  const left=landscape?164:6,right=landscape?width-196:compactChat?system.left-10:width-6;
  const area={left,right,top:landscape||compactChat?top+44:system.top+system.height+12,bottom:Math.max(top+72,bottom-(chat?6:landscape?12:104))};
  const projection={x:0,y:0,scale:1,tilt:.55,yaw:0,distance:100},unit=chessBounds(projection);
  const scale=Math.max(.01,Math.min((right-left)/(unit.right-unit.left),(area.bottom-area.top)/(unit.bottom-unit.top)));
- const camera={...projection,scale,x:(left+right)/2-(unit.left+unit.right)*scale/2,y:(area.top+area.bottom)/2-(unit.top+unit.bottom)*scale/2};
- const railLeft=landscape?width-184:12,railTop=landscape?top+52:bottom-98;
+ const camera={...projection,scale,x:(left+right)/2-(unit.left+unit.right)*scale/2,y:landscape?(area.top+area.bottom)/2-(unit.top+unit.bottom)*scale/2:area.top+Math.min(24,(area.bottom-area.top-(unit.bottom-unit.top)*scale)/2)-unit.top*scale};
+ const bounds=chessBounds(camera),railLeft=landscape?width-184:12,railTop=landscape?top+52:bounds.bottom+8;
  return {camera,area,system,stacked:!landscape,compact:true,
   header:{left:landscape?164:12,top:top+4,width:landscape?width-290:width-132,height:headerHeight},
   close:{left:width-12,top:top+4},
@@ -74,5 +74,5 @@ export function mobileChessLayout({width,height,safeTop=0,safeBottom=0,offsetTop
   white:{left:12,top:top+(landscape?30:76),width:landscape?140:system.left-24,height:playerHeight},
   status:{left:12,top:top+(landscape?56:102),width:landscape?140:system.left-24,height:28},
   help:{left:12,top:bottom-12,width:width-24},
-  aside:{left:railLeft,top:railTop,width:landscape?172:width-24,height:Math.max(64,bottom-railTop-6)}};
+  aside:{left:railLeft,top:railTop,width:landscape?172:width-24,height:Math.max(64,bottom-railTop)}};
 }

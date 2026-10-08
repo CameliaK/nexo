@@ -3,7 +3,7 @@ html,body{overscroll-behavior:none;touch-action:manipulation}
 #space,#node-targets .node-target,.floating-chess{touch-action:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 button,a{-webkit-tap-highlight-color:transparent}
 .back-button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.mobile-safe-probe{position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.mobile-safe-probe{position:fixed;visibility:hidden;pointer-events:none;height:100svh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .mobile-chess-chat-toggle,.mobile-chat-controls,.mobile-system-header{display:none}
 @media(max-width:768px),(pointer:coarse) and (max-height:768px){
  body input,body textarea,body select{font-size:16px!important}

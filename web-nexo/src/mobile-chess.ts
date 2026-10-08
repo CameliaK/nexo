@@ -1,3 +1,4 @@
+import { mobileViewport } from './mobile-layout';
 import { icon } from './icons';
 import type { BackendArchitecture } from './backend/types';
 import { t,languageStore } from './i18n';
@@ -20,10 +21,11 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  const isMobile=()=>innerWidth<=768||(matchMedia('(pointer: coarse)').matches&&innerHeight<=768);
  const emit=()=>dispatchEvent(new Event('nexo:mobile-layout'));
  function measure(){
-  const visual=window.visualViewport,styles=getComputedStyle(safe);
-  body.style.setProperty('--mobile-height',(visual?.height||innerHeight)+'px');body.style.setProperty('--mobile-top',(visual?.offsetTop||0)+'px');
-  body.dataset.mobileKeyboard=String((visual?.height||innerHeight)<innerHeight*.75);
-  body.dataset.mobileHeight=String(visual?.height||innerHeight);body.dataset.mobileTop=String(visual?.offsetTop||0);
+  const visual=window.visualViewport,styles=getComputedStyle(safe),stable=safe.getBoundingClientRect().height;const height=Math.min(visual?.height||innerHeight,stable||innerHeight);
+  body.style.setProperty('--mobile-height',height+'px');body.style.setProperty('--mobile-top',(visual?.offsetTop||0)+'px');
+  body.dataset.mobileKeyboard=String(height<innerHeight*.75);
+  body.dataset.mobileHeight=String(height);body.dataset.mobileTop=String(visual?.offsetTop||0);
+  const inset=body.dataset.mobileKeyboard==='true'?Math.max(8,parseFloat(styles.paddingBottom)||0):Math.max(16,parseFloat(styles.paddingBottom)||0)+(innerWidth>innerHeight?16:56);body.dataset.mobileInset=String(inset);body.style.setProperty('--mobile-bottom-inset',inset+'px');const dock=mobileViewport({width:innerWidth,height,offsetTop:visual?.offsetTop||0,chat:true,landscape:innerWidth>innerHeight,browserInset:inset});body.style.setProperty('--mobile-dock-height',dock.dock+'px');body.style.setProperty('--mobile-dock-top',dock.dockTop+'px');
   body.dataset.safeTop=String(parseFloat(styles.paddingTop)||0);body.dataset.safeBottom=String(parseFloat(styles.paddingBottom)||0);
  }
  function relabel(){

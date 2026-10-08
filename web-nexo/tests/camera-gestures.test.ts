@@ -64,7 +64,18 @@ test('Chess unfolds over 1.4 seconds before its pieces fade in; the same phases 
  assert.deepEqual(chessPhase(.4,true),{approach:0,unfold:1,board:.4,pieces:.4,pulse:0});
 });
 
-import {mobileSystemBox} from '../src/mobile-layout';
+import {mobileSystemBox,mobileViewport} from '../src/mobile-layout';
+test('Portrait game preserves the board width and reserves Safari space below all controls',()=>{
+ for(const [width,height]of [[360,640],[390,844]]){
+  const layout=mobileChessLayout({width,height}),bounds=chessBounds(layout.camera);
+  assert.ok(Math.abs(bounds.right-bounds.left-(width-12))<.001);
+  assert.ok(layout.aside.top+layout.aside.height<=height-72);
+  assert.ok(layout.aside.height>=96,'Moves and three controls fit without clipping');
+ }
+ const dock=mobileViewport({width:390,height:844,chat:true,safeBottom:34});
+ assert.equal(dock.inset,90);assert.equal(dock.dock,(844-90)*.55);
+ assert.equal(dock.dockTop+dock.dock,844-90);
+});
 test('Mobile chess reuses a legible window, with no bar and no board/chat overlap',()=>{
  for(const [width,height]of [[360,640],[390,844],[844,390],[412,839],[839,412]])for(const chat of [false,true]){
   const viewport={width,height,chat},window=mobileSystemBox(viewport),layout=mobileChessLayout(viewport),bounds=chessBounds(layout.camera);

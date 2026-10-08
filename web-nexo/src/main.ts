@@ -12,6 +12,7 @@ import './media.css';
 import './welcome.css';
 import './mobile.css';
 import './icons.css';
+import './mobile-ui.css';
 import { createWelcome } from './welcome';
 import { architecture, applyContent, registerTranslations } from './i18n/content';
 import { initializeLanguage } from './i18n';
