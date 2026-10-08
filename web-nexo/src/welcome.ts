@@ -29,8 +29,7 @@ export function createWelcome(options:WelcomeOptions={}) {
   const content=doc.createElement('div');content.className='welcome-content';content.tabIndex=0;
   content.setAttribute('role','region');content.setAttribute('aria-labelledby','welcome-title');
   const masthead=doc.createElement('div');masthead.className='welcome-masthead';
-  const language=doc.createElement('button');language.type='button';language.className='welcome-language';
-  language.addEventListener('click',()=>languageStore.toggle());
+  const language=doc.createElement('span');language.className='welcome-language';
   masthead.append(label('span','welcome.label','welcome-eyebrow'),language);
   const title=label('h1','welcome.title');title.id='welcome-title';
   const subtitle=label('p','welcome.subtitle','welcome-subtitle');subtitle.id='welcome-description';
@@ -43,17 +42,16 @@ export function createWelcome(options:WelcomeOptions={}) {
   });
   const actions=doc.createElement('div');actions.className='welcome-actions';
   const enter=label('button','welcome.enter','welcome-enter') as HTMLButtonElement;enter.type='button';
-  const skip=label('button','welcome.skip','welcome-skip') as HTMLButtonElement;skip.type='button';
-  actions.append(enter,skip);content.append(masthead,title,subtitle,steps);card.append(content,actions);overlay.append(card);
+  actions.append(enter);content.append(masthead,title,subtitle,steps);card.append(content,actions);overlay.append(card);
   doc.body.append(help,overlay);
 
   const render=()=>{
     for(const {element,key} of bindings)element.textContent=t(key);
     help.title=t('welcome.reopen');help.setAttribute('aria-label',t('welcome.reopen'));
-    language.textContent=languageStore.language.toUpperCase();language.setAttribute('aria-label',t('language.switch'));
+    language.textContent=languageStore.language.toUpperCase();language.setAttribute('aria-hidden','true');
     if(hint)hint.textContent=t('welcome.click');
   };
-  const controls:HTMLElement[]=[content,language,enter,skip];
+  const controls:HTMLElement[]=[content,enter];
   const focus=()=>enter.focus({preventScroll:true});
   const lockBackground=()=>{
     for(const child of Array.from(doc.body.children)){
@@ -63,9 +61,9 @@ export function createWelcome(options:WelcomeOptions={}) {
     }
   };
   const observer=typeof MutationObserver==='undefined'?null:new MutationObserver(lockBackground);
-  function open(){
+  function open(opener?:HTMLElement){
     if(!overlay.hidden)return;
-    returnFocus=doc.activeElement as HTMLElement|null;
+    returnFocus=opener??doc.activeElement as HTMLElement|null;
     overlay.hidden=false;help.setAttribute('aria-expanded','true');lockBackground();
     observer?.observe(doc.body,{childList:true});focus();
   }
@@ -100,7 +98,7 @@ export function createWelcome(options:WelcomeOptions={}) {
   }
   const onKey=(event:KeyboardEvent)=>{
     if(overlay.hidden)return;
-    if(event.key==='Escape'||event.key==='Enter'&&event.target!==language){
+    if(event.key==='Escape'||event.key==='Enter'){
       event.preventDefault();event.stopImmediatePropagation();close();return;
     }
     if(event.key==='Tab'){
@@ -113,7 +111,7 @@ export function createWelcome(options:WelcomeOptions={}) {
     event.stopImmediatePropagation();
   };
   const onFocus=(event:FocusEvent)=>{if(!overlay.hidden&&!overlay.contains(event.target as Node))focus()};
-  help.addEventListener('click',open);enter.addEventListener('click',close);skip.addEventListener('click',close);
+  help.addEventListener('click',()=>open(help));enter.addEventListener('click',close);
   doc.addEventListener('keydown',onKey,true);doc.addEventListener('focusin',onFocus,true);
   render();help.setAttribute('aria-expanded','false');const stopLanguage=languageStore.subscribe(render);
   if(!dismissed)open();

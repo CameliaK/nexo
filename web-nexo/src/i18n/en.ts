@@ -136,7 +136,6 @@ export const en = {
   "welcome.askDetail": "Write to Nexo, Kirbith's assistant; it takes you to the answer or creates a node for you.",
   "welcome.inspect": "Look inside",
   "welcome.inspectDetail": "The system window shows the backend working in real time.",
-  "welcome.skip": "Skip",
   "welcome.enter": "Enter the universe",
   "welcome.reopen": "Open the portfolio welcome and guide",
   "welcome.click": "Click",

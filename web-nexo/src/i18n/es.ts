@@ -135,7 +135,6 @@ export const es = {
   "welcome.askDetail": "Escríbele a Nexo, el asistente de Kirbith; te lleva a la respuesta o crea un nodo para ti.",
   "welcome.inspect": "Mira por dentro",
   "welcome.inspectDetail": "La ventana del sistema muestra el backend trabajando en tiempo real.",
-  "welcome.skip": "Omitir",
   "welcome.enter": "Entrar al universo",
   "welcome.reopen": "Abrir bienvenida y guía del portafolio",
   "welcome.click": "Haz clic",

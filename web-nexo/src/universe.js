@@ -432,7 +432,7 @@ function backGenerated(){
   if(!generatedReturn)return;const previous=generatedReturn;cancelGeneratedFocus();generatedNotice=null;
   generatedRequest={id:null,returning:true,path:previous.path,index:0,previous};advanceGeneratedFocus(performance.now());
 }
-focusView.addEventListener('click',()=>{const id=generatedNotice;if(!id)return;for(const button of document.querySelectorAll?.('.account-overlay:not([hidden]) .access-close, .access-overlay:not([hidden]) .access-close, .welcome-overlay:not([hidden]) .welcome-skip')||[])button.click();system.media?.close();if(system.chess?.isOpen())system.chess.closeForNavigation?.(()=>focusGenerated(id));else focusGenerated(id)});
+focusView.addEventListener('click',()=>{const id=generatedNotice;if(!id)return;for(const button of document.querySelectorAll?.('.account-overlay:not([hidden]) .access-close, .access-overlay:not([hidden]) .access-close, .welcome-overlay:not([hidden]) .welcome-enter')||[])button.click();system.media?.close();if(system.chess?.isOpen())system.chess.closeForNavigation?.(()=>focusGenerated(id));else focusGenerated(id)});
 focusBack.addEventListener('click',backGenerated);
 function advanceGeneratedFocus(now){
   if(!generatedRequest&&!generatedFocus)return;
