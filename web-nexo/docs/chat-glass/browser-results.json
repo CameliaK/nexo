@@ -1,0 +1,339 @@
+{
+  "production": true,
+  "reports": [
+    {
+      "name": "desktop",
+      "root": {
+        "color": "rgba(8, 19, 26, 0.64)",
+        "blur": "blur(20px) saturate(1.1)",
+        "hit": true,
+        "rect": {
+          "x": 24,
+          "y": 112,
+          "width": 380,
+          "height": 760,
+          "top": 112,
+          "right": 404,
+          "bottom": 872,
+          "left": 24
+        },
+        "input": {
+          "x": 43,
+          "y": 752,
+          "width": 290,
+          "height": 46,
+          "top": 752,
+          "right": 333,
+          "bottom": 798,
+          "left": 43
+        },
+        "opacity": "1",
+        "modal": "false",
+        "dimLayers": [],
+        "canvasFps": "60",
+        "contrast": {
+          "input": 15.752916788141473,
+          "placeholder": 9.61451742420375,
+          "owner": 13.584146321958135
+        }
+      },
+      "chess": {
+        "color": "rgba(8, 19, 26, 0.64)",
+        "blur": "blur(20px) saturate(1.1)",
+        "hit": true,
+        "rect": {
+          "x": 1036,
+          "y": 216,
+          "width": 380,
+          "height": 660,
+          "top": 216,
+          "right": 1416,
+          "bottom": 876,
+          "left": 1036
+        },
+        "input": {
+          "x": 1053,
+          "y": 758,
+          "width": 294,
+          "height": 46,
+          "top": 758,
+          "right": 1347,
+          "bottom": 804,
+          "left": 1053
+        },
+        "opacity": "1",
+        "modal": "false",
+        "dimLayers": [],
+        "canvasFps": "30",
+        "contrast": {
+          "input": 15.752916788141473,
+          "placeholder": 9.61451742420375
+        },
+        "board": {
+          "x": 185.546875,
+          "y": 324.5625,
+          "width": 540.90625,
+          "height": 330.859375
+        },
+        "system": {
+          "x": 770,
+          "y": 192,
+          "width": 218,
+          "height": 120
+        },
+        "reducedMotion": false
+      }
+    },
+    {
+      "name": "iphone13",
+      "root": {
+        "color": "rgba(8, 19, 26, 0.64)",
+        "blur": "blur(16px) saturate(1.1)",
+        "hit": true,
+        "rect": {
+          "x": 12,
+          "y": 347.390625,
+          "width": 366,
+          "height": 424.59375,
+          "top": 347.390625,
+          "right": 378,
+          "bottom": 771.984375,
+          "left": 12
+        },
+        "input": {
+          "x": 25,
+          "y": 657.984375,
+          "width": 288,
+          "height": 46,
+          "top": 657.984375,
+          "right": 313,
+          "bottom": 703.984375,
+          "left": 25
+        },
+        "opacity": "1",
+        "modal": "false",
+        "dimLayers": [],
+        "canvasFps": "60",
+        "contrast": {
+          "input": 15.752916788141473,
+          "placeholder": 9.61451742420375,
+          "owner": 13.584146321958135
+        }
+      },
+      "chess": {
+        "color": "rgba(8, 19, 26, 0.64)",
+        "blur": "blur(16px) saturate(1.1)",
+        "hit": true,
+        "rect": {
+          "x": 0,
+          "y": 411.390625,
+          "width": 390,
+          "height": 360.59375,
+          "top": 411.390625,
+          "right": 390,
+          "bottom": 771.984375,
+          "left": 0
+        },
+        "input": {
+          "x": 12,
+          "y": 683.296875,
+          "width": 314,
+          "height": 46,
+          "top": 683.296875,
+          "right": 326,
+          "bottom": 729.296875,
+          "left": 12
+        },
+        "opacity": "0",
+        "modal": "false",
+        "dimLayers": [],
+        "canvasFps": "30",
+        "contrast": {
+          "input": 15.752916788141473,
+          "placeholder": 9.61451742420375,
+          "owner": 13.584146321958135
+        },
+        "board": {
+          "x": 81.578125,
+          "y": 135.671875,
+          "width": 226.828125,
+          "height": 205.71875
+        },
+        "system": {
+          "x": 259.3125,
+          "y": 48,
+          "width": 118.671875,
+          "height": 75.671875
+        },
+        "reducedMotion": false
+      }
+    },
+    {
+      "name": "pixel7",
+      "root": {
+        "color": "rgba(8, 19, 26, 0.64)",
+        "blur": "blur(16px) saturate(1.1)",
+        "hit": true,
+        "rect": {
+          "x": 12,
+          "y": 345.140625,
+          "width": 388,
+          "height": 421.84375,
+          "top": 345.140625,
+          "right": 400,
+          "bottom": 766.984375,
+          "left": 12
+        },
+        "input": {
+          "x": 25,
+          "y": 652.984375,
+          "width": 310,
+          "height": 46,
+          "top": 652.984375,
+          "right": 335,
+          "bottom": 698.984375,
+          "left": 25
+        },
+        "opacity": "1",
+        "modal": "false",
+        "dimLayers": [],
+        "canvasFps": "60",
+        "contrast": {
+          "input": 15.752916788141473,
+          "placeholder": 9.61451742420375,
+          "owner": 13.584146321958135
+        }
+      },
+      "chess": {
+        "color": "rgba(8, 19, 26, 0.64)",
+        "blur": "blur(16px) saturate(1.1)",
+        "hit": true,
+        "rect": {
+          "x": 0,
+          "y": 409.140625,
+          "width": 412,
+          "height": 357.84375,
+          "top": 409.140625,
+          "right": 412,
+          "bottom": 766.984375,
+          "left": 0
+        },
+        "input": {
+          "x": 12,
+          "y": 678.296875,
+          "width": 336,
+          "height": 46,
+          "top": 678.296875,
+          "right": 348,
+          "bottom": 724.296875,
+          "left": 12
+        },
+        "opacity": "0",
+        "modal": "false",
+        "dimLayers": [],
+        "canvasFps": "30",
+        "contrast": {
+          "input": 15.752916788141473,
+          "placeholder": 9.61451742420375,
+          "owner": 13.584146321958135
+        },
+        "board": {
+          "x": 93.8125,
+          "y": 135.671875,
+          "width": 224.34375,
+          "height": 203.46875
+        },
+        "system": {
+          "x": 281.3125,
+          "y": 48,
+          "width": 118.671875,
+          "height": 75.671875
+        },
+        "reducedMotion": false
+      }
+    },
+    {
+      "name": "desktop-reduced",
+      "root": {
+        "color": "rgba(8, 19, 26, 0.64)",
+        "blur": "blur(20px) saturate(1.1)",
+        "hit": true,
+        "rect": {
+          "x": 24,
+          "y": 112,
+          "width": 380,
+          "height": 760,
+          "top": 112,
+          "right": 404,
+          "bottom": 872,
+          "left": 24
+        },
+        "input": {
+          "x": 43,
+          "y": 752,
+          "width": 290,
+          "height": 46,
+          "top": 752,
+          "right": 333,
+          "bottom": 798,
+          "left": 43
+        },
+        "opacity": "1",
+        "modal": "false",
+        "dimLayers": [],
+        "canvasFps": "60",
+        "contrast": {
+          "input": 15.752916788141473,
+          "placeholder": 9.61451742420375,
+          "owner": 13.584146321958135
+        }
+      },
+      "chess": {
+        "color": "rgba(8, 19, 26, 0.64)",
+        "blur": "blur(20px) saturate(1.1)",
+        "hit": true,
+        "rect": {
+          "x": 1036,
+          "y": 216,
+          "width": 380,
+          "height": 660,
+          "top": 216,
+          "right": 1416,
+          "bottom": 876,
+          "left": 1036
+        },
+        "input": {
+          "x": 1053,
+          "y": 758,
+          "width": 294,
+          "height": 46,
+          "top": 758,
+          "right": 1347,
+          "bottom": 804,
+          "left": 1053
+        },
+        "opacity": "1",
+        "modal": "false",
+        "dimLayers": [],
+        "canvasFps": "30",
+        "contrast": {
+          "input": 15.752916788141473,
+          "placeholder": 9.61451742420375
+        },
+        "board": {
+          "x": 185.546875,
+          "y": 324.5625,
+          "width": 540.90625,
+          "height": 330.859375
+        },
+        "system": {
+          "x": 770,
+          "y": 192,
+          "width": 218,
+          "height": 120
+        },
+        "reducedMotion": true
+      }
+    }
+  ]
+}

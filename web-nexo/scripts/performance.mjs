@@ -1,4 +1,4 @@
-import { chromium } from 'playwright';
+import { chromium, devices } from 'playwright';
 import { writeFile } from 'node:fs/promises';
 import os from 'node:os';
 
@@ -8,10 +8,11 @@ const runs=Number(process.env.PERF_RUNS||3),output=process.argv[2]||'docs/perfor
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
 const generated=Array.from({length:12},(_,i)=>({id:'gen_perf_'+i,generated:true,label:'Generated '+(i+1),summary:'Performance fixture',created_at:'2026-10-05T18:00:00Z',sources:[{title:'Fixture',ref:'aprendizaje'}],layout:'text',content:{body:'Neutral reproducible fixture.'}}));
 const game={id:'perf-game',color:'w',fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',moves:[],turn:'player',status:'active',updated_at:'2026-10-05T18:00:00Z'};
-const results=[];
+const results=[],glass=process.env.PERF_CHAT_GLASS==='1',mobile=process.env.PERF_MOBILE==='1';
+const viewport=mobile?{width:393,height:851}:{width:1366,height:768};
 try{
  for(let run=0;run<runs;run++){
-  const context=await browser.newContext({viewport:{width:1366,height:768},deviceScaleFactor:2});
+  const context=await browser.newContext({...(mobile?devices['Pixel 7']:{}),viewport,deviceScaleFactor:2});
   const page=await context.newPage();
   page.on("pageerror",error=>console.error(error.message));
   await page.route('**/*',async route=>{
@@ -47,12 +48,26 @@ try{
   });
   await page.goto(url);await page.waitForFunction(()=>document.querySelectorAll('.node-target.is-generated').length===12).catch(async error=>{console.error(await page.evaluate(()=>({nodes:document.querySelectorAll('.node-target.is-generated').length,text:document.body.innerText.slice(-1500)})));throw error});
   await page.waitForTimeout(1500);
-  const cameraStart=await page.evaluate(()=>performance.now());
-  await page.mouse.move(1050,160);await page.mouse.down();
-  const start=Date.now();
-  for(let i=0;i<300;i++){await page.mouse.move(1050+Math.sin(i/24)*100,160+Math.cos(i/30)*60);const remaining=start+(i+1)*1000/60-Date.now();if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining))}
-  await page.mouse.up();const cameraEnd=await page.evaluate(()=>performance.now());
-  const fps=await page.evaluate(({cameraStart,cameraEnd})=>{const f=window.__perf.frames.filter(t=>t>=cameraStart&&t<=cameraEnd);return (f.length-1)*1000/(f.at(-1)-f[0])},{cameraStart,cameraEnd});
+  async function measureCamera(){
+   const cameraStart=await page.evaluate(()=>performance.now());
+   const x=mobile?viewport.width*.5:1050,y=mobile?140:160,dx=mobile?35:100,dy=mobile?20:60;
+   await page.mouse.move(x,y);await page.mouse.down();const start=Date.now();
+   for(let i=0;i<300;i++){await page.mouse.move(x+Math.sin(i/24)*dx,y+Math.cos(i/30)*dy);const remaining=start+(i+1)*1000/60-Date.now();if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining))}
+   await page.mouse.up();const cameraEnd=await page.evaluate(()=>performance.now());
+   return page.evaluate(({cameraStart,cameraEnd})=>{
+    const f=window.__perf.frames.filter(t=>t>=cameraStart&&t<=cameraEnd),gaps=f.slice(1).map((v,i)=>v-f[i]);
+    return {fps:(f.length-1)*1000/(f.at(-1)-f[0]),maxFrameMs:Math.max(...gaps),longTasks:window.__perf.tasks.filter(t=>t.start>=cameraStart&&t.start<cameraEnd&&t.duration>50)};
+   },{cameraStart,cameraEnd});
+  }
+  const closed=await measureCamera(),fps=closed.fps;
+  let glassCamera=null;
+  if(glass){
+   await page.locator('#floating-live-chat').click({force:true});await page.waitForTimeout(650);
+   glassCamera=await measureCamera();
+   const surface=await page.locator('#live-panel>.panel-surface').evaluate(e=>({background:getComputedStyle(e).backgroundColor,blur:getComputedStyle(e).backdropFilter}));
+   glassCamera.surface=surface;
+   await page.keyboard.press('Escape');await page.locator('#live-panel').waitFor({state:'hidden'});await page.waitForTimeout(300);
+  }
   await page.locator('#floating-chess').click({force:true});
   await page.waitForFunction(()=>typeof window.__perf.interactive==='number');
   const interactive=await page.evaluate(()=>window.__perf.interactive);
@@ -62,11 +77,11 @@ try{
    return {unexpectedLostFrames:intervals.reduce((sum,gap,i)=>sum+Math.max(0,Math.round(gap/(1000/(budgets[frames.indexOf(f[i+1])]||60)))-1),0),lostFrames:intervals.reduce((sum,gap)=>sum+Math.max(0,Math.round(gap/(1000/60))-1),0),frameIntervals:intervals.length,longTasks:tasks.filter(t=>t.start>=start&&t.start<end&&t.duration>50),maxFrameMs:Math.max(...intervals)};
   });
   const board=await page.locator('.chess-board').boundingBox();
-  results.push({run:run+1,interactiveMs:interactive,cameraFps:fps,...opening,board});
+  results.push({run:run+1,interactiveMs:interactive,cameraFps:fps,...(glass?{glassCamera}:{}),...opening,board});
   if(run===0&&process.env.PERF_CAPTURE!=='0')await page.screenshot({path:output.replace(/\.json$/,'.png'),scale:'css'});
   await context.close();
  }
  const average=key=>results.reduce((sum,r)=>sum+r[key],0)/results.length;
- const report={interactiveMeasurement:'click-capture-raf-legal-selection-v2',at:new Date().toISOString(),url,browser:await browser.version(),machine:{platform:os.platform(),arch:os.arch(),cpu:os.cpus()[0]?.model,cores:os.cpus().length},viewport:'1366x768',dpr:2,generatedNodes:12,openingWindowMs:1800,summary:{interactiveMs:average('interactiveMs'),cameraFps:average('cameraFps'),lostFrames:average('lostFrames'),unexpectedLostFrames:average('unexpectedLostFrames'),longTasks:results.reduce((sum,r)=>sum+r.longTasks.length,0)},results};
+ const report={interactiveMeasurement:'click-capture-raf-legal-selection-v2',at:new Date().toISOString(),url,browser:await browser.version(),machine:{platform:os.platform(),arch:os.arch(),cpu:os.cpus()[0]?.model,cores:os.cpus().length},viewport:viewport.width+'x'+viewport.height,dpr:2,generatedNodes:12,openingWindowMs:1800,summary:{interactiveMs:average('interactiveMs'),cameraFps:average('cameraFps'),...(glass?{glassCameraFps:results.reduce((sum,r)=>sum+r.glassCamera.fps,0)/results.length,glassLongTasks:results.reduce((sum,r)=>sum+r.glassCamera.longTasks.length,0)}:{}),lostFrames:average('lostFrames'),unexpectedLostFrames:average('unexpectedLostFrames'),longTasks:results.reduce((sum,r)=>sum+r.longTasks.length,0)},results};
  await writeFile(output,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report.summary,null,2));
 }finally{await browser.close()}
