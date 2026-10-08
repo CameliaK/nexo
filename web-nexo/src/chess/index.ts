@@ -1,3 +1,4 @@
+import { icon as uiIcon } from '../icons';
 import { motion, easeOut, resumeStart } from '../motion';
 import { AccountChess, errorText } from '../auth/session';
 import { t, translateUI } from '../i18n';
@@ -33,7 +34,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   dialog.innerHTML=`
     <div class="chess-shell">
       <div class="chess-heading"><span class="chess-eyebrow">${t('chess.eyebrow')}</span><h2 id="chess-title">${t('chess.title')}</h2><span class="chess-local">${t('chess.local')}</span></div>
-      <button class="chess-close" type="button" aria-label="${t('chess.close')}">↙ <span>${t('chess.fold')}</span> <kbd>ESC</kbd></button>
+      <button class="chess-close" type="button" aria-label="${t('chess.close')}">${uiIcon('back')} <span>${t('chess.fold')}</span> <kbd>ESC</kbd></button>
       <div class="chess-layout">
         <div class="chess-play">
           <div class="chess-player" data-color="b"><span class="chess-avatar chess-avatar-black">K</span><div class="chess-player-info"><strong>Kirbith</strong><span>${t('chess.blackHost')}</span></div><span class="chess-captures" data-captured-by="b" aria-label="${t('chess.capturesOwner')}"></span><span class="chess-turn-dot"></span></div>
@@ -42,8 +43,8 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
         </div>
         <aside class="chess-aside">
           <div class="chess-status"><span class="chess-eyebrow">${t('chess.status')}</span><h2 class="chess-status-title"></h2><p class="chess-status-detail"></p></div>
-          <details class="chess-history"><summary class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span><span class="chess-last-move">—</span></summary><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></details>
-          <div class="chess-actions"><button type="button" class="chess-flip">⇄ <span>${t('chess.flip')}</span></button><button type="button" class="chess-restart">↻ <span>${t('chess.new')}</span></button><button type="button" class="chess-claim" hidden>${t('chess.claim')}</button></div>
+          <details class="chess-history"><summary class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span><span class="chess-last-move">—</span><span class="history-chevron">${uiIcon('back')}</span></summary><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></details>
+          <div class="chess-actions"><button type="button" class="chess-flip">${uiIcon('flip')} <span>${t('chess.flip')}</span></button><button type="button" class="chess-restart">${uiIcon('restart')} <span>${t('chess.new')}</span></button><button type="button" class="chess-claim" hidden>${t('chess.claim')}</button></div>
           <p class="chess-local-note">${t('chess.note')}</p>
         </aside>
       </div>
@@ -55,6 +56,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   const $=<T extends HTMLElement=HTMLElement>(selector:string)=>dialog.querySelector<T>(selector)!;
   let ctx:CanvasRenderingContext2D;
   dialog.append($('.chess-close'));
+  const moveLine=document.createElement('button');moveLine.type='button';moveLine.className='chess-moves-open';moveLine.setAttribute('aria-haspopup','dialog');moveLine.innerHTML=uiIcon('history');const moveStrip=document.createElement('span');moveStrip.className='chess-move-strip';moveLine.append(moveStrip);$('.chess-aside').prepend(moveLine);moveLine.onclick=()=>showHistory();
   const board=$('.chess-board'),popover=$('.chess-popover'),backdrop=$('.chess-popover-backdrop');
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   let selected:Square|null=null,flipped=false,animation:Animation|null=null,morph:Morph|null=null;
@@ -80,7 +82,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     const mobile=document.body.classList.contains('mobile-chess');
     const status=$('.chess-status'),statusParent=mobile?$('.chess-shell'):$('.chess-aside');if(status.parentElement!==statusParent)statusParent.prepend(status);
     if(mobile&&dialog.dataset.mobile!=='true')($<HTMLDetailsElement>('.chess-history')).open=innerHeight>700;dialog.dataset.mobile=String(mobile);dialog.dataset.compactChat=String(mobile&&document.body.classList.contains('mobile-chess-chat')&&Number(data.mobileHeight)<480&&innerWidth<innerHeight);
-    const layout=document.body.classList.contains('mobile-chess')?mobileChessLayout({width:innerWidth,height:Number(data.mobileHeight)||innerHeight,safeTop:Number(data.safeTop)||0,safeBottom:Number(data.safeBottom)||0,offsetTop:Number(data.mobileTop)||0,chat:document.body.classList.contains('mobile-chess-chat'),landscape:innerWidth>innerHeight}):chessLayout({width:innerWidth,height:innerHeight},currentView);
+    const layout=document.body.classList.contains('mobile-chess')?mobileChessLayout({width:innerWidth,height:Number(data.mobileHeight)||innerHeight,safeTop:Number(data.safeTop)||0,safeBottom:Number(data.safeBottom)||0,offsetTop:Number(data.mobileTop)||0,browserInset:Number(data.mobileInset)||undefined,chat:document.body.classList.contains('mobile-chess-chat'),landscape:innerWidth>innerHeight}):chessLayout({width:innerWidth,height:innerHeight},currentView);
     const changed=JSON.stringify(camera)!==JSON.stringify(layout.camera);camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';dialog.dataset.density=layout.compact?'compact':'normal';
     const {header,close,black,white,help,aside}=layout;
     if(mobile){const status=(layout as ReturnType<typeof mobileChessLayout>).status;for(const [key,value] of Object.entries(status))dialog.style.setProperty('--chess-status-'+key,value+'px')}
@@ -161,7 +163,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     dialog.classList.toggle('chess-ended',!!record&&record.status!=='active');dialog.setAttribute('aria-busy',String(remote.busy||!remote.ready));
     remoteError.textContent=remote.error?errorText(remote.error):'';remoteError.hidden=!remote.error;
     sessionLine.hidden=remote.me.mode==='guest';sessionText.textContent=t('account.signedAs',{email:remote.me.email_hint||''});accountLink.textContent=t('account.node');
-    resign.textContent=t('chess.resign');resign.hidden=!record||record.status!=='active';resign.disabled=remote.busy;
+    resign.innerHTML=uiIcon('flag')+'<span>'+t('chess.resign')+'</span>';resign.setAttribute('aria-label',t('chess.resign'));resign.hidden=!record||record.status!=='active';resign.disabled=remote.busy;
     $('.chess-restart').hidden=!!remote.ownerId;($<HTMLButtonElement>('.chess-restart')).disabled=remote.busy||record?.status==='active';
     $('.chess-claim').hidden=true;
     online.replaceChildren();
@@ -194,7 +196,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     const scroll=$('.chess-history-scroll');scroll.scrollTop=scroll.scrollHeight;
     $('.chess-claim').hidden=!(status.claimable||game.canAnnounceClaim||claimMode);
     $('.chess-claim').textContent=claimMode?t('chess.cancelClaim'):t('chess.claim');
-    syncBoard();refreshOnline();announce(`${$('.chess-status-title').textContent}. ${$('.chess-status-detail').textContent}`);
+    syncBoard();refreshOnline();refreshMoveLine();announce(`${$('.chess-status-title').textContent}. ${$('.chess-status-detail').textContent}`);
   }
   function choose(square:Square){
     if(remote&&!remote.canMove){announce(remote.nodeLabel);return}
@@ -223,18 +225,31 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     if(remote)void remote.move(from+to+(move.promotion||''));
     board.inert=true;dialog.focus({preventScroll:true});refresh();announce(`${move.san}. ${game.status.title}. ${game.status.detail}`);
   }
-  function hidePopover(){backdrop.hidden=true;popover.replaceChildren();$('.chess-shell').inert=false;popoverReturn?.focus({preventScroll:true})}
+  function hidePopover(){document.body.classList.remove('is-chess-modal');backdrop.classList.remove('is-history-sheet');backdrop.hidden=true;popover.replaceChildren();$('.chess-shell').inert=false;popoverReturn?.focus({preventScroll:true})}
+  function refreshMoveLine(){
+    const moves=remote?.game?.moves||viewHistory;moveLine.setAttribute('aria-label',t('chess.history'));moveStrip.replaceChildren();
+    for(const [i,move] of moves.entries()){const chip=document.createElement('span');chip.textContent=(i%2?'':String(Math.floor(i/2)+1)+'. ')+move.san;if(i===moves.length-1)chip.className='is-last';moveStrip.append(chip)}
+    if(!moves.length)moveStrip.textContent=t('chess.first');moveStrip.scrollLeft=moveStrip.scrollWidth;
+    if(backdrop.classList.contains('is-history-sheet')){const list=popover.querySelector('.history-sheet-list');if(list)list.replaceChildren($('.chess-moves').cloneNode(true))}
+  }
+  function showHistory(){
+    if(busy())return;showPopover(t('chess.history'),'',[],false);backdrop.classList.add('is-history-sheet');
+    const list=document.createElement('div');list.className='history-sheet-list';list.append($('.chess-moves').cloneNode(true));
+    if(!viewHistory.length&&!remote?.game?.moves.length){const empty=document.createElement('p');empty.textContent=t('chess.first');list.append(empty)}
+    const close=document.createElement('button');close.type='button';close.className='history-sheet-close';close.innerHTML=uiIcon('close');close.setAttribute('aria-label',t('common.close'));close.onclick=hidePopover;popover.append(close,list);close.focus({preventScroll:true});
+  }
   function showPopover(title:string,detail:string,actions:{label:string;action:()=>void;piece?:PieceSymbol}[],cancel=true){
-    popoverReturn=document.activeElement as HTMLElement;popover.replaceChildren();
+    backdrop.classList.remove('is-history-sheet');popoverReturn=document.activeElement as HTMLElement;popover.replaceChildren();
     const h=document.createElement('h2');h.id='chess-popover-title';h.textContent=title;
     const p=document.createElement('p');p.textContent=detail;
     const choices=document.createElement('div');choices.className=actions.some(a=>a.piece)?'chess-promotions':'chess-confirm-actions';
     actions.forEach(action=>{const b=document.createElement('button');b.type='button';if(action.piece)b.append(icon(action.piece,game.turn));const label=document.createElement('span');label.textContent=action.label;b.append(label);b.addEventListener('click',()=>{hidePopover();action.action()});choices.append(b)});
     popover.append(h,p,choices);
     if(cancel){const b=document.createElement('button');b.type='button';b.className='chess-popover-cancel';b.textContent=t('common.cancel');b.onclick=hidePopover;popover.append(b)}
-    $('.chess-shell').inert=true;backdrop.hidden=false;popover.querySelector('button')?.focus();
+    document.body.classList.add('is-chess-modal');$('.chess-shell').inert=true;backdrop.hidden=false;popover.querySelector('button')?.focus();
   }
   function reset(){if(remote){if(remote.game?.status==='active'){announce(t('chess.finishFirst'));return}remote.playerGame=null;remote.error=null;remote.notify();return}game.reset();selected=null;claimMode=false;focusSquare=flipped?'e7':'e2';refresh();buttons.get(focusSquare)?.focus()}
+  backdrop.addEventListener('click',event=>{if(event.target===backdrop)hidePopover()});
   $('.chess-restart').addEventListener('click',()=>{if(busy())return;if(!game.history.length&&!game.status.ended){reset();return}showPopover(t('chess.restartTitle'),t('chess.restartDetail'),[{label:t('chess.restart'),action:reset}])});
   $('.chess-flip').addEventListener('click',()=>{if(busy())return;flipped=!flipped;buildBoard();resize();announce(flipped?t('chess.blackView'):t('chess.whiteView'))});
   $('.chess-claim').addEventListener('click',()=>{

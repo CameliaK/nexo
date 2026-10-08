@@ -195,3 +195,14 @@ npm run test:media-browser -- http://127.0.0.1:4192
 Para comparar otra vez la base, compila `web-nexo/` de `bc5558c` en un directorio
 independiente y sírvela en otro puerto. Ejecuta el **script actual** contra ambas
 URLs; usar el script antiguo de esa revisión volvería a introducir la demora RPC.
+
+
+## UI móvil A–F — 2026-10-08
+
+Sobre producción en Apple M2 / Chrome 154, DPR 2 y 12 nodos generados:
+43.9 ms hasta interacción, 60.1 FPS en arrastre, 1 fotograma perdido adicional y
+0 tareas largas. La base de `mobile-fix` dio 42.2 ms / 60.1 FPS / 1 / 0;
+una primera pasada de esta revisión dio 42.1 ms / 60.2 FPS / 1 / 0.
+Se conserva el rendimiento dentro de la variación observada entre pasadas.
+Resultados y reproducción: [UI móvil](mobile/ui/README.md),
+[medición final](mobile/ui/performance.json).

@@ -1,4 +1,5 @@
 // @ts-nocheck -- This lightweight DOM fixture exercises the unchanged Canvas renderer.
+import { icon } from '../src/icons';
 import { mobileSystemBox } from '../src/mobile-layout';
 import { createCameraGestures, clampZoom } from '../src/camera-gestures';
 import { formationPhase } from '../src/node-forming';
@@ -41,11 +42,12 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  const listeners={},listen=(k,f)=>{const previous=listeners[k];listeners[k]=previous?e=>{previous(e);f(e)}:f},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
  if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,progress:()=>chessOpen?1:0,isAnimating:()=>false,render(){},open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
- const sandbox={mobileSystemBox,createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
+ const sandbox={icon,mobileSystemBox,createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let mediaFrame;
  if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { motion as MOTION, easeOut, resumeStart } from './motion';",'').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
+ source=source.replace("import { icon } from './icons';",'');
  source=source.replace("import { mobileSystemBox } from './mobile-layout';",'');
  source=source.replace("import { createCameraGestures, clampZoom } from './camera-gestures';",'');
  source=source.replace("import { formationPhase } from './node-forming';",'');
@@ -479,4 +481,15 @@ test('Focus returns from the expanded system and Back restores the system and it
 });
 test('Manual input during the root exit cancels the subsequent automatic focus, without consuming the formation',()=>{
  const {api,frames,enter,listeners}=fixture();frames(100);enter('experiencia');enter('experiencia.infosys');api.formGenerated('exit-forming',['experiencia.infosys']);api.spawnGenerated(focusNode(),null,false,'exit-forming');frames(100);listeners['document:click']({});frames(4000);assert.equal(api.getLevel().id,'experiencia');assert.equal(api.camera().zoom,1);assert.ok(api.generatedRegistry.has('gen_focus'));api.dispose();
+});
+
+test('Nexo yields to chess and node hit areas on short phones, including reduced motion',()=>{
+ for(const [width,height]of [[360,640],[390,664],[390,844]])for(const reduced of [false,true]){
+  const {api,frames,sandbox,listeners,el}=fixture(true,reduced);
+  sandbox.innerWidth=width;sandbox.innerHeight=height;listeners.resize();el('companion-panel').hidden=true;el('content-card').hidden=true;frames(100);
+  const chess=api.chessOrbit();api.companion.locked=false;api.companion.x=chess.sx;api.companion.y=chess.sy;frames(500);
+  const hit={left:api.companion.x-26,right:api.companion.x+26,top:api.companion.y-26,bottom:api.companion.y+26};
+  const current=api.chessOrbit();assert.equal(satellite.intersects(hit,{left:current.sx-25,right:current.sx+25,top:current.sy-25,bottom:current.sy+25}),false);
+  for(const node of api.getNodes())assert.equal(satellite.intersects(hit,{left:node.sx-node.sr,right:node.sx+node.sr,top:node.sy-node.sr,bottom:node.sy+node.sr}),false,node.id+' stays tappable');
+ }
 });

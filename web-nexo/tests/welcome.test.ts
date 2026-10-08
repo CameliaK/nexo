@@ -71,10 +71,10 @@ test('Welcome appears on the first visit, Enter dismisses it, and dismissal surv
   finally{reloaded.dispose()}
 });
 
-test('Skip persists dismissal; the question node reopens the guide and ESC returns focus to it',()=>{
+test('The sole entry button persists dismissal; the question node reopens the guide and ESC returns focus to it',()=>{
   const storage=memory(),f=fixture(),welcome=createWelcome({document:f.doc,storage});
   try{
-    element(welcome,'.welcome-skip').click();assert.equal(storage.getItem(WELCOME_KEY),'1');
+    element(welcome,'.welcome-enter').click();assert.equal(storage.getItem(WELCOME_KEY),'1');
     const help=welcome.help as any;help.focus();help.click();
     assert.equal(welcome.element.hidden,false);assert.equal(help.getAttribute('aria-expanded'),'true');assert.equal(help.getAttribute('aria-label'),t('welcome.reopen'));
     const event=f.fire('keydown',element(welcome,'.welcome-enter'),{key:'Escape'});
@@ -87,10 +87,10 @@ test('Modal traps Tab and programmatic focus, restores prior focus, and protects
   Object.defineProperty(globalThis,'MutationObserver',{configurable:true,value:f.Observer});
   f.previous.focus();const welcome=createWelcome({document:f.doc,storage:memory()});
   try{
-    const content=element(welcome,'.welcome-content'),skip=element(welcome,'.welcome-skip'),enter=element(welcome,'.welcome-enter');
-    skip.focus();assert.equal(f.fire('keydown',skip,{key:'Tab',shiftKey:false}).defaultPrevented,true);assert.equal(f.doc.activeElement,content);
+    const content=element(welcome,'.welcome-content'),enter=element(welcome,'.welcome-enter');
+    enter.focus();assert.equal(f.fire('keydown',enter,{key:'Tab',shiftKey:false}).defaultPrevented,true);assert.equal(f.doc.activeElement,content);
     const scrolling=f.fire('keydown',content,{key:'PageDown'});assert.equal(scrolling.defaultPrevented,false);assert.equal(scrolling.stopped,true,'The guide can scroll with the keyboard without triggering universe shortcuts');
-    assert.equal(f.fire('keydown',content,{key:'Tab',shiftKey:true}).defaultPrevented,true);assert.equal(f.doc.activeElement,skip);
+    assert.equal(f.fire('keydown',content,{key:'Tab',shiftKey:true}).defaultPrevented,true);assert.equal(f.doc.activeElement,enter);
     f.previous.focus();assert.equal(f.doc.activeElement,enter);
     const late=f.make('button');f.doc.body.append(late as any);assert.equal(late.inert,true,'Loading new universe controls does not leak focus outside the modal');
     f.fire('keydown',enter,{key:'Escape'});assert.equal(f.doc.activeElement,f.previous);assert.equal(late.inert,false);assert.equal(f.locked.inert,true);
@@ -104,10 +104,11 @@ test('Changing language relabels the open welcome in place and preserves focus',
   try{
     const title=element(welcome,'#welcome-title'),enter=element(welcome,'.welcome-enter'),language=element(welcome,'.welcome-language');
     assert.equal(title.textContent,'Hola, soy Kirbith Cubillas');assert.equal(enter.textContent,'Entrar al universo');
-    language.click();assert.equal(title.textContent,"Hi, I'm Kirbith Cubillas");assert.equal(enter.textContent,'Enter the universe');
+    languageStore.toggle();assert.equal(title.textContent,"Hi, I'm Kirbith Cubillas");assert.equal(enter.textContent,'Enter the universe');
     assert.equal(element(welcome,'#welcome-title'),title);assert.equal(f.doc.activeElement,enter);assert.equal(language.textContent,'EN');
-    language.focus();f.fire('keydown',language,{key:'Enter'});assert.equal(welcome.element.hidden,false,'Enter on the language control retains native toggle behavior');
-    assert.equal(title.textContent,'Hola, soy Kirbith Cubillas');assert.equal(language.textContent,'ES');
+    assert.equal(welcome.element.querySelectorAll('button').length,1);
+    assert.equal(welcome.element.querySelector('.welcome-skip'),null);
+    languageStore.set('es');assert.equal(title.textContent,'Hola, soy Kirbith Cubillas');assert.equal(language.textContent,'ES');
   }finally{welcome.dispose();languageStore.set('es')}
 });
 
@@ -151,4 +152,11 @@ test('HTML has a Spanish title and description before JS, documented social URL 
   for(const key of ['og:title','og:description','og:url','og:image','twitter:title','twitter:description','twitter:url','twitter:image','twitter:card'])assert.ok(html.includes(`="${key}"`),key);
   assert.match(html,/name="theme-color" content="#[\da-f]{6}"/);assert.ok(html.includes('href="/favicon.svg"'));assert.match(fs.readFileSync('public/favicon.svg','utf8'),/<svg/);
   const docs=fs.readFileSync('docs/metadata.md','utf8');for(const placeholder of ['__PUBLIC_SITE_URL__','__SOCIAL_IMAGE_URL__'])assert.ok(html.includes(placeholder)&&docs.includes(placeholder));
+});
+
+test('Touch reopening restores the help node even when the browser never focused the tapped button',()=>{
+ const f=fixture(),storage=memory();storage.setItem(WELCOME_KEY,'1');f.previous.focus();
+ const welcome=createWelcome({document:f.doc,storage});
+ try{(welcome.help as any).click();assert.equal(f.doc.activeElement,element(welcome,'.welcome-enter'));f.fire('keydown',element(welcome,'.welcome-enter'),{key:'Escape'});assert.equal(f.doc.activeElement,welcome.help)}
+ finally{welcome.dispose()}
 });

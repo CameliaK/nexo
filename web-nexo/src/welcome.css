@@ -10,7 +10,7 @@
 .welcome-content:focus-visible{outline:1px solid #b6f3dc55;outline-offset:-5px}
 .welcome-masthead{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:25px}
 .welcome-eyebrow{font:10px 'Space Grotesk',sans-serif;letter-spacing:.17em;color:#a8d3bf}
-.welcome-language{flex-shrink:0;border:1px solid #b6f3dc30;background:none;color:var(--mint);border-radius:2px;padding:7px 9px;font:11px 'Space Grotesk',sans-serif}
+.welcome-language{flex-shrink:0;color:var(--mint);padding:7px 0;font:11px 'Space Grotesk',sans-serif}
 .welcome-card h1{font:400 clamp(26px,4vw,38px)/1.16 'Space Grotesk',sans-serif;letter-spacing:-.045em;color:#d1e8dc;margin:0 0 18px}
 .welcome-subtitle{font-size:14px;line-height:1.8;color:#a3b7b7;max-width:620px;margin:0}
 .welcome-steps{list-style:none;padding:0;margin:27px 0 0;display:grid;gap:20px}
@@ -20,7 +20,6 @@
 .welcome-steps p{font-size:13px;line-height:1.65;color:#98afae;margin:0}
 .welcome-actions{flex-shrink:0;display:flex;align-items:center;gap:24px;padding:20px 38px max(24px,env(safe-area-inset-bottom));border-top:1px solid #b6f3dc20;background:#0b171de8}
 .welcome-enter{min-height:46px;border:1px solid #b6f3dc65;border-radius:2px;background:#b6f3dc13;color:#d3efe1;padding:12px 21px;font:500 13px 'Space Grotesk',sans-serif}.welcome-enter:hover{background:#b6f3dc23;border-color:var(--mint)}
-.welcome-skip{min-height:44px;padding:10px 4px;border:0;background:none;color:#97b4ab;font-size:12px;text-decoration:underline;text-underline-offset:4px}.welcome-skip:hover{color:#d3efe1}
 .has-first-visit-hint:before{content:'';position:absolute;inset:-10px;border:1px solid #b6f3dc80;border-radius:50%;pointer-events:none;animation:first-node-pulse 2.8s ease-in-out infinite}
 .first-visit-hint{position:absolute;left:50%;top:calc(50% - var(--radius) - 36px);transform:translateX(-50%);pointer-events:none;white-space:nowrap;font:10px 'Space Grotesk',sans-serif;letter-spacing:.06em;color:var(--mint);background:#0c191edb;border:1px solid #b6f3dc32;padding:5px 9px;border-radius:2px}
 @keyframes welcome-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}

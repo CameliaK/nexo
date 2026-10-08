@@ -111,3 +111,12 @@ QA_CAPTURE=0 npm run test:mobile
 La corrida final de capturas guarda únicamente 390×844 y escritorio. El informe
 de rendimiento usa 12 nodos generados y se ejecuta al final sin otras pruebas
 concurrentes; los resultados están en `fix/performance.json`.
+
+
+## Revisión de UI A–F
+
+La comparación final de 390×844 y 360×640, en WebKit, y las verificaciones de
+Chromium/Pixel 7 y WebKit/iPhone 13 en ambos sentidos están en
+[ui/README.md](ui/README.md). Ejecutar también `QA_CAPTURE=0 npm run test:mobile-ui`.
+Este informe reemplaza la presentación visual anterior; las comprobaciones de
+teclado, barra real de Safari y VoiceOver siguen pendientes en un iPhone físico.

@@ -1,3 +1,4 @@
+import { icon } from '../icons';
 import { privacyLink } from '../privacy/link';
 import { DataDeletion } from '../privacy/deletion';
 import { t, languageStore } from '../i18n';
@@ -13,7 +14,7 @@ export function createAccountNode(session: AccountChess, access: () => void, doc
   const root = doc.createElement('section'); root.id = 'account-panel'; root.className = 'access-overlay account-overlay'; root.hidden = true;
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'account-panel-title');
   const box = doc.createElement('div'); box.className = 'access-glass account-glass';
-  const close = doc.createElement('button'); close.type = 'button'; close.className = 'access-close'; close.textContent = '×';
+  const close = doc.createElement('button'); close.type = 'button'; close.className = 'access-close'; close.innerHTML = icon('close');
   const title = doc.createElement('h2'); title.id = 'account-panel-title'; const email = doc.createElement('p'); email.className = 'account-email';
   const settings = doc.createElement('div'); settings.className = 'account-settings';
   const label = doc.createElement('label'); label.className = 'account-notifications'; const checkbox = doc.createElement('input'); checkbox.type = 'checkbox'; const text = doc.createElement('span'); label.append(checkbox, text);
@@ -36,7 +37,7 @@ export function createAccountNode(session: AccountChess, access: () => void, doc
     if (wasOpen) (previous?.isConnected && !previous.closest('[hidden]') ? previous : node).focus({ preventScroll: true });
   }
   function render() {
-    nodeText.textContent = t('account.node'); node.title = t('account.open'); node.setAttribute('aria-label', t('account.open'));
+    nodeText.innerHTML = icon('person');nodeText.setAttribute('aria-hidden','true'); node.title = t('account.open'); node.setAttribute('aria-label', t('account.open'));
     close.setAttribute('aria-label', t('common.close')); title.textContent = t('account.node'); email.textContent = session.me.email_hint || '';
     text.textContent = t('account.emailNotifications'); help.textContent = t('account.notificationsHelp'); checkbox.checked = session.notifications; checkbox.disabled = session.busy || saving || !session.notificationsReady;
     logout.textContent = t('account.logout'); remove.textContent = t('account.delete'); logout.disabled = remove.disabled = data.disabled = confirm.disabled = session.busy || saving || deletion.busy;

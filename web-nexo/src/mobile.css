@@ -3,7 +3,7 @@ html,body{overscroll-behavior:none;touch-action:manipulation}
 #space,#node-targets .node-target,.floating-chess{touch-action:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 button,a{-webkit-tap-highlight-color:transparent}
 .back-button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.mobile-safe-probe{position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.mobile-safe-probe{position:fixed;visibility:hidden;pointer-events:none;height:100svh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .mobile-chess-chat-toggle,.mobile-chat-controls,.mobile-system-header{display:none}
 @media(max-width:768px),(pointer:coarse) and (max-height:768px){
  body input,body textarea,body select{font-size:16px!important}
@@ -75,7 +75,7 @@ body.mobile-chess-chat .chat-send{margin:0;min-height:44px;padding:4px;font-size
 body.mobile-chess-chat .chat-hint,body.mobile-chess-chat #compose-hint{font-size:10px;margin:3px 0 0;line-height:1.2;grid-column:1/-1}
 body.mobile-system-expanded .system-aperture{z-index:40;background:none;border:0}
 body.mobile-system-expanded .system-enter{pointer-events:none}
-body.mobile-system-expanded .mobile-system-header{display:flex;position:absolute;left:0;right:0;top:-56px;height:56px;align-items:center;justify-content:space-between;pointer-events:auto;background:#0b161e;border-top:1px solid #b6f3dc55}
+body.mobile-system-expanded .mobile-system-header{display:flex;position:absolute;left:0;right:0;top:-56px;height:56px;align-items:center;justify-content:space-between;pointer-events:auto;background:transparent;border:0;border-radius:24px 24px 0 0;padding:12px 4px 0;touch-action:none}
 .mobile-system-header h2{font-size:16px;font-weight:500;margin:0}
 .mobile-system-header button{min-width:44px;min-height:44px;background:transparent;color:#d6f6e9;border:1px solid #b6f3dc44;border-radius:5px;font-size:24px}
 body.mobile-system-expanded .companion-panel,body.mobile-system-expanded .live-panel,body.mobile-system-expanded .mobile-chat-controls{visibility:hidden}
@@ -88,7 +88,6 @@ body.mobile-chess .chess-heading{width:var(--chess-header-width)}
 body.mobile-chess .chess-heading h2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.mobile-chess .chess-history .chess-eyebrow{display:block;font-size:9px}
 @media(orientation:landscape){body.mobile-chess .mobile-chess-chat-toggle{top:calc(var(--mobile-top,0px) + env(safe-area-inset-top) + 190px);left:12px;right:auto}}
-@media(max-width:650px) and (max-height:720px){.floating-chess[data-compact-caption=true] .floating-chess-caption small{display:none}}
 body.mobile-chess-chat .privacy-notice{font-size:9px;line-height:1.25;margin:4px 0 0;flex:none}
 body.mobile-chess-chat .live-panel .privacy-notice{max-height:48px;overflow-y:auto}
 /* Transformed world nodes must not enlarge a mobile browser's layout viewport. */
@@ -113,9 +112,8 @@ body.mobile-chess-chat .chess-aside,body.mobile-chess .chess-scene[data-compact-
 .chess-scene .chess-shell{animation:none}
 .chess-scene .chess-close{opacity:1!important;pointer-events:auto!important}
 
-/* One glass aperture in the root and in chess: no strip-specific representation. */
-.system-aperture{border:1px solid #b6f3dc30;background:#b6f3dc03;border-radius:6px}
-.system-aperture[data-active=true]{border-color:#9bf5df;background:#9bf5df0c}
+/* The distant system floats directly in the universe, in every context. */
+.system-aperture,.system-aperture[data-active=true]{border:0;background:none;border-radius:0;box-shadow:none}
 body.mobile-chess .chess-status{position:fixed;left:var(--chess-status-left);top:var(--chess-status-top);width:var(--chess-status-width);height:var(--chess-status-height)}
 body.mobile-chess .chess-status-title{font-size:12px}
 body.mobile-chess .chess-status-detail{margin:2px 0 0;line-height:1.2}
@@ -127,3 +125,5 @@ body.mobile-chess .chess-history .chess-eyebrow{margin:0}
 body.mobile-system-expanded .chess-close{visibility:hidden}
 
 body.mobile-system-expanded .system-caption{display:none!important}
+
+.mobile-system-header:before{content:"";position:absolute;top:7px;left:calc(50% - 18px);width:36px;height:3px;border-radius:2px;background:#b6f3dc55}

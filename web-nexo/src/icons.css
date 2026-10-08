@@ -1,0 +1,22 @@
+.ui-icon{width:24px;height:24px;flex:none;display:inline-block;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.back-button svg{stroke-width:1.75}
+.access-close,.chess-scene .chess-close,.chess-loading-close,.media-viewer-close,.mobile-system-header button,.mobile-chat-controls button:last-child,.orientation .back-button{width:44px;min-width:44px;height:44px;min-height:44px;padding:10px;border:0!important;background:transparent!important;box-shadow:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+.access-close:active,.chess-close:active,.media-viewer-close:active,.back-button:active,.mobile-system-header button:active{color:#e4fff3;background:#b6f3dc12!important;transform:scale(.94)}
+.account-node>span .ui-icon{position:static;width:20px;height:20px;opacity:1;stroke-width:1.75}
+.system-caption .ui-icon{width:10px;height:10px;margin-left:3px}
+.chess-history .history-chevron{width:12px;height:12px;transform:rotate(-90deg)}
+.chess-history[open] .history-chevron{transform:rotate(90deg)}
+.chess-history-heading:after{content:none!important}
+.chess-actions .ui-icon{width:20px;height:20px}
+.related-action .ui-icon{width:14px;height:14px;margin-left:5px}
+@media(prefers-reduced-motion:reduce){.access-close:active,.chess-close:active,.media-viewer-close:active,.back-button:active,.mobile-system-header button:active{transform:none}}
+
+.back-button{border:0!important;background:transparent!important}
+.tools button .ui-icon{stroke-width:1.75}
+.ui-icon path{vector-effect:non-scaling-stroke}
+
+.floating-live-glyph{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#f5e2e9}
+.floating-live-glyph .ui-icon{width:15px;height:15px}
+.panel-header button:not(.panel-handle):has(.ui-icon){width:44px;height:44px;min-width:44px;border:0;background:transparent;border-radius:50%;padding:10px}
+
+.welcome-step-icon .ui-icon{stroke-width:1.75}

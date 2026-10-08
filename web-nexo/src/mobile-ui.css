@@ -1,0 +1,112 @@
+/* Mobile surfaces sit in the scene; only expanded sheets have a glass background. */
+.chess-moves-open{display:none}
+body.mobile-chess .chess-scene .chess-aside{display:flex!important;flex-direction:column;gap:6px;background:none;border:0;box-shadow:none;clip-path:none;padding:0!important;overflow:auto}
+body.mobile-chess-chat .chess-scene .chess-aside{display:none!important}
+body.mobile-chess .chess-history{display:none!important}
+body.mobile-chess .chess-scene .chess-moves-open{display:flex;align-items:center;gap:8px;background:none;border:0;min-height:32px;width:100%;padding:0;text-align:left;color:#8cae9f}
+.chess-moves-open>.ui-icon{width:16px;height:16px}
+.chess-move-strip{display:flex;gap:10px;flex:1;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none;font:11px 'Space Grotesk',sans-serif;padding-block:5px;touch-action:pan-x}
+.chess-move-strip .is-last{color:#d8f9e9}
+body.mobile-chess .chess-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:8px;margin:0}
+body.mobile-chess .chess-actions button{height:58px;min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:4px 0;background:none;border:0;box-shadow:none;color:#b3dacc}
+body.mobile-chess .chess-actions button>span{font-size:10px;line-height:1.3;white-space:normal}
+body.mobile-chess .chess-actions .chess-resign{grid-column:auto;color:#79938c}
+body.mobile-chess .chess-actions button:active{color:#e2fff1;opacity:.7}
+body.mobile-chess .chess-popover-backdrop{max-height:calc(100svh - var(--mobile-bottom-inset,72px));overflow:auto}
+body.mobile-chess .is-history-sheet{inset:0;width:100%;height:100svh;max-height:none;transform:none;background:#02080d70;display:flex;align-items:flex-end}
+body.mobile-chess .is-history-sheet .chess-popover{position:relative;width:100%;max-height:70svh;overflow:auto;clip-path:none;border:0;border-radius:24px 24px 0 0;padding:28px 20px calc(var(--mobile-bottom-inset,72px) + 12px);background:#101f28f2}
+.is-history-sheet .chess-popover:before{content:'';position:absolute;top:8px;left:calc(50% - 18px);width:36px;height:3px;border-radius:2px;background:#b6f3dc55}
+.is-history-sheet .chess-popover>h2{font-size:18px;margin-right:44px}
+.is-history-sheet .history-sheet-close{position:absolute;right:10px;top:12px;width:44px;height:44px;border:0;background:none;padding:10px}
+.history-sheet-list{max-height:44svh;overflow-y:auto;margin-top:16px}
+.history-sheet-list .chess-moves li{font-size:14px;grid-template-columns:44px 1fr 1fr;padding:12px 0}
+@media(orientation:landscape){body.mobile-chess .chess-actions{grid-template-columns:1fr;gap:4px}body.mobile-chess .chess-actions button{height:44px;flex-direction:row;gap:12px;justify-content:flex-start}}
+
+body.mobile-chess .chess-scene{height:100svh}
+body.mobile-chess.is-chess-modal .mobile-chess-chat-toggle,body.mobile-chess.is-chess-modal .system-enter{pointer-events:none!important}
+
+.chat-empty,.privacy-summary{display:none}
+.message-meta{display:flex;gap:8px;align-items:center;color:#78978c;font-size:9px;margin-top:6px}
+.message-meta .message-state{margin:0}
+body.mobile-chess .mobile-chess-chat-toggle{border-radius:999px;padding:7px 12px;background:#132921d9;border:1px solid #b6f3dc35;gap:7px}
+body.mobile-chess .mobile-chess-chat-toggle .ui-icon{width:18px;height:18px}
+body.mobile-chess .mobile-chat-controls:not([hidden]){top:var(--mobile-dock-top);height:64px;gap:4px;border:0;border-radius:24px 24px 0 0;background:#14252bec;backdrop-filter:blur(8px);padding:16px 12px 4px}
+.mobile-chat-controls:before{content:'';position:absolute;top:7px;left:calc(50% - 18px);width:36px;height:3px;border-radius:2px;background:#b6f3dc55}
+body.mobile-chess .mobile-chat-controls button{font-size:10px;line-height:1.2;flex:1;border:0;border-radius:12px;min-height:44px;color:#89a99e}
+body.mobile-chess .mobile-chat-controls button[aria-pressed=true]{background:#b6f3dc14;color:#dcf7ec;border:0}
+body.mobile-chess .mobile-chat-controls button:last-child{flex:none;width:44px;padding:10px;margin-left:4px;background:none}
+body.mobile-chess-chat .companion-panel,body.mobile-chess-chat .live-panel{top:calc(var(--mobile-dock-top) + 64px)!important;bottom:auto!important;height:calc(var(--mobile-dock-height) - 64px);filter:none}
+body.mobile-chess-chat .panel-surface{background:#14252bef;border:0;padding:8px 12px 10px;backdrop-filter:blur(8px)}
+body.mobile-chess-chat .chat-history{gap:10px;padding:4px 0 10px}
+body.mobile-chess-chat .chat-history:empty{display:none}
+body.mobile-chess-chat .chat-history:empty+.chat-empty{display:flex;flex:1;align-items:center;justify-content:center;text-align:center;font-size:12px;line-height:1.6;color:#92afa4;padding:18px 30px;margin:0}
+body.mobile-chess-chat .chat-message{width:fit-content;max-width:80%;border:0;border-radius:16px 16px 16px 4px;padding:10px 12px;background:#a9cebc0c;align-self:flex-start}
+body.mobile-chess-chat .chat-message.visitor{align-self:flex-end;border-radius:16px 16px 4px 16px;background:#b6f3dc16}
+body.mobile-chess-chat .message-author{display:none}
+body.mobile-chess-chat .chat-message p{font-size:12px;line-height:1.5;margin:0;overflow-wrap:anywhere}
+body.mobile-chess-chat .message-meta{font-size:9px;line-height:1.3}
+body.mobile-chess-chat .live-compose{display:block;padding:4px 0 0}
+body.mobile-chess-chat .compose-field,body.mobile-chess-chat .panel-compose>div:not(.chat-suggestions):not(.chat-privacy-bar){position:relative;display:flex;border:1px solid #b6f3dc30;border-radius:24px;background:#09151b50;min-height:44px;align-items:center}
+body.mobile-chess-chat .compose-field textarea,body.mobile-chess-chat .panel-compose input{height:44px;min-height:44px;margin:0;width:100%;padding:11px 50px 11px 14px;border:0;border-radius:24px;background:none;outline-offset:2px;resize:none}
+body.mobile-chess-chat .compose-field .chat-send,body.mobile-chess-chat .panel-compose>div>button{position:absolute;top:0;right:2px;width:44px;height:44px;margin:0;padding:10px;border:0;border-radius:50%;background:none;display:grid;place-items:center}
+body.mobile-chess-chat .chat-send:disabled,body.mobile-chess-chat .panel-compose>div>button:disabled{opacity:.35}
+body.mobile-chess-chat .live-name{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+body.mobile-chess-chat .live-name[hidden]{display:none}
+body.mobile-chess-chat .live-name>span{flex:none;font-size:9px}
+body.mobile-chess-chat .live-name input{min-width:0;width:100%;height:28px;margin:0;padding:4px 8px;border-radius:14px;font-size:12px!important}
+body.mobile-chess-chat .chat-privacy-bar{flex:none;margin:5px 0 0}
+body.mobile-chess-chat .chat-privacy-bar .privacy-notice{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0;white-space:normal;display:block}
+body.mobile-chess-chat .privacy-summary{display:block;font-size:9px;line-height:1.3;white-space:nowrap;color:#99b0b2;margin:0}
+.privacy-summary a{color:#b6d3ca;text-underline-offset:3px}
+body.mobile-chess-chat[data-mobile-keyboard=true] .live-name{display:none}
+
+.panel-compose>.chat-privacy-bar{display:block;border:0;border-radius:0;background:none;margin:0;padding:0}
+
+.mobile-instruction{display:none}
+@media(max-width:650px){
+ body{--root-bottom-inset:calc(max(env(safe-area-inset-bottom),16px) + 56px)}
+ footer{bottom:var(--root-bottom-inset);left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));height:112px;display:block;border:0;padding:0}
+ footer .scene-info{position:absolute;left:0;bottom:64px;margin:0;width:158px;gap:0}
+ footer .scene-info .eyebrow{font-size:8px}
+ footer .scene-count{font-size:9px;margin-top:4px}
+ footer .privacy-footer{left:166px;right:auto;top:15px;font-size:9px;line-height:16px}
+ footer .instruction{display:flex;position:absolute;left:0;right:auto;top:auto;bottom:44px;max-width:210px;margin:0;justify-content:flex-start;font-size:9px;line-height:16px}
+ footer #instruction-text{display:none}
+ footer .mobile-instruction{display:inline}
+ .language-node{left:max(16px,env(safe-area-inset-left));bottom:var(--root-bottom-inset);width:44px;height:44px}
+ .welcome-help{left:calc(max(16px,env(safe-area-inset-left)) + 44px);bottom:var(--root-bottom-inset);width:44px;height:44px}
+ .account-node{left:calc(max(16px,env(safe-area-inset-left)) + 88px);bottom:var(--root-bottom-inset);width:44px;height:44px}
+ footer .tools{position:absolute;right:0;bottom:0;height:44px;gap:0;padding:0;background:none;border:0;backdrop-filter:none}
+ footer .tools button{width:32px;height:44px}
+ footer .tools .zoom-label{min-width:28px;font-size:9px}
+ footer .tools .tool-divider{margin:0 3px}
+ .floating-chess .floating-chess-caption{font-size:11px;width:110px;white-space:normal;line-height:1.3}
+ .floating-chess .floating-chess-caption small{display:block;font-size:8px;line-height:1.4;letter-spacing:.05em;white-space:normal}
+ .floating-chess[data-compact-caption=true] .floating-chess-caption small{display:block}
+}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:650px){
+ body{--root-bottom-inset:calc(max(env(safe-area-inset-bottom),16px) + 56px)}
+ footer{left:16px;right:16px;bottom:var(--root-bottom-inset);height:44px;border:0;padding:0;display:block}
+ .language-node,.welcome-help,.account-node{bottom:var(--root-bottom-inset);width:44px;height:44px}
+ .language-node{left:16px}.welcome-help{left:60px}.account-node{left:104px}
+ footer .scene-info{position:absolute;left:160px;bottom:0;width:158px;margin:0;height:44px;font-size:9px}
+ footer .scene-info .eyebrow{font-size:8px}
+ footer .scene-count{font-size:9px;margin-top:4px}
+ footer .instruction{display:none}
+ footer .privacy-footer{left:326px;right:auto;top:16px;font-size:10px}
+ footer .tools{position:absolute;right:0;bottom:0;height:44px;margin:0;padding:0;border:0;background:none;backdrop-filter:none}
+ footer .tools button{height:44px;width:34px}
+ .floating-chess .floating-chess-caption{width:110px;font-size:11px;line-height:1.3}
+ .floating-chess .floating-chess-caption small{display:block;font-size:8px;letter-spacing:.05em;line-height:1.4;white-space:normal}
+ .node-label{width:130px;top:calc(50% + var(--radius) + 12px);gap:4px}
+ .node-name{font-size:10px}.node-meta{font-size:8px;letter-spacing:.02em}
+ .node-name .node-index{font-size:8px}
+}
+@media(max-width:650px),(pointer:coarse) and (max-height:650px){footer .scene-info>div{font-size:8px;line-height:1.3}}
+@media(max-width:650px){#companion-target{width:52px;height:52px}}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:650px){
+ .orientation{top:80px}
+ .orientation h1{font-size:20px;margin:6px 0 7px}
+ .orientation .back-wrap{top:80px}
+}
+body.mobile-chess .chess-scene .chess-heading h2{font-size:12px;line-height:1.25;white-space:normal;overflow:visible;text-overflow:clip;margin:0}

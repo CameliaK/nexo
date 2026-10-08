@@ -1,4 +1,5 @@
-import { privacyNotice } from './privacy/link';
+import { icon } from './icons';
+import { privacyNotice, privacyLink } from './privacy/link';
 import { chatErrorText } from './chat-errors';
 import { t, translateText, translateUI, languageStore } from './i18n';
 import { portfolio } from './i18n/content';
@@ -17,6 +18,10 @@ export interface Universe {
 function element<K extends keyof HTMLElementTagNameMap>(tag:K,text='',className='') {const e=document.createElement(tag);e.textContent=text;e.className=className;return e}
 const read=(key:string)=>{try{return localStorage.getItem(key)}catch{return null}};
 const save=(key:string,value:string)=>{try{localStorage.setItem(key,value)}catch{/* Memory-only mode remains available. */}};
+function messageTime(stamp:string){const date=new Date(stamp);return Number.isNaN(date.valueOf())?'':new Intl.DateTimeFormat(languageStore.language,{hour:'2-digit',minute:'2-digit'}).format(date)}
+function metadata(stamp:string){const meta=element('div','','message-meta'),time=element('time',messageTime(stamp));time.dateTime=stamp;meta.append(time);return meta}
+function chatPrivacy(key:'privacy.assistant'|'privacy.live'){const bar=element('div','','chat-privacy-bar'),summary=element('p','','privacy-summary'),text=element('span',t('chat.privacyLine'));text.dataset.i18n='chat.privacyLine';summary.append(text,document.createTextNode(' '),privacyLink());bar.append(privacyNotice(key),summary);return bar}
+function emptyChat(key:'chat.emptyAgent'|'chat.emptyLive'){const empty=element('p',t(key),'chat-empty');empty.dataset.i18n=key;return empty}
 const stepLabels=()=>({understand:t('step.understand'),search_nodes:t('step.search_nodes'),search_base:t('step.search_base'),design_node:t('step.design_node'),create_node:t('step.create_node'),answer:t('step.answer')});
 type AgentRun={answer:HTMLParagraphElement;path:string[];closed:boolean};
 type LiveRow={message:LiveMessage;root:HTMLElement;status:HTMLElement;state:'sending'|LiveDeliveryStatus;retryable?:boolean;error?:unknown};
@@ -66,30 +71,30 @@ export class Chats {
   private buildAgent(){
     const body=document.querySelector('#companion-panel .panel-body')!;
     const context=element('details','','nexo-context');context.append(element('summary',t('chat.context')));
-    context.append(document.getElementById('panel-context')!,document.getElementById('panel-message')!);body.append(context,this.agentHistory);
+    context.append(document.getElementById('panel-context')!,document.getElementById('panel-message')!);body.append(context,this.agentHistory,emptyChat('chat.emptyAgent'));
     this.agentHistory.setAttribute('role','log');this.agentHistory.setAttribute('aria-label',t('chat.agentHistory'));this.agentHistory.setAttribute('aria-live','polite');
     this.process.append(element('summary',t('chat.process')));
     const steps=element('ol');for(const[id,label]of Object.entries(stepLabels())){const row=element('li',label);row.dataset.state='waiting';steps.append(row);this.steps.set(id,row)}this.process.append(steps,this.sources);body.append(this.process);
-    this.agentSend.setAttribute('aria-label',t('chat.sendAgent'));this.agentSend.textContent='↗';this.agentSend.onclick=()=>void this.sendAgent();
+    this.agentSend.setAttribute('aria-label',t('chat.sendAgent'));this.agentSend.innerHTML=icon('send');this.agentSend.onclick=()=>void this.sendAgent();
     this.agentInput.maxLength=LIMITS.messageMaxChars;this.agentInput.addEventListener('input',()=>this.refresh());this.agentInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();void this.sendAgent()}});
     const suggestions=element('div','','chat-suggestions');suggestions.setAttribute('role','group');suggestions.setAttribute('aria-label',t('chat.suggestions'));
     for(const key of ['chat.suggestFrontend','chat.suggestAI','chat.suggestData'] as const){
       const button=element('button',t(key));button.type='button';button.dataset.i18n=key;
       button.onclick=()=>{this.agentInput.value=t(key);this.refresh();this.agentInput.focus()};suggestions.append(button);
     }
-    document.querySelector('.panel-compose')!.append(this.agentCounter,suggestions,privacyNotice('privacy.assistant'));
+    document.querySelector('.panel-compose')!.append(this.agentCounter,suggestions,chatPrivacy('privacy.assistant'));
     if(this.simulated)document.querySelector('#companion-panel .panel-footer')!.append(element('span',t('common.simulated'),'simulation-label'));
   }
   private buildLive(){
     const record=portfolio.nodes.find(n=>n.type==='live_chat')!,content=record.content as {intro:string;name_label:string;placeholder:string;note:string;max_chars:number};
     this.livePanel.id='live-panel';this.livePanel.hidden=true;this.livePanel.setAttribute('role','dialog');this.livePanel.setAttribute('aria-modal','false');this.livePanel.setAttribute('aria-labelledby','live-title');
     const surface=element('div','','panel-surface'),header=element('header','','panel-header'),title=element('h2',t('chat.title'));title.id='live-title';
-    const close=element('button','×');close.setAttribute('aria-label',t('chat.close'));close.onclick=()=>this.closeLive();header.append(title,close);
+    const close=element('button');close.innerHTML=icon('close');close.setAttribute('aria-label',t('chat.close'));close.onclick=()=>this.closeLive();header.append(title,close);
     const intro=element('p',content.intro,'live-intro');this.liveHistory.setAttribute('role','log');this.liveHistory.setAttribute('aria-label',t('chat.history'));this.liveHistory.setAttribute('aria-live','polite');
     this.liveName.type='text';this.liveName.maxLength=LIMITS.liveNameMaxChars;this.liveName.value=read('nexo.live.name')||'';this.nameWrap.append(element('span',content.name_label),this.liveName);this.nameWrap.hidden=read('nexo.live.named')==='yes';
     this.liveInput.maxLength=content.max_chars;this.liveInput.rows=2;this.liveInput.placeholder=content.placeholder;this.liveInput.setAttribute('aria-label',t('chat.ownerMessage'));this.liveInput.addEventListener('input',()=>this.refresh());this.liveInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();void this.sendLive()}});
-    this.liveSend.type='button';this.liveSend.onclick=()=>void this.sendLive();const compose=element('div','','live-compose');compose.append(this.nameWrap,this.liveInput,this.liveCounter,this.liveSend,this.liveHint);
-    surface.append(header,intro,this.liveHistory,compose,privacyNotice('privacy.live'));if(this.simulated)surface.append(element('span',t('chat.simulated'),'simulation-label'));this.livePanel.append(surface);document.body.append(this.livePanel);
+    this.liveSend.innerHTML=icon('send');this.liveSend.setAttribute('aria-label',t('common.send'));this.liveSend.type='button';this.liveSend.onclick=()=>void this.sendLive();const compose=element('div','','live-compose');const field=element('div','','compose-field');field.append(this.liveInput,this.liveSend);compose.append(this.nameWrap,field,this.liveCounter,this.liveHint);
+    surface.append(header,intro,this.liveHistory,emptyChat('chat.emptyLive'),compose,chatPrivacy('privacy.live'));if(this.simulated)surface.append(element('span',t('chat.simulated'),'simulation-label'));this.livePanel.append(surface);document.body.append(this.livePanel);
   }
   private buildNavigation(){
     const go=element('button',t('nav.goNow'));go.onclick=async()=>{await this.universe.exitSystem();this.routeNotice.hidden=true;void this.drainRoute()};this.routeNotice.append(this.routeLabel,go);this.routeNotice.hidden=true;document.body.append(this.routeNotice);
@@ -128,6 +133,7 @@ export class Chats {
     for(const row of this.errorRows)row.element.textContent=chatErrorText(row.error);
     if(this.agentErrorValue)this.agentHint.textContent=chatErrorText(this.agentErrorValue);
     if(this.liveErrorValue)this.liveHint.textContent=chatErrorText(this.liveErrorValue);
+    for(const panel of [this.livePanel,document.getElementById('companion-panel')!])for(const time of panel.querySelectorAll<HTMLTimeElement>('.message-meta time'))time.textContent=messageTime(time.dateTime);
     translateUI(this.livePanel);translateUI(document.getElementById('companion-panel')!);translateUI(this.routeNotice);this.renderInventory();this.refresh();
   }
   private refresh(){
@@ -144,12 +150,12 @@ export class Chats {
     else if(this.resetHint(this.liveHint.textContent))this.liveHint.textContent='';
   }
   private agentBubble(text:string,from:'visitor'|'agent'){
-    const row=element('div','','chat-message '+from);row.append(element('span',from==='visitor'?t('common.you'):'Nexo','message-author'));const p=element('p',text);row.append(p);this.agentHistory.append(row);return p;
+    const row=element('div','','chat-message '+from);row.append(element('span',from==='visitor'?t('common.you'):'Nexo','message-author'));const p=element('p',text);row.append(p,metadata(new Date().toISOString()));this.agentHistory.append(row);return p;
   }
   async sendAgent(retry?:string){
     const text=(retry??this.agentInput.value).trim();if(!text||text.length>500||this.state!=='open'||this.busy||this.pendingSend||Date.now()<this.agentCooldown)return;
-    this.agentErrorValue=null;this.universe.openAgent();this.pendingSend=true;this.lastQuestion=text;this.agentBubble(text,'visitor');this.agentHint.textContent=t('chat.sending');this.refresh();
-    try{const accepted=await this.backend.sendMessage(text,languageStore.language);this.busy=true;this.agentInput.value='';this.agentHint.textContent=t('chat.waiting');this.register(accepted.run_id)}catch(error){this.agentError(error)}finally{this.pendingSend=false;this.refresh()}
+    this.agentErrorValue=null;this.universe.openAgent();this.pendingSend=true;this.lastQuestion=text;const sent=this.agentBubble(text,'visitor'),status=element('span',t('chat.sending'),'message-state');status.dataset.i18n='chat.sending';sent.parentElement!.querySelector('.message-meta')!.append(status);this.agentHint.textContent=t('chat.sending');this.refresh();
+    try{const accepted=await this.backend.sendMessage(text,languageStore.language);this.busy=true;this.agentInput.value='';this.agentHint.textContent=t('chat.waiting');this.register(accepted.run_id);status.dataset.i18n='chat.sent';status.textContent=t('chat.sent')}catch(error){status.dataset.i18n='chat.failed';status.textContent=t('chat.failed');this.agentError(error)}finally{this.pendingSend=false;this.refresh()}
   }
   private agentError(error:unknown,retryable=true){
     const message=chatErrorText(error);this.agentErrorValue=error;this.agentHint.textContent=message;this.busy=false;
@@ -168,7 +174,7 @@ export class Chats {
   }
   private addLive(message:LiveMessage,state:'sending'|LiveDeliveryStatus='sent',restored=false){
     if(this.liveRows.has(message.id))return;
-    const root=element('div','','chat-message '+message.from);root.append(element('span',message.from==='owner'?portfolio.meta.owner:t('common.you'),'message-author'),element('p',message.text));const status=element('span','','message-state');root.append(status);const row={message,root,status,state};this.liveRows.set(message.id,row);this.liveHistory.append(root);
+    const root=element('div','','chat-message '+message.from);root.append(element('span',message.from==='owner'?portfolio.meta.owner:t('common.you'),'message-author'),element('p',message.text));const status=element('span','','message-state');const meta=metadata(message.ts);meta.append(status);root.append(meta);const row={message,root,status,state};this.liveRows.set(message.id,row);this.liveHistory.append(root);
     if(!restored)this.universe.setChatMessage(message.text,message.from);
     if(message.from==='visitor')this.delivery(message.id,state);else if(!this.liveOpen&&(!restored||Date.parse(message.ts)>Date.parse(read('nexo.live.readAt')||'1970-01-01')))this.unread.add(message.id);
     if(this.liveOpen){save('nexo.live.readAt',new Date().toISOString());this.liveHistory.scrollTop=this.liveHistory.scrollHeight}this.updateUnread();

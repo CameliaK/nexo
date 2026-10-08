@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdir,writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { chromium,devices,mobileFixture,origin } from './mobile-fixture.mjs';
-const phase=process.argv[2]||'after',captures=process.env.QA_CAPTURE!=='0',output=fileURLToPath(new URL('../docs/mobile/fix/',import.meta.url));
+const phase=process.argv[2]||'after',captures=process.env.QA_CAPTURE!=='0',output=fileURLToPath(new URL('../docs/mobile/ui/',import.meta.url));
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({headless:true});
 const pixel=devices['Pixel 7'].viewport;
@@ -45,7 +45,7 @@ try{
   assert.ok(mini.width>=110&&mini.height>=72);
   const minTouch=await page.locator('.chess-square').evaluateAll(cells=>Math.min(...cells.map(c=>Math.min(c.getBoundingClientRect().width,c.getBoundingClientRect().height))));assert.ok(minTouch>=40,'grid touch targets are at least 40px');
   if(width===390||width===360)if(captures)await page.screenshot({path:`${output}/after-chess-${width}x${height}.png`,scale:'css'});
-  if(height===640){assert.equal(await page.locator('.chess-history').getAttribute('open'),null);await page.locator('.chess-history summary').tap();assert.equal(await page.locator('.chess-history').evaluate(el=>el.open),true);await page.locator('.chess-history summary').tap()}
+  await page.locator('.chess-moves-open').tap();await page.locator('.is-history-sheet').waitFor({state:'visible'});await page.locator('.history-sheet-close').tap();
   const players=await page.locator('.chess-player-info').allTextContents();assert.ok(players.every(s=>s.includes('·')),'side labels remain intact');
   await page.locator('[data-square=e2]').tap();await page.locator('[data-square=e4]').tap();await page.waitForFunction(()=>document.querySelector('.chess-move-count').textContent==='01');
   await page.evaluate(()=>window.mobileCells=[...document.querySelectorAll('.chess-square')]);

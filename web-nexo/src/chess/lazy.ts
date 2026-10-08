@@ -1,3 +1,4 @@
+import { icon } from '../icons';
 import type { AccountChess } from '../auth/session';
 import { t } from '../i18n';
 import './style.css';
@@ -11,7 +12,7 @@ export function createLazyChess(remote: AccountChess, openAccount: () => void) {
   const shell = document.createElement('section'); shell.className = 'chess-loading'; shell.hidden = true;
   shell.setAttribute('role', 'status'); shell.setAttribute('aria-live', 'polite'); shell.tabIndex = -1;
   const grid = document.createElement('div'); grid.className = 'chess-loading-grid';
-  const close=document.createElement('button');close.type='button';close.className='chess-loading-close';close.textContent='×';close.setAttribute('aria-label',t('chess.close'));close.onclick=()=>closePending();
+  const close=document.createElement('button');close.type='button';close.className='chess-loading-close';close.innerHTML=icon('close');close.setAttribute('aria-label',t('chess.close'));close.onclick=()=>closePending();
   const label = document.createElement('p'); label.textContent = t('chess.loadingGame'); shell.append(close,grid, label); document.body.append(shell);
   function closePending(){requested=false;shell.hidden=true;document.body.classList.remove('is-chess');dispatchEvent(new Event('nexo:chess-state'));onClosed?.();returnFocus?.focus({preventScroll:true})}
   const warm = () => {
