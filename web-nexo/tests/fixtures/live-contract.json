@@ -1,0 +1,19 @@
+{
+  "accepted": { "message_id": "visitor-new", "run_id": "live-out-real" },
+  "history": { "conversation_id": "conversation-real", "messages": [
+    { "id": "owner-history", "from": "owner", "text": "Thanks for visiting", "ts": "2026-10-08T12:01:00Z" },
+    { "id": "visitor-history", "from": "visitor", "text": "Hello Kirbith", "ts": "2026-10-08T12:00:00Z" }
+  ] },
+  "owner": { "id": "owner-new", "from": "owner", "text": "Hello from Telegram", "ts": "2026-10-08T12:03:00Z" },
+  "outgoing": [
+    { "v": 2, "type": "run.start", "run_id": "live-out-real", "seq": 1, "ts": "2026-10-08T12:02:00Z", "data": { "kind": "live_out", "content_version": 3 } },
+    { "v": 2, "type": "live.delivery", "run_id": "live-out-real", "seq": 2, "ts": "2026-10-08T12:02:00Z", "data": { "message_id": "visitor-new", "status": "sent" } },
+    { "v": 2, "type": "live.delivery", "run_id": "live-out-real", "seq": 3, "ts": "2026-10-08T12:02:01Z", "data": { "message_id": "visitor-new", "status": "delivered_to_owner" } },
+    { "v": 2, "type": "run.done", "run_id": "live-out-real", "seq": 4, "ts": "2026-10-08T12:02:01Z", "data": { "outcome": "delivered", "duration_ms": 1000 } }
+  ],
+  "incoming": [
+    { "v": 2, "type": "run.start", "run_id": "live-in-real", "seq": 1, "ts": "2026-10-08T12:03:00Z", "data": { "kind": "live_in", "content_version": 3 } },
+    { "v": 2, "type": "live.message", "run_id": "live-in-real", "seq": 2, "ts": "2026-10-08T12:03:00Z", "data": { "conversation_id": "conversation-real", "message": { "id": "owner-new", "from": "owner", "text": "Hello from Telegram", "ts": "2026-10-08T12:03:00Z" } } },
+    { "v": 2, "type": "run.done", "run_id": "live-in-real", "seq": 3, "ts": "2026-10-08T12:03:00Z", "data": { "outcome": "received", "duration_ms": 100 } }
+  ]
+}

@@ -5,6 +5,7 @@ import { Chats } from '../src/chat';
 import { RealBackend } from '../src/backend/real';
 import { AUTH_TOKEN_KEY } from '../src/backend/identity';
 import { languageStore, t, translateUI } from '../src/i18n';
+import liveContract from './fixtures/live-contract.json';
 
 function setup(response:(path:string,request:any)=>Response){
  const oldDocument=globalThis.document,oldStorage=globalThis.localStorage,oldFetch=globalThis.fetch;
@@ -111,4 +112,46 @@ test('Ordered forming/spawn real events reach the universe with their run ID; ma
 
 test('Answer streaming stays visible in the compact panel while the generated camera view is active',()=>{
  const f=setup(path=>ok(path));try{document.body.className='generated-camera-focused';const body=document.querySelector('#companion-panel .panel-body');body.scrollHeight=123;f.chats.register('stream-focus');f.chats.receive(event('stream-focus',1,'run.start',{kind:'chat',content_version:3}));f.chats.receive(event('stream-focus',2,'answer.chunk',{text:'Still completing'}));assert.equal(body.scrollTop,123);assert.equal(f.chats.runs.get('stream-focus').answer.textContent,'Still completing')}finally{f.dispose()}
+});
+
+test('Real live contract: 202 is Sent without waiting for WS; disconnect never fails accepted/history/owner messages',async()=>{
+ const f=setup((path,request)=>request.method==='POST'?json(liveContract.accepted,202):path.includes('/live/')?json(liveContract.history):ok(path));
+ try{
+  await f.ready();f.chats.liveInput.value='A new message';await f.chats.sendLive();
+  assert.equal(f.chats.liveRows.get(liveContract.accepted.message_id).state,'sent');
+  for(const message of liveContract.history.messages)assert.equal(f.chats.liveRows.get(message.id).state,'delivered_to_owner');
+  await f.chats.connection('reconnecting');
+  assert.equal(f.chats.liveHistory.querySelectorAll('.message-retry').length,0);
+  assert.equal(f.chats.liveRows.get(liveContract.accepted.message_id).state,'sent');
+ }finally{f.dispose()}
+});
+test('Real live contract: delivery before/after HTTP acceptance is correlated by run and message ID',async()=>{
+ for(const early of [true,false]){
+  let f;const deliver=()=>{for(const e of liveContract.outgoing)f.chats.receive(e)};
+  f=setup((path,request)=>{if(request.method!=='POST')return ok(path);if(early)deliver();return json(liveContract.accepted,202)});
+  try{
+   await f.ready();f.chats.liveInput.value='Hello';await f.chats.sendLive();if(!early)deliver();
+   assert.equal(f.chats.liveRows.size,1);assert.equal(f.chats.liveRows.get(liveContract.accepted.message_id).state,'delivered_to_owner');
+   assert.equal(f.chats.liveHistory.querySelectorAll('.message-retry').length,0);
+   for(const e of liveContract.incoming)f.chats.receive(e);
+   const owner=f.chats.liveRows.get(liveContract.owner.id);assert.equal(owner.state,'delivered_to_owner');
+   // An unrelated/malformed delivery must never make an owner reply retryable.
+   f.chats.delivery(owner.message.id,'failed');assert.equal(owner.root.querySelector('.message-retry'),null);
+  }finally{f.dispose()}
+ }
+});
+test('Real live contract: only genuine POST/explicit failures allow own retry; successful retry replaces the row',async()=>{
+ for(const network of [true,false]){
+  let attempt=0;const f=setup((path,request)=>{
+   if(request.method!=='POST')return ok(path);
+   if(++attempt===1){if(network)throw new TypeError('Network failed');return error('internal',500)}
+   return json(liveContract.accepted,202);
+  });
+  try{
+   await f.ready();f.chats.liveInput.value='Retry this';await f.chats.sendLive();const row=[...f.chats.liveRows.values()][0];
+   assert.equal(row.state,'failed');assert.equal(row.status.textContent,t('chat.failed'));assert.ok(row.root.querySelector('.message-retry'));
+   const root=row.root;await f.chats.sendLive(row);assert.equal(f.chats.liveRows.size,1);assert.equal(row.root,root);
+   assert.equal(row.state,'sent');assert.equal(row.root.querySelector('.message-retry'),null);
+  }finally{f.dispose()}
+ }
 });

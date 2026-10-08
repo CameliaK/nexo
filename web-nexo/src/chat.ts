@@ -47,23 +47,37 @@ export class Chats {
     if(!read('nexo.visitor_id'))save('nexo.visitor_id',crypto.randomUUID());
   }
   private identityEpoch=0;private agentErrorValue:unknown=null;private liveErrorValue:unknown=null;private errorRows:{element:HTMLElement;error:unknown}[]=[];private liveRuns=new Map<string,string>();
+  private livePosts=0;
+  private liveReceipts=new Map<string,{runId:string;state:LiveDeliveryStatus}>();
   resetIdentity(){
-    this.universe.clearFormations?.();this.identityEpoch++;this.agentCooldown=this.liveCooldown=0;this.agentErrorValue=this.liveErrorValue=null;this.errorRows=[];this.liveRuns.clear();
+    this.universe.clearFormations?.();this.identityEpoch++;this.agentCooldown=this.liveCooldown=0;this.agentErrorValue=this.liveErrorValue=null;this.errorRows=[];this.liveRuns.clear();this.liveReceipts.clear();this.livePosts=0;
     this.inbox.reset();this.runs.clear();this.liveRows.clear();this.liveHistory.replaceChildren();this.agentHistory.replaceChildren();
     for(const id of this.generated.keys())this.universe.removeGenerated(id);this.generated.clear();this.unread.clear();this.routeQueue=[];this.updateUnread();
     this.busy=false;this.activeRun=null;
   }
   register(id:string,outgoing=true){this.inbox.register(id);this.traces.register(id,outgoing)}
-  receive(event:BackendEvent){this.inbox.receive(event)}
+  receive(event:BackendEvent){
+    // A receipt can precede both POST acceptance and the history response. Keep
+    // it by message ID as well as the ordered run's preauth queue.
+    if(event.type==='live.delivery'&&['sent','delivered_to_owner','failed'].includes(event.data.status)){
+      if(this.liveRows.has(event.data.message_id))this.delivery(event.data.message_id,event.data.status);
+      else if(this.livePosts){
+        if(this.liveReceipts.size>=64)this.liveReceipts.delete(this.liveReceipts.keys().next().value!);
+        const previous=this.liveReceipts.get(event.data.message_id);
+        if(previous?.state!=='delivered_to_owner'||event.data.status==='failed')this.liveReceipts.set(event.data.message_id,{runId:event.run_id,state:event.data.status});
+      }
+    }
+    this.inbox.receive(event);
+  }
   async connection(state:ConnectionState){
     const lost=this.state==='open'&&state!=='open';this.state=state;
-    if(lost){this.universe.clearFormations?.();const interrupted=this.busy||this.pendingSend;this.busy=false;this.pendingSend=false;this.inbox.reset();this.routeQueue=[];this.routeNotice.hidden=true;if(interrupted)this.agentError(new Error(t('chat.lost')));for(const row of this.liveRows.values())if(row.state==='sending'||row.state==='sent')this.delivery(row.message.id,'failed')}
+    if(lost){this.universe.clearFormations?.();const interrupted=this.busy||this.pendingSend;this.busy=false;this.pendingSend=false;this.inbox.reset();this.routeQueue=[];this.routeNotice.hidden=true;if(interrupted)this.agentError(new Error(t('chat.lost')))}
     this.refresh();
     if(state==='open'){
       const identityEpoch=this.identityEpoch;
       const [history,nodes]=await Promise.allSettled([this.backend.listLiveMessages(),this.backend.listGeneratedNodes()]);
       if(identityEpoch!==this.identityEpoch||this.stopped)return;
-      if(history.status==='fulfilled')for(const message of history.value.messages)this.addLive(message,'sent',true);
+      if(history.status==='fulfilled')for(const message of history.value.messages)this.addLive(message,'delivered_to_owner',true);
       if(nodes.status==='fulfilled')for(const node of nodes.value)this.acceptGenerated(node,null,true);
       this.updateUnread();
     }
@@ -164,25 +178,42 @@ export class Chats {
     if(retryable){const retry=element('button',t('common.retry'),'message-retry');retry.onclick=()=>void this.sendAgent(question);p.parentElement!.append(retry)}
   }
   async sendLive(retry?:LiveRow){
-    if(retry&&(retry.state!=='failed'||retry.retryable===false))return;const text=(retry?.message.text??this.liveInput.value).trim();if(!text||text.length>500||this.state!=='open'||Date.now()<this.liveCooldown)return;
+    if(retry&&(retry.message.from!=='visitor'||retry.state!=='failed'||retry.retryable===false))return;const text=(retry?.message.text??this.liveInput.value).trim();if(!text||text.length>500||this.state!=='open'||Date.now()<this.liveCooldown)return;
     this.liveErrorValue=null;
     const temp=retry?.message.id||'pending_'+crypto.randomUUID();let row=retry;
     if(!row){this.addLive({id:temp,from:'visitor',text,ts:new Date().toISOString()},'sending');row=this.liveRows.get(temp)!}else {row.error=undefined;row.state='sending';row.status.textContent=t('chat.sending');row.root.querySelector('.message-retry')?.remove()}
     if(!retry)this.liveInput.value='';this.refresh();
-    try{const accepted=await this.backend.sendLiveMessage(text,this.liveName.value.trim()||undefined);this.liveRows.delete(temp);row.message.id=accepted.message_id;this.liveRows.set(accepted.message_id,row);this.liveRuns.set(accepted.run_id,accepted.message_id);this.register(accepted.run_id);save('nexo.live.name',this.liveName.value.trim());save('nexo.live.named','yes');this.nameWrap.hidden=true;this.liveHint.textContent=''}catch(error){this.liveRows.set(temp,row);row.error=error;this.delivery(temp,'failed');this.liveErrorValue=error;this.liveHint.textContent=chatErrorText(error);if(error instanceof BackendError&&(error.code==='rate_limited'||error.status===429))this.liveCooldown=Date.now()+(error.retryAfterSec||30)*1000}
+    const epoch=this.identityEpoch;this.livePosts++;
+    try{
+      const accepted=await this.backend.sendLiveMessage(text,this.liveName.value.trim()||undefined);
+      if(epoch!==this.identityEpoch||this.stopped)return;
+      const duplicate=this.liveRows.get(accepted.message_id);if(duplicate&&duplicate!==row){duplicate.root.remove();this.liveRows.delete(accepted.message_id)}
+      this.liveRows.delete(temp);row.message.id=accepted.message_id;this.liveRows.set(accepted.message_id,row);
+      this.delivery(accepted.message_id,'sent');this.liveRuns.set(accepted.run_id,accepted.message_id);
+      const receipt=this.liveReceipts.get(accepted.message_id);this.liveReceipts.delete(accepted.message_id);
+      if(receipt?.runId===accepted.run_id)this.delivery(accepted.message_id,receipt.state);
+      this.liveHint.textContent='';this.register(accepted.run_id);
+      save('nexo.live.name',this.liveName.value.trim());save('nexo.live.named','yes');this.nameWrap.hidden=true;
+    }catch(error){
+      if(epoch!==this.identityEpoch||this.stopped)return;
+      this.liveRows.set(temp,row);row.error=error;this.delivery(temp,'failed');this.liveErrorValue=error;this.liveHint.textContent=chatErrorText(error);if(error instanceof BackendError&&(error.code==='rate_limited'||error.status===429))this.liveCooldown=Date.now()+(error.retryAfterSec||30)*1000;
+    }finally{if(epoch===this.identityEpoch&&!--this.livePosts)this.liveReceipts.clear()}
     this.refresh();
   }
   private addLive(message:LiveMessage,state:'sending'|LiveDeliveryStatus='sent',restored=false){
-    if(this.liveRows.has(message.id))return;
+    if(this.liveRows.has(message.id)){if(restored)this.delivery(message.id,'delivered_to_owner');return}
+    if(message.from==='owner')state='delivered_to_owner';
     const root=element('div','','chat-message '+message.from);root.append(element('span',message.from==='owner'?portfolio.meta.owner:t('common.you'),'message-author'),element('p',message.text));const status=element('span','','message-state');const meta=metadata(message.ts);meta.append(status);root.append(meta);const row={message,root,status,state};this.liveRows.set(message.id,row);this.liveHistory.append(root);
     if(!restored)this.universe.setChatMessage(message.text,message.from);
     if(message.from==='visitor')this.delivery(message.id,state);else if(!this.liveOpen&&(!restored||Date.parse(message.ts)>Date.parse(read('nexo.live.readAt')||'1970-01-01')))this.unread.add(message.id);
     if(this.liveOpen){save('nexo.live.readAt',new Date().toISOString());this.liveHistory.scrollTop=this.liveHistory.scrollHeight}this.updateUnread();
   }
   private delivery(id:string,state:'sending'|LiveDeliveryStatus,retryable?:boolean){
-    const row=this.liveRows.get(id);if(!row)return;retryable??=row.retryable??true;row.state=state;row.retryable=retryable;row.status.textContent={sending:t('chat.sending'),sent:t('chat.sent'),delivered_to_owner:t('chat.delivered'),failed:t('chat.failed')}[state];
-    if(state==='failed'&&row.error)row.status.textContent=chatErrorText(row.error);
-    if(!retryable)row.root.querySelector('.message-retry')?.remove();
+    const row=this.liveRows.get(id);if(!row||!['sending','sent','delivered_to_owner','failed'].includes(state))return;
+    if(row.message.from==='owner'){row.state='delivered_to_owner';row.root.querySelector('.message-retry')?.remove();return}
+    if(row.state==='delivered_to_owner'&&state==='sent')return;
+    retryable??=row.retryable??true;row.state=state;row.retryable=retryable;row.root.dataset.delivery=state;row.status.textContent={sending:t('chat.sending'),sent:t('chat.sent'),delivered_to_owner:t('chat.delivered'),failed:t('chat.failed')}[state];
+    if(state!=='failed'||!retryable)row.root.querySelector('.message-retry')?.remove();
     if(state==='failed'&&retryable&&!row.root.querySelector('.message-retry')){const retry=element('button',t('common.retry'),'message-retry');retry.onclick=()=>void this.sendLive(row);row.root.append(retry)}
   }
   private acceptGenerated(value:unknown,anchor:string|null,restored=false,runId?:string){
@@ -202,7 +233,6 @@ export class Chats {
     finally{this.routing=false}
   }
   private onEvent(event:BackendEvent){
-    if(event.type==='run.start'&&event.data.kind==='live_out')void this.backend.listLiveMessages().then(history=>{for(const message of history.messages)this.addLive(message)}).catch(()=>{});
     if(event.type==='run.start'&&event.data.kind==='chat'){
       this.agentErrorValue=null;this.busy=true;this.activeRun=event.run_id;if(!this.lastQuestion)this.lastQuestion=event.data.input||'';this.universe.openAgent();this.process.open=true;this.sources.replaceChildren();for(const row of this.steps.values())row.dataset.state='waiting';
       this.runs.set(event.run_id,{answer:this.agentBubble('','agent'),path:[],closed:false});this.agentHint.textContent=t('chat.working');
