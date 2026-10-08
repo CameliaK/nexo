@@ -5,6 +5,7 @@ import { Chats } from '../src/chat';
 import { RealBackend } from '../src/backend/real';
 import { AUTH_TOKEN_KEY } from '../src/backend/identity';
 import { languageStore, t, translateUI } from '../src/i18n';
+import liveContract from './fixtures/live-contract.json';
 
 function setup(response:(path:string,request:any)=>Response){
  const oldDocument=globalThis.document,oldStorage=globalThis.localStorage,oldFetch=globalThis.fetch;
@@ -13,6 +14,7 @@ function setup(response:(path:string,request:any)=>Response){
   children=[];childNodes=[];dataset={};attributes={};value='';textContent='';className='';hidden=false;disabled=false;handlers={};parentElement=null;
   append(...items){for(const item of items){item.parentElement?.removeChild(item);this.children.push(item);item.parentElement=this}}
   removeChild(item){this.children=this.children.filter(child=>child!==item)}
+  insertBefore(item,before){item.parentElement?.removeChild(item);const index=this.children.indexOf(before);this.children.splice(index<0?this.children.length:index,0,item);item.parentElement=this}
   replaceWith(item){const parent=this.parentElement;this.remove();parent?.append(item)}
   replaceChildren(...items){this.children=[];this.append(...items)}remove(){this.parentElement?.removeChild(this)}
   setAttribute(key,value){this.attributes[key]=value}getAttribute(key){return this.attributes[key]??null}removeAttribute(key){delete this.attributes[key]}
@@ -111,4 +113,81 @@ test('Ordered forming/spawn real events reach the universe with their run ID; ma
 
 test('Answer streaming stays visible in the compact panel while the generated camera view is active',()=>{
  const f=setup(path=>ok(path));try{document.body.className='generated-camera-focused';const body=document.querySelector('#companion-panel .panel-body');body.scrollHeight=123;f.chats.register('stream-focus');f.chats.receive(event('stream-focus',1,'run.start',{kind:'chat',content_version:3}));f.chats.receive(event('stream-focus',2,'answer.chunk',{text:'Still completing'}));assert.equal(body.scrollTop,123);assert.equal(f.chats.runs.get('stream-focus').answer.textContent,'Still completing')}finally{f.dispose()}
+});
+
+test('Real live contract: 202 is Sent without waiting for WS; disconnect never fails accepted/history/owner messages',async()=>{
+ const f=setup((path,request)=>request.method==='POST'?json(liveContract.accepted,202):path.includes('/live/')?json(liveContract.history):ok(path));
+ try{
+  await f.ready();f.chats.liveInput.value='A new message';await f.chats.sendLive();
+  assert.equal(f.chats.liveRows.get(liveContract.accepted.message_id).state,'sent');
+  for(const message of liveContract.history.messages)assert.equal(f.chats.liveRows.get(message.id).state,'delivered_to_owner');
+  await f.chats.connection('reconnecting');
+  assert.equal(f.chats.liveHistory.querySelectorAll('.message-retry').length,0);
+  assert.equal(f.chats.liveRows.get(liveContract.accepted.message_id).state,'sent');
+ }finally{f.dispose()}
+});
+test('Real live contract: delivery before/after HTTP acceptance is correlated by run and message ID',async()=>{
+ for(const early of [true,false]){
+  let f;const deliver=()=>{for(const e of liveContract.outgoing)f.chats.receive(e)};
+  f=setup((path,request)=>{if(request.method!=='POST')return ok(path);if(early)deliver();return json(liveContract.accepted,202)});
+  try{
+   await f.ready();f.chats.liveInput.value='Hello';await f.chats.sendLive();if(!early)deliver();
+   assert.equal(f.chats.liveRows.size,1);assert.equal(f.chats.liveRows.get(liveContract.accepted.message_id).state,'delivered_to_owner');
+   assert.equal(f.chats.liveHistory.querySelectorAll('.message-retry').length,0);
+   for(const e of liveContract.incoming)f.chats.receive(e);
+   const owner=f.chats.liveRows.get(liveContract.owner.id);assert.equal(owner.state,'delivered_to_owner');
+   // An unrelated/malformed delivery must never make an owner reply retryable.
+   f.chats.delivery(owner.message.id,'failed');assert.equal(owner.root.querySelector('.message-retry'),null);
+  }finally{f.dispose()}
+ }
+});
+test('Real live contract: only genuine POST/explicit failures allow own retry; successful retry replaces the row',async()=>{
+ for(const network of [true,false]){
+  let attempt=0;const f=setup((path,request)=>{
+   if(request.method!=='POST')return ok(path);
+   if(++attempt===1){if(network)throw new TypeError('Network failed');return error('internal',500)}
+   return json(liveContract.accepted,202);
+  });
+  try{
+   await f.ready();f.chats.liveInput.value='Retry this';await f.chats.sendLive();const row=[...f.chats.liveRows.values()][0];
+   assert.equal(row.state,'failed');assert.equal(row.status.textContent,t('chat.failed'));assert.ok(row.root.querySelector('.message-retry'));
+   const root=row.root;await f.chats.sendLive(row);assert.equal(f.chats.liveRows.size,1);assert.equal(row.root,root);
+   assert.equal(row.state,'sent');assert.equal(row.root.querySelector('.message-retry'),null);
+  }finally{f.dispose()}
+ }
+});
+
+test('A receipt buffered by message ID survives a missing run.start and requires the accepted run ID',async()=>{
+ for(const sameRun of [true,false]){
+  let f;f=setup((path,request)=>{
+   if(request.method!=='POST')return ok(path);
+   f.chats.receive(event(sameRun?liveContract.accepted.run_id:'other-run',2,'live.delivery',{message_id:liveContract.accepted.message_id,status:'delivered_to_owner'}));
+   return json(liveContract.accepted,202);
+  });
+  try{await f.ready();f.chats.liveInput.value='Receipt';await f.chats.sendLive();assert.equal(f.chats.liveRows.get(liveContract.accepted.message_id).state,sameRun?'delivered_to_owner':'sent');assert.equal(f.chats.liveHistory.querySelectorAll('.message-retry').length,0)}finally{f.dispose()}
+ }
+});
+
+test('Descending history is sorted oldest first with stable ID ties; created_at is supported and optimistic echoes merge in place',async()=>{
+ const history=JSON.parse(JSON.stringify(liveContract.history).replaceAll('2026-10-08','2020-10-08'));
+ const f=setup((path,request)=>request.method==='POST'?json(liveContract.accepted,202):path.includes('/live/')?json(history):ok(path));
+ try{
+  await f.ready();const ids=()=>f.chats.liveHistory.children.map(e=>e.dataset.messageId);
+  assert.deepEqual(ids(),['visitor-history','owner-history']);
+  for(const id of ['z','a'])f.chats.addLive({id,from:'owner',text:id,created_at:'2020-10-08T12:02:00Z'});
+  assert.deepEqual(ids(),['visitor-history','owner-history','a','z']);
+  f.chats.liveInput.value='New';await f.chats.sendLive();const row=f.chats.liveRows.get(liveContract.accepted.message_id),date=row.message.ts,root=row.root;
+  f.chats.addLive({id:row.message.id,from:'visitor',text:'New',created_at:'2026-10-08T12:02:30Z'});
+  assert.equal(f.chats.liveRows.size,5);assert.equal(row.root,root);assert.equal(row.message.ts,date);assert.equal(ids().at(-1),row.message.id);
+ }finally{f.dispose()}
+});
+test('Live scroll follows opening and own sends, preserves reading position for incoming messages and offers a localized jump control',async()=>{
+ const f=setup(path=>ok(path));
+ try{
+  await f.ready();f.chats.liveOpen=true;const history=f.chats.liveHistory;history.scrollHeight=1000;history.clientHeight=200;history.scrollTop=0;history.handlers.scroll();
+  f.chats.addLive(liveContract.owner);assert.equal(history.scrollTop,0);assert.equal(f.chats.liveNew.hidden,false);
+  assert.ok(f.chats.liveNew.innerHTML.includes('data-icon="down"'));languageStore.set('en');f.chats.refreshLanguage();assert.equal(f.chats.liveNew.querySelector('span').textContent,'New message');
+  f.chats.liveNew.onclick();assert.equal(history.scrollTop,1000);assert.equal(f.chats.liveNew.hidden,true);
+  history.scrollTop=0;history.handlers.scroll();f.chats.liveInput.value='Own send';await f.chats.sendLive();assert.equal(history.scrollTop,1000);assert.equal(f.chats.liveNew.hidden,true);
+ }finally{f.dispose()}
 });

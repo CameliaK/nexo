@@ -6,6 +6,7 @@ const paths={
  flag:'M5 21V3m0 1h6l2 3h6v9h-6l-2-3H5',pause:'M9 5v14M15 5v14',play:'m8 4 12 8-12 8Z',
  minus:'M5 12h14',plus:'M5 12h14M12 5v14',expand:'M9 3H3v6M15 3h6v6M3 15v6h6M21 15v6h-6',
  home:'m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7',history:'M5 5h14M5 10h14M5 15h14M5 20h9',
+ down:'M12 4v16m-6-6 6 6 6-6',
 } as const;
 export type IconName=keyof typeof paths;
 /** Decorative SVG; the surrounding control owns the localized accessible name. */

@@ -1,4 +1,6 @@
 import { icon } from './icons';
+import { compareLiveMessages, liveTimestamp, normalizeLiveMessage } from './live-messages';
+import { lockLivePanel } from './live-modal';
 import { privacyNotice, privacyLink } from './privacy/link';
 import { chatErrorText } from './chat-errors';
 import { t, translateText, translateUI, languageStore } from './i18n';
@@ -24,7 +26,7 @@ function chatPrivacy(key:'privacy.assistant'|'privacy.live'){const bar=element('
 function emptyChat(key:'chat.emptyAgent'|'chat.emptyLive'){const empty=element('p',t(key),'chat-empty');empty.dataset.i18n=key;return empty}
 const stepLabels=()=>({understand:t('step.understand'),search_nodes:t('step.search_nodes'),search_base:t('step.search_base'),design_node:t('step.design_node'),create_node:t('step.create_node'),answer:t('step.answer')});
 type AgentRun={answer:HTMLParagraphElement;path:string[];closed:boolean};
-type LiveRow={message:LiveMessage;root:HTMLElement;status:HTMLElement;state:'sending'|LiveDeliveryStatus;retryable?:boolean;error?:unknown};
+type LiveRow={message:LiveMessage;root:HTMLElement;status:HTMLElement;state:'sending'|LiveDeliveryStatus;optimistic?:boolean;retryable?:boolean;error?:unknown};
 export class Chats {
   private waitHint='';private state:ConnectionState='closed';private busy=false;private agentCooldown=0;private liveCooldown=0;private pendingSend=false;private lastQuestion='';private stopped=false;
   private inbox:EventInbox;private runs=new Map<string,AgentRun>();private activeRun:string|null=null;
@@ -33,6 +35,22 @@ export class Chats {
   private livePanel=element('section','','live-panel');private liveHistory=element('div','','chat-history live-history');
   private liveInput=element('textarea');private liveName=element('input');private nameWrap=element('label','','live-name');
   private liveHint=element('p','','chat-hint');private liveCounter=element('span','','chat-counter');private liveSend=element('button',t('common.send'),'chat-send');
+  private livePinned=true;private liveNew=element('button','','live-new-message');
+  private releaseLiveSurface:(()=>void)|null=null;
+  private resizeLiveDraft=()=>{
+    if(typeof getComputedStyle!=='function')return;
+    this.liveInput.style.height='auto';
+    const style=getComputedStyle(this.liveInput),line=parseFloat(style.lineHeight)||24;
+    const padding=parseFloat(style.paddingTop)+parseFloat(style.paddingBottom)+parseFloat(style.borderTopWidth)+parseFloat(style.borderBottomWidth);
+    const maximum=line*4+padding;
+    const height=Math.min(maximum,Math.max(line+padding,this.liveInput.scrollHeight));
+    this.liveInput.style.height=height+'px';
+    this.liveInput.style.overflowY=this.liveInput.scrollHeight>maximum?'auto':'hidden';
+    if(document.body.dataset.liveComposerHeight!==String(height)){
+      document.body.dataset.liveComposerHeight=String(height);window.dispatchEvent(new Event('nexo:live-compose'));
+    }
+    if(this.liveOpen&&this.livePinned)this.scrollLiveEnd();
+  };
   private agentHistory=element('div','','chat-history agent-history');
   private process=element('details','','agent-process');private steps=new Map<string,HTMLElement>();private sources=element('div','','rag-sources');
   private agentInput=document.getElementById('nexo-input') as HTMLInputElement;
@@ -47,23 +65,37 @@ export class Chats {
     if(!read('nexo.visitor_id'))save('nexo.visitor_id',crypto.randomUUID());
   }
   private identityEpoch=0;private agentErrorValue:unknown=null;private liveErrorValue:unknown=null;private errorRows:{element:HTMLElement;error:unknown}[]=[];private liveRuns=new Map<string,string>();
+  private livePosts=0;
+  private liveReceipts=new Map<string,{runId:string;state:LiveDeliveryStatus}>();
   resetIdentity(){
-    this.universe.clearFormations?.();this.identityEpoch++;this.agentCooldown=this.liveCooldown=0;this.agentErrorValue=this.liveErrorValue=null;this.errorRows=[];this.liveRuns.clear();
-    this.inbox.reset();this.runs.clear();this.liveRows.clear();this.liveHistory.replaceChildren();this.agentHistory.replaceChildren();
+    this.universe.clearFormations?.();this.identityEpoch++;this.agentCooldown=this.liveCooldown=0;this.agentErrorValue=this.liveErrorValue=null;this.errorRows=[];this.liveRuns.clear();this.liveReceipts.clear();this.livePosts=0;
+    this.inbox.reset();this.runs.clear();this.liveRows.clear();this.liveHistory.replaceChildren();this.agentHistory.replaceChildren();this.livePinned=true;this.liveNew.hidden=true;
     for(const id of this.generated.keys())this.universe.removeGenerated(id);this.generated.clear();this.unread.clear();this.routeQueue=[];this.updateUnread();
     this.busy=false;this.activeRun=null;
   }
   register(id:string,outgoing=true){this.inbox.register(id);this.traces.register(id,outgoing)}
-  receive(event:BackendEvent){this.inbox.receive(event)}
+  receive(event:BackendEvent){
+    // A receipt can precede both POST acceptance and the history response. Keep
+    // it by message ID as well as the ordered run's preauth queue.
+    if(event.type==='live.delivery'&&['sent','delivered_to_owner','failed'].includes(event.data.status)){
+      if(this.liveRows.has(event.data.message_id))this.delivery(event.data.message_id,event.data.status);
+      else if(this.livePosts){
+        if(this.liveReceipts.size>=64)this.liveReceipts.delete(this.liveReceipts.keys().next().value!);
+        const previous=this.liveReceipts.get(event.data.message_id);
+        if(previous?.state!=='delivered_to_owner'||event.data.status==='failed')this.liveReceipts.set(event.data.message_id,{runId:event.run_id,state:event.data.status});
+      }
+    }
+    this.inbox.receive(event);
+  }
   async connection(state:ConnectionState){
     const lost=this.state==='open'&&state!=='open';this.state=state;
-    if(lost){this.universe.clearFormations?.();const interrupted=this.busy||this.pendingSend;this.busy=false;this.pendingSend=false;this.inbox.reset();this.routeQueue=[];this.routeNotice.hidden=true;if(interrupted)this.agentError(new Error(t('chat.lost')));for(const row of this.liveRows.values())if(row.state==='sending'||row.state==='sent')this.delivery(row.message.id,'failed')}
+    if(lost){this.universe.clearFormations?.();const interrupted=this.busy||this.pendingSend;this.busy=false;this.pendingSend=false;this.inbox.reset();this.routeQueue=[];this.routeNotice.hidden=true;if(interrupted)this.agentError(new Error(t('chat.lost')))}
     this.refresh();
     if(state==='open'){
       const identityEpoch=this.identityEpoch;
       const [history,nodes]=await Promise.allSettled([this.backend.listLiveMessages(),this.backend.listGeneratedNodes()]);
       if(identityEpoch!==this.identityEpoch||this.stopped)return;
-      if(history.status==='fulfilled')for(const message of history.value.messages)this.addLive(message,'sent',true);
+      if(history.status==='fulfilled')for(const message of history.value.messages)this.addLive(message,'delivered_to_owner',true);
       if(nodes.status==='fulfilled')for(const node of nodes.value)this.acceptGenerated(node,null,true);
       this.updateUnread();
     }
@@ -91,10 +123,18 @@ export class Chats {
     const surface=element('div','','panel-surface'),header=element('header','','panel-header'),title=element('h2',t('chat.title'));title.id='live-title';
     const close=element('button');close.innerHTML=icon('close');close.setAttribute('aria-label',t('chat.close'));close.onclick=()=>this.closeLive();header.append(title,close);
     const intro=element('p',content.intro,'live-intro');this.liveHistory.setAttribute('role','log');this.liveHistory.setAttribute('aria-label',t('chat.history'));this.liveHistory.setAttribute('aria-live','polite');
+    this.liveHistory.addEventListener('scroll',()=>{
+      this.livePinned=this.liveHistory.scrollHeight-this.liveHistory.clientHeight-this.liveHistory.scrollTop<=48;
+      if(this.livePinned)this.liveNew.hidden=true;
+    },{passive:true});
+    this.liveNew.type='button';this.liveNew.hidden=true;this.liveNew.innerHTML=icon('down');
+    const newLabel=element('span',t('chat.newMessage'));newLabel.dataset.i18n='chat.newMessage';this.liveNew.append(newLabel);
+    this.liveNew.onclick=()=>this.scrollLiveEnd();
     this.liveName.type='text';this.liveName.maxLength=LIMITS.liveNameMaxChars;this.liveName.value=read('nexo.live.name')||'';this.nameWrap.append(element('span',content.name_label),this.liveName);this.nameWrap.hidden=read('nexo.live.named')==='yes';
-    this.liveInput.maxLength=content.max_chars;this.liveInput.rows=2;this.liveInput.placeholder=content.placeholder;this.liveInput.setAttribute('aria-label',t('chat.ownerMessage'));this.liveInput.addEventListener('input',()=>this.refresh());this.liveInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();void this.sendLive()}});
+    this.liveInput.maxLength=content.max_chars;this.liveInput.rows=1;this.liveInput.placeholder=content.placeholder;this.liveInput.setAttribute('aria-label',t('chat.ownerMessage'));this.liveInput.addEventListener('input',()=>{this.resizeLiveDraft();this.refresh()});this.liveInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();void this.sendLive()}});
     this.liveSend.innerHTML=icon('send');this.liveSend.setAttribute('aria-label',t('common.send'));this.liveSend.type='button';this.liveSend.onclick=()=>void this.sendLive();const compose=element('div','','live-compose');const field=element('div','','compose-field');field.append(this.liveInput,this.liveSend);compose.append(this.nameWrap,field,this.liveCounter,this.liveHint);
-    surface.append(header,intro,this.liveHistory,emptyChat('chat.emptyLive'),compose,chatPrivacy('privacy.live'));if(this.simulated)surface.append(element('span',t('chat.simulated'),'simulation-label'));this.livePanel.append(surface);document.body.append(this.livePanel);
+    surface.append(header,intro,this.liveHistory,this.liveNew,emptyChat('chat.emptyLive'),compose,chatPrivacy('privacy.live'));if(this.simulated)surface.append(element('span',t('chat.simulated'),'simulation-label'));this.livePanel.append(surface);document.body.append(this.livePanel);
+    if(typeof window!=='undefined'){window.addEventListener('resize',this.resizeLiveDraft);window.visualViewport?.addEventListener('resize',this.resizeLiveDraft)}
   }
   private buildNavigation(){
     const go=element('button',t('nav.goNow'));go.onclick=async()=>{await this.universe.exitSystem();this.routeNotice.hidden=true;void this.drainRoute()};this.routeNotice.append(this.routeLabel,go);this.routeNotice.hidden=true;document.body.append(this.routeNotice);
@@ -103,11 +143,12 @@ export class Chats {
   openLive(){
     if(this.liveOpen||this.liveTransition)return;
     this.liveOpen=true;this.liveTransition='opening';this.livePanel.hidden=false;this.universe.setLiveOpen(true);
+    this.releaseLiveSurface=lockLivePanel(this.livePanel,()=>this.closeLive());this.resizeLiveDraft();
     this.unread.clear();save('nexo.live.readAt',new Date().toISOString());this.updateUnread();
     this.universe.morphLivePanel(this.livePanel,true,()=>{
       this.liveTransition=null;
       if(this.closeAfterOpen){this.closeAfterOpen=false;this.closeLive();return}
-      this.liveInput.focus();this.liveHistory.scrollTop=this.liveHistory.scrollHeight;
+      this.liveInput.focus();this.scrollLiveEnd();
     });
   }
   closeLive(){
@@ -115,11 +156,18 @@ export class Chats {
     if(!this.liveOpen||this.liveTransition)return;
     this.liveTransition='closing';this.liveInput.blur();
     this.universe.morphLivePanel(this.livePanel,false,()=>{
-      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode();
+      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode();
     });
   }
   escape(){if(this.liveOpen){this.closeLive();return true}return false}
   private updateUnread(){this.universe.setUnread(this.unread.size);}
+  private scrollLiveEnd(){this.livePinned=true;this.liveNew.hidden=true;this.liveHistory.scrollTop=this.liveHistory.scrollHeight;}
+  private sortLive(){
+    const rows=[...this.liveRows.values()].sort((a,b)=>compareLiveMessages(a.message,b.message));
+    // Move only the rows that are out of order. Existing optimistic rows retain
+    // their timestamp when server data arrives, so acceptance cannot jump them.
+    rows.forEach((row,index)=>{const current=this.liveHistory.children[index];if(current!==row.root)this.liveHistory.insertBefore(row.root,current||null)});
+  }
   private resetHint(text:string|null){
     const value=translateText(text||'');return !value||[t('connection.retrying'),t('chat.offline'),t('guide.future'),t('chat.mockHint'),t('chat.ask')].includes(value)||!!this.waitHint&&value===translateText(this.waitHint);
   }
@@ -127,7 +175,7 @@ export class Chats {
     const record=portfolio.nodes.find(n=>n.type==='live_chat')!,content=record.content as {intro:string;name_label:string;placeholder:string;note:string};
     this.livePanel.querySelector('.live-intro')!.textContent=content.intro;
     this.nameWrap.querySelector('span')!.textContent=content.name_label;this.liveInput.placeholder=content.placeholder;
-    for(const row of this.liveRows.values())if(row.message.from==='visitor')this.delivery(row.message.id,row.state,row.retryable);
+    for(const row of this.liveRows.values())this.delivery(row.message.id,row.state,row.retryable);
     for(const [id,row] of this.steps)row.textContent=stepLabels()[id as keyof ReturnType<typeof stepLabels>]+(row.dataset.state==='done'?t('step.done'):row.dataset.state==='skipped'?t('step.skipped'):'');
     const run=this.activeRun?this.runs.get(this.activeRun):undefined;if(run?.path.length)this.routeLabel.textContent=t('step.route',{path:run.path.map(id=>this.universe.nodeLabel(id)).join(' › ')});
     for(const row of this.errorRows)row.element.textContent=chatErrorText(row.error);
@@ -164,25 +212,51 @@ export class Chats {
     if(retryable){const retry=element('button',t('common.retry'),'message-retry');retry.onclick=()=>void this.sendAgent(question);p.parentElement!.append(retry)}
   }
   async sendLive(retry?:LiveRow){
-    if(retry&&(retry.state!=='failed'||retry.retryable===false))return;const text=(retry?.message.text??this.liveInput.value).trim();if(!text||text.length>500||this.state!=='open'||Date.now()<this.liveCooldown)return;
+    if(retry&&(retry.message.from!=='visitor'||retry.state!=='failed'||retry.retryable===false))return;const text=(retry?.message.text??this.liveInput.value).trim();if(!text||text.length>500||this.state!=='open'||Date.now()<this.liveCooldown)return;
     this.liveErrorValue=null;
     const temp=retry?.message.id||'pending_'+crypto.randomUUID();let row=retry;
     if(!row){this.addLive({id:temp,from:'visitor',text,ts:new Date().toISOString()},'sending');row=this.liveRows.get(temp)!}else {row.error=undefined;row.state='sending';row.status.textContent=t('chat.sending');row.root.querySelector('.message-retry')?.remove()}
-    if(!retry)this.liveInput.value='';this.refresh();
-    try{const accepted=await this.backend.sendLiveMessage(text,this.liveName.value.trim()||undefined);this.liveRows.delete(temp);row.message.id=accepted.message_id;this.liveRows.set(accepted.message_id,row);this.liveRuns.set(accepted.run_id,accepted.message_id);this.register(accepted.run_id);save('nexo.live.name',this.liveName.value.trim());save('nexo.live.named','yes');this.nameWrap.hidden=true;this.liveHint.textContent=''}catch(error){this.liveRows.set(temp,row);row.error=error;this.delivery(temp,'failed');this.liveErrorValue=error;this.liveHint.textContent=chatErrorText(error);if(error instanceof BackendError&&(error.code==='rate_limited'||error.status===429))this.liveCooldown=Date.now()+(error.retryAfterSec||30)*1000}
+    if(!retry){this.liveInput.value='';this.resizeLiveDraft()}this.refresh();
+    this.scrollLiveEnd();
+    const epoch=this.identityEpoch;this.livePosts++;
+    try{
+      const accepted=await this.backend.sendLiveMessage(text,this.liveName.value.trim()||undefined);
+      if(epoch!==this.identityEpoch||this.stopped)return;
+      const duplicate=this.liveRows.get(accepted.message_id);if(duplicate&&duplicate!==row){duplicate.root.remove();this.liveRows.delete(accepted.message_id)}
+      this.liveRows.delete(temp);row.message.id=accepted.message_id;row.root.dataset.messageId=accepted.message_id;this.liveRows.set(accepted.message_id,row);
+      this.delivery(accepted.message_id,'sent');this.liveRuns.set(accepted.run_id,accepted.message_id);
+      const receipt=this.liveReceipts.get(accepted.message_id);this.liveReceipts.delete(accepted.message_id);
+      if(receipt?.runId===accepted.run_id)this.delivery(accepted.message_id,receipt.state);
+      this.liveHint.textContent='';this.register(accepted.run_id);
+      save('nexo.live.name',this.liveName.value.trim());save('nexo.live.named','yes');this.nameWrap.hidden=true;
+    }catch(error){
+      if(epoch!==this.identityEpoch||this.stopped)return;
+      this.liveRows.set(temp,row);row.error=error;this.delivery(temp,'failed');this.liveErrorValue=error;this.liveHint.textContent=chatErrorText(error);if(error instanceof BackendError&&(error.code==='rate_limited'||error.status===429))this.liveCooldown=Date.now()+(error.retryAfterSec||30)*1000;
+    }finally{if(epoch===this.identityEpoch&&!--this.livePosts)this.liveReceipts.clear()}
     this.refresh();
   }
   private addLive(message:LiveMessage,state:'sending'|LiveDeliveryStatus='sent',restored=false){
-    if(this.liveRows.has(message.id))return;
-    const root=element('div','','chat-message '+message.from);root.append(element('span',message.from==='owner'?portfolio.meta.owner:t('common.you'),'message-author'),element('p',message.text));const status=element('span','','message-state');const meta=metadata(message.ts);meta.append(status);root.append(meta);const row={message,root,status,state};this.liveRows.set(message.id,row);this.liveHistory.append(root);
+    const normalized=normalizeLiveMessage(message);if(!normalized)return;message=normalized;
+    const existing=this.liveRows.get(message.id);
+    if(existing){
+      existing.message={...message,...(existing.optimistic?{ts:existing.message.ts,created_at:existing.message.created_at}:{})};
+      existing.root.querySelector('p')!.textContent=message.text;
+      if(restored)this.delivery(message.id,'delivered_to_owner');
+      this.sortLive();return;
+    }
+    if(message.from==='owner')state='delivered_to_owner';
+    const root=element('div','','chat-message '+message.from);root.dataset.messageId=message.id;root.append(element('span',message.from==='owner'?portfolio.meta.owner:t('common.you'),'message-author'),element('p',message.text));const status=element('span','','message-state');const meta=metadata(liveTimestamp(message));meta.append(status);root.append(meta);const row={message,root,status,state,optimistic:state==='sending'};this.liveRows.set(message.id,row);this.liveHistory.append(root);this.sortLive();
     if(!restored)this.universe.setChatMessage(message.text,message.from);
-    if(message.from==='visitor')this.delivery(message.id,state);else if(!this.liveOpen&&(!restored||Date.parse(message.ts)>Date.parse(read('nexo.live.readAt')||'1970-01-01')))this.unread.add(message.id);
-    if(this.liveOpen){save('nexo.live.readAt',new Date().toISOString());this.liveHistory.scrollTop=this.liveHistory.scrollHeight}this.updateUnread();
+    this.delivery(message.id,state);
+    if(message.from==='owner'&&!this.liveOpen&&(!restored||Date.parse(liveTimestamp(message))>Date.parse(read('nexo.live.readAt')||'1970-01-01')))this.unread.add(message.id);
+    if(this.liveOpen){save('nexo.live.readAt',new Date().toISOString());if(this.livePinned||state==='sending')this.scrollLiveEnd();else if(!restored)this.liveNew.hidden=false}this.updateUnread();
   }
   private delivery(id:string,state:'sending'|LiveDeliveryStatus,retryable?:boolean){
-    const row=this.liveRows.get(id);if(!row)return;retryable??=row.retryable??true;row.state=state;row.retryable=retryable;row.status.textContent={sending:t('chat.sending'),sent:t('chat.sent'),delivered_to_owner:t('chat.delivered'),failed:t('chat.failed')}[state];
-    if(state==='failed'&&row.error)row.status.textContent=chatErrorText(row.error);
-    if(!retryable)row.root.querySelector('.message-retry')?.remove();
+    const row=this.liveRows.get(id);if(!row||!['sending','sent','delivered_to_owner','failed'].includes(state))return;
+    if(row.message.from==='owner'){row.state='delivered_to_owner';row.retryable=false;row.root.dataset.delivery='delivered_to_owner';row.status.textContent=t('chat.delivered');row.root.querySelector('.message-retry')?.remove();return}
+    if(row.state==='delivered_to_owner'&&state==='sent')return;
+    retryable??=row.retryable??true;row.state=state;row.retryable=retryable;row.root.dataset.delivery=state;row.status.textContent={sending:t('chat.sending'),sent:t('chat.sent'),delivered_to_owner:t('chat.delivered'),failed:t('chat.failed')}[state];
+    if(state!=='failed'||!retryable)row.root.querySelector('.message-retry')?.remove();
     if(state==='failed'&&retryable&&!row.root.querySelector('.message-retry')){const retry=element('button',t('common.retry'),'message-retry');retry.onclick=()=>void this.sendLive(row);row.root.append(retry)}
   }
   private acceptGenerated(value:unknown,anchor:string|null,restored=false,runId?:string){
@@ -202,7 +276,6 @@ export class Chats {
     finally{this.routing=false}
   }
   private onEvent(event:BackendEvent){
-    if(event.type==='run.start'&&event.data.kind==='live_out')void this.backend.listLiveMessages().then(history=>{for(const message of history.messages)this.addLive(message)}).catch(()=>{});
     if(event.type==='run.start'&&event.data.kind==='chat'){
       this.agentErrorValue=null;this.busy=true;this.activeRun=event.run_id;if(!this.lastQuestion)this.lastQuestion=event.data.input||'';this.universe.openAgent();this.process.open=true;this.sources.replaceChildren();for(const row of this.steps.values())row.dataset.state='waiting';
       this.runs.set(event.run_id,{answer:this.agentBubble('','agent'),path:[],closed:false});this.agentHint.textContent=t('chat.working');
@@ -227,5 +300,5 @@ export class Chats {
     if(event.type==='run.done'||event.type==='run.error'){this.universe.finishForming?.(event.run_id);this.liveRuns.delete(event.run_id);}
     this.refresh();
   }
-  dispose(){this.stopped=true;clearInterval(this.timer);this.inbox.reset();this.universe.clearFormations?.()}
+  dispose(){this.stopped=true;clearInterval(this.timer);this.inbox.reset();this.universe.clearFormations?.();this.releaseLiveSurface?.();if(typeof window!=='undefined'){window.removeEventListener('resize',this.resizeLiveDraft);window.visualViewport?.removeEventListener('resize',this.resizeLiveDraft)}}
 }

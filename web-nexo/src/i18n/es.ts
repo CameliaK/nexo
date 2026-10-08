@@ -1,4 +1,5 @@
 export const es = {
+  "chat.newMessage": "Mensaje nuevo",
   "nav.touchHint": "Toca un nodo para explorar",
   "chat.emptyAgent": "Pregúntale a Nexo sobre Kirbith y su trabajo.",
   "chat.emptyLive": "Escríbele a Kirbith. Tu conversación empieza aquí.",

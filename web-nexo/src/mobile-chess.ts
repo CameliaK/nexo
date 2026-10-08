@@ -25,7 +25,7 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
   body.style.setProperty('--mobile-height',height+'px');body.style.setProperty('--mobile-top',(visual?.offsetTop||0)+'px');
   body.dataset.mobileKeyboard=String(height<innerHeight*.75);
   body.dataset.mobileHeight=String(height);body.dataset.mobileTop=String(visual?.offsetTop||0);
-  const inset=body.dataset.mobileKeyboard==='true'?Math.max(8,parseFloat(styles.paddingBottom)||0):Math.max(16,parseFloat(styles.paddingBottom)||0)+(innerWidth>innerHeight?16:56);body.dataset.mobileInset=String(inset);body.style.setProperty('--mobile-bottom-inset',inset+'px');const dock=mobileViewport({width:innerWidth,height,offsetTop:visual?.offsetTop||0,chat:true,landscape:innerWidth>innerHeight,browserInset:inset});body.style.setProperty('--mobile-dock-height',dock.dock+'px');body.style.setProperty('--mobile-dock-top',dock.dockTop+'px');
+  const inset=body.dataset.mobileKeyboard==='true'?Math.max(8,parseFloat(styles.paddingBottom)||0):Math.max(16,parseFloat(styles.paddingBottom)||0)+(innerWidth>innerHeight?16:56);body.dataset.mobileInset=String(inset);body.style.setProperty('--mobile-bottom-inset',inset+'px');const dock=mobileViewport({width:innerWidth,height,offsetTop:visual?.offsetTop||0,chat:true,landscape:innerWidth>innerHeight,browserInset:inset,composerHeight:body.classList.contains('live-chat-open')?Number(body.dataset.liveComposerHeight)||0:0});body.style.setProperty('--mobile-dock-height',dock.dock+'px');body.style.setProperty('--mobile-dock-top',dock.dockTop+'px');
   body.dataset.safeTop=String(parseFloat(styles.paddingTop)||0);body.dataset.safeBottom=String(parseFloat(styles.paddingBottom)||0);
  }
  function relabel(){
@@ -40,7 +40,7 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  }
  function closeChat(restore=true){
   if(chat==='agent')universe.closeAgent();else if(chat==='live')chats.closeLive();
-  chat=null;controls.hidden=true;body.classList.remove('mobile-chess-chat');button.setAttribute('aria-expanded','false');emit();if(restore)button.focus({preventScroll:true});
+  chat=null;controls.hidden=true;body.classList.remove('mobile-chess-chat');button.setAttribute('aria-expanded','false');measure();emit();if(restore)button.focus({preventScroll:true});
  }
  function select(which:'agent'|'live'){
   if(!active)return;
@@ -48,7 +48,7 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
   chat=which;controls.hidden=false;body.classList.add('mobile-chess-chat');button.setAttribute('aria-expanded','true');
   assistant.setAttribute('aria-pressed',String(which==='agent'));owner.setAttribute('aria-pressed',String(which==='live'));
   if(which==='agent')universe.openAgent();else chats.openLive();
-  emit();
+  measure();emit();
  }
  function systemSheet(value:boolean){
   if(value===expanded)return;expanded=value;summary.hidden=!value;if(value)portal.element.setAttribute('aria-describedby','mobile-system-components system-connection system-activity');else portal.element.removeAttribute('aria-describedby');body.classList.toggle('mobile-system-expanded',value);
@@ -94,6 +94,7 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  const target=document.getElementById('floating-live-chat');if(target)observer.observe(target,{attributes:true,attributeFilter:['data-unread']});
  document.addEventListener('focusin',focus,{capture:true});document.addEventListener('keydown',key,{capture:true});document.addEventListener('pointerdown',down);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',cancel);
  window.addEventListener('nexo:chess-state',sync);window.addEventListener('resize',resize);window.visualViewport?.addEventListener('resize',resize);window.visualViewport?.addEventListener('scroll',resize);
+ window.addEventListener('nexo:live-compose',resize);
  const stopLanguage=languageStore.subscribe(relabel);measure();relabel();sync();
- return {dispose(){observer.disconnect();stopLanguage();active=false;systemSheet(false);closeChat(false);for(const [element,inert]of hiddenState)element.inert=inert;body.classList.remove('mobile-chess');button.remove();controls.remove();safe.remove();sheetHeader.remove();summary.remove();portal.button.removeEventListener('click',openSystem,{capture:true});document.removeEventListener('focusin',focus,{capture:true});document.removeEventListener('keydown',key,{capture:true});document.removeEventListener('pointerdown',down);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cancel);window.removeEventListener('nexo:chess-state',sync);window.removeEventListener('resize',resize);window.visualViewport?.removeEventListener('resize',resize);window.visualViewport?.removeEventListener('scroll',resize)}};
+ return {dispose(){observer.disconnect();stopLanguage();active=false;systemSheet(false);closeChat(false);for(const [element,inert]of hiddenState)element.inert=inert;body.classList.remove('mobile-chess');button.remove();controls.remove();safe.remove();sheetHeader.remove();summary.remove();portal.button.removeEventListener('click',openSystem,{capture:true});document.removeEventListener('focusin',focus,{capture:true});document.removeEventListener('keydown',key,{capture:true});document.removeEventListener('pointerdown',down);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cancel);window.removeEventListener('nexo:chess-state',sync);window.removeEventListener('resize',resize);window.removeEventListener('nexo:live-compose',resize);window.visualViewport?.removeEventListener('resize',resize);window.visualViewport?.removeEventListener('scroll',resize)}};
 }

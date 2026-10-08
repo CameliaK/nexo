@@ -1,0 +1,251 @@
+{
+  "production": true,
+  "reports": [
+    {
+      "engine": "chromium",
+      "device": "Pixel 7",
+      "width": 393,
+      "height": 851,
+      "lang": "es",
+      "rootNodesTapped": 5,
+      "board": {
+        "x": 6,
+        "y": 172,
+        "width": 381,
+        "height": 345.53125
+      },
+      "rail": {
+        "x": 12,
+        "y": 525.53125,
+        "width": 369,
+        "height": 96
+      },
+      "chat": {
+        "input": {
+          "x": 12,
+          "y": 690.296875,
+          "width": 317,
+          "height": 46
+        },
+        "panel": {
+          "x": 0,
+          "y": 414.546875,
+          "width": 393,
+          "height": 364.4375
+        },
+        "nav": {
+          "x": 0,
+          "y": 350.546875,
+          "width": 393,
+          "height": 64
+        }
+      },
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "device": "Pixel 7",
+      "width": 851,
+      "height": 393,
+      "lang": "en",
+      "rootNodesTapped": 5,
+      "board": {
+        "x": 241.34375,
+        "y": 44,
+        "width": 336.28125,
+        "height": 305
+      },
+      "rail": {
+        "x": 667,
+        "y": 52,
+        "width": 172,
+        "height": 194
+      },
+      "chat": {
+        "input": {
+          "x": 12,
+          "y": 272.3125,
+          "width": 775,
+          "height": 46
+        },
+        "panel": {
+          "x": 0,
+          "y": 219,
+          "width": 851,
+          "height": 142
+        },
+        "nav": {
+          "x": 0,
+          "y": 155,
+          "width": 851,
+          "height": 64
+        }
+      },
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "device": "Pixel 7",
+      "width": 360,
+      "height": 640,
+      "lang": "en",
+      "rootNodesTapped": 5,
+      "board": {
+        "x": 6,
+        "y": 148.1875,
+        "width": 348,
+        "height": 315.609375
+      },
+      "rail": {
+        "x": 12,
+        "y": 471.796875,
+        "width": 336,
+        "height": 96
+      },
+      "chat": {
+        "input": {
+          "x": 12,
+          "y": 479.296875,
+          "width": 284,
+          "height": 46
+        },
+        "panel": {
+          "x": 0,
+          "y": 319.59375,
+          "width": 360,
+          "height": 248.390625
+        },
+        "nav": {
+          "x": 0,
+          "y": 255.59375,
+          "width": 360,
+          "height": 64
+        }
+      },
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "device": "iPhone 13",
+      "width": 390,
+      "height": 844,
+      "lang": "es",
+      "rootNodesTapped": 5,
+      "board": {
+        "x": 6,
+        "y": 172,
+        "width": 378,
+        "height": 342.8125
+      },
+      "rail": {
+        "x": 12,
+        "y": 522.8125,
+        "width": 366,
+        "height": 96
+      },
+      "chat": {
+        "input": {
+          "x": 12,
+          "y": 683.296875,
+          "width": 314,
+          "height": 46
+        },
+        "panel": {
+          "x": 0,
+          "y": 411.390625,
+          "width": 390,
+          "height": 360.59375
+        },
+        "nav": {
+          "x": 0,
+          "y": 347.390625,
+          "width": 390,
+          "height": 64
+        }
+      },
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "device": "iPhone 13",
+      "width": 844,
+      "height": 390,
+      "lang": "en",
+      "rootNodesTapped": 5,
+      "board": {
+        "x": 239.5,
+        "y": 44,
+        "width": 332.984375,
+        "height": 302
+      },
+      "rail": {
+        "x": 660,
+        "y": 52,
+        "width": 172,
+        "height": 194
+      },
+      "chat": {
+        "input": {
+          "x": 12,
+          "y": 269.3125,
+          "width": 768,
+          "height": 46
+        },
+        "panel": {
+          "x": 0,
+          "y": 216,
+          "width": 844,
+          "height": 142
+        },
+        "nav": {
+          "x": 0,
+          "y": 152,
+          "width": 844,
+          "height": 64
+        }
+      },
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "device": "iPhone 13",
+      "width": 360,
+      "height": 640,
+      "lang": "es",
+      "rootNodesTapped": 5,
+      "board": {
+        "x": 6,
+        "y": 148.1875,
+        "width": 348,
+        "height": 315.609375
+      },
+      "rail": {
+        "x": 12,
+        "y": 471.796875,
+        "width": 336,
+        "height": 96
+      },
+      "chat": {
+        "input": {
+          "x": 12,
+          "y": 479.296875,
+          "width": 284,
+          "height": 46
+        },
+        "panel": {
+          "x": 0,
+          "y": 319.59375,
+          "width": 360,
+          "height": 248.390625
+        },
+        "nav": {
+          "x": 0,
+          "y": 255.59375,
+          "width": 360,
+          "height": 64
+        }
+      },
+      "passed": true
+    }
+  ]
+}

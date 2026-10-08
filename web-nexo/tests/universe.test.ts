@@ -34,6 +34,7 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
    return this.rect||{left:1120,top:530,width:258,height:170,right:1378,bottom:700};
   }
   querySelector(selector){return this.children.find(e=>e&&typeof e==='object'&&(selector==='.'+e.className||selector===e.tagName))||this.children.map(e=>e?.querySelector?.(selector)).find(Boolean)}remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this)}blur(){}
+  insertBefore(item,before){item.remove();const index=this.children.indexOf(before);this.children.splice(index<0?this.children.length:index,0,item);item.parent=this}
   getAttribute(k){return this.attributes[k]??null}removeAttribute(k){delete this.attributes[k]}set src(value){this.attributes.src=value}get src(){return this.attributes.src}showModal(){this.open=true}close(){this.open=false}
  }
  const elements={},el=id=>elements[id]??=new Element(),gradient={addColorStop(){}};
@@ -81,6 +82,16 @@ test('Live chat fragments into its panel and reassembles as a node',()=>{
  frames(800);assert.equal(opened,1);assert.equal(api.getMorphCanvas().hidden,true);assert.equal(panel.style.opacity,'');
  api.morphLivePanel(panel,false,()=>{closed++;api.setLiveOpen(false)});
  frames(800);assert.equal(closed,1);assert.equal(api.chatTarget.hidden,false);assert.equal(api.getMorphCanvas().hidden,true);
+});
+
+test('An open live panel disables camera pan/zoom and reduces the universe cadence without changing its level',()=>{
+ const {api,el,frames,listeners}=fixture();frames(100);const before=JSON.stringify(api.camera()),level=api.getLevel().id;
+ api.setLiveOpen(true);
+ el('space').handlers.pointerdown({pointerType:'mouse',clientX:700,clientY:400,pointerId:1});
+ listeners.pointermove({pointerType:'mouse',clientX:780,clientY:430,target:el('space')});
+ el('space').handlers.wheel({preventDefault(){},deltaY:-1});frames(300);
+ assert.equal(JSON.stringify(api.camera()),before);assert.equal(api.getLevel().id,level);assert.equal(el('body').dataset.canvasFps,'30');
+ api.setLiveOpen(false);frames(100);assert.equal(el('body').dataset.canvasFps,'60');
 });
 test('System portal preserves camera and level; live-in never navigates; both entry points share the view',()=>{
  const {api,el,frames,enter,traces}=fixture();frames(100);enter('experiencia');api.setCamera({x:75,y:-30},1.2);const previous=JSON.stringify(api.camera());api.openPanel();api.enterSystem();frames();assert.equal(api.getLevel().id,'system');assert.equal(api.getNodes().length,9);assert.equal(api.panelOpen(),true);
@@ -145,7 +156,7 @@ test('Live preview fades at five seconds, replaces previous text and pauses whil
 
 test('Unread indicator survives preview expiry and clears only when Chats opens the panel',()=>{
  const {api,frames,el,sandbox}=fixture();frames(100);
- const chats=Object.assign(Object.create(Chats.prototype),{universe:api,liveRows:new Map(),unread:new Set(),liveOpen:false,liveTransition:null,livePanel:el('live-panel'),liveHistory:el('live-history'),liveInput:el('live-input')});
+ const chats=Object.assign(Object.create(Chats.prototype),{universe:api,resizeLiveDraft(){},liveRows:new Map(),unread:new Set(),liveOpen:false,liveTransition:null,livePinned:true,liveNew:el('live-new'),livePanel:el('live-panel'),liveHistory:el('live-history'),liveInput:el('live-input')});
  const originalDocument=globalThis.document;globalThis.document=sandbox.document;
  try{
    chats.addLive({id:'owner-1',from:'owner',text:'Hola','ts':new Date().toISOString()});
