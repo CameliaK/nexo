@@ -14,6 +14,7 @@ function setup(response:(path:string,request:any)=>Response){
   children=[];childNodes=[];dataset={};attributes={};value='';textContent='';className='';hidden=false;disabled=false;handlers={};parentElement=null;
   append(...items){for(const item of items){item.parentElement?.removeChild(item);this.children.push(item);item.parentElement=this}}
   removeChild(item){this.children=this.children.filter(child=>child!==item)}
+  insertBefore(item,before){item.parentElement?.removeChild(item);const index=this.children.indexOf(before);this.children.splice(index<0?this.children.length:index,0,item);item.parentElement=this}
   replaceWith(item){const parent=this.parentElement;this.remove();parent?.append(item)}
   replaceChildren(...items){this.children=[];this.append(...items)}remove(){this.parentElement?.removeChild(this)}
   setAttribute(key,value){this.attributes[key]=value}getAttribute(key){return this.attributes[key]??null}removeAttribute(key){delete this.attributes[key]}
@@ -154,4 +155,28 @@ test('Real live contract: only genuine POST/explicit failures allow own retry; s
    assert.equal(row.state,'sent');assert.equal(row.root.querySelector('.message-retry'),null);
   }finally{f.dispose()}
  }
+});
+
+test('Descending history is sorted oldest first with stable ID ties; created_at is supported and optimistic echoes merge in place',async()=>{
+ const history=JSON.parse(JSON.stringify(liveContract.history).replaceAll('2026-10-08','2020-10-08'));
+ const f=setup((path,request)=>request.method==='POST'?json(liveContract.accepted,202):path.includes('/live/')?json(history):ok(path));
+ try{
+  await f.ready();const ids=()=>f.chats.liveHistory.children.map(e=>e.dataset.messageId);
+  assert.deepEqual(ids(),['visitor-history','owner-history']);
+  for(const id of ['z','a'])f.chats.addLive({id,from:'owner',text:id,created_at:'2020-10-08T12:02:00Z'});
+  assert.deepEqual(ids(),['visitor-history','owner-history','a','z']);
+  f.chats.liveInput.value='New';await f.chats.sendLive();const row=f.chats.liveRows.get(liveContract.accepted.message_id),date=row.message.ts,root=row.root;
+  f.chats.addLive({id:row.message.id,from:'visitor',text:'New',created_at:'2026-10-08T12:02:30Z'});
+  assert.equal(f.chats.liveRows.size,5);assert.equal(row.root,root);assert.equal(row.message.ts,date);assert.equal(ids().at(-1),row.message.id);
+ }finally{f.dispose()}
+});
+test('Live scroll follows opening and own sends, preserves reading position for incoming messages and offers a localized jump control',async()=>{
+ const f=setup(path=>ok(path));
+ try{
+  await f.ready();f.chats.liveOpen=true;const history=f.chats.liveHistory;history.scrollHeight=1000;history.clientHeight=200;history.scrollTop=0;history.handlers.scroll();
+  f.chats.addLive(liveContract.owner);assert.equal(history.scrollTop,0);assert.equal(f.chats.liveNew.hidden,false);
+  assert.ok(f.chats.liveNew.innerHTML.includes('data-icon="down"'));languageStore.set('en');f.chats.refreshLanguage();assert.equal(f.chats.liveNew.querySelector('span').textContent,'New message');
+  f.chats.liveNew.onclick();assert.equal(history.scrollTop,1000);assert.equal(f.chats.liveNew.hidden,true);
+  history.scrollTop=0;history.handlers.scroll();f.chats.liveInput.value='Own send';await f.chats.sendLive();assert.equal(history.scrollTop,1000);assert.equal(f.chats.liveNew.hidden,true);
+ }finally{f.dispose()}
 });

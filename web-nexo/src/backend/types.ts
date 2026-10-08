@@ -122,6 +122,8 @@ export interface LiveMessage {
   text: string;
   /** ISO 8601. */
   ts: string;
+  /** Some persisted history responses use created_at instead of ts. */
+  created_at?: string;
 }
 
 /* ───────────────────────── Eventos (WebSocket) ───────────────────────── */

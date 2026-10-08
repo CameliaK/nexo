@@ -34,6 +34,7 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
    return this.rect||{left:1120,top:530,width:258,height:170,right:1378,bottom:700};
   }
   querySelector(selector){return this.children.find(e=>e&&typeof e==='object'&&(selector==='.'+e.className||selector===e.tagName))||this.children.map(e=>e?.querySelector?.(selector)).find(Boolean)}remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this)}blur(){}
+  insertBefore(item,before){item.remove();const index=this.children.indexOf(before);this.children.splice(index<0?this.children.length:index,0,item);item.parent=this}
   getAttribute(k){return this.attributes[k]??null}removeAttribute(k){delete this.attributes[k]}set src(value){this.attributes.src=value}get src(){return this.attributes.src}showModal(){this.open=true}close(){this.open=false}
  }
  const elements={},el=id=>elements[id]??=new Element(),gradient={addColorStop(){}};
@@ -145,7 +146,7 @@ test('Live preview fades at five seconds, replaces previous text and pauses whil
 
 test('Unread indicator survives preview expiry and clears only when Chats opens the panel',()=>{
  const {api,frames,el,sandbox}=fixture();frames(100);
- const chats=Object.assign(Object.create(Chats.prototype),{universe:api,liveRows:new Map(),unread:new Set(),liveOpen:false,liveTransition:null,livePanel:el('live-panel'),liveHistory:el('live-history'),liveInput:el('live-input')});
+ const chats=Object.assign(Object.create(Chats.prototype),{universe:api,liveRows:new Map(),unread:new Set(),liveOpen:false,liveTransition:null,livePinned:true,liveNew:el('live-new'),livePanel:el('live-panel'),liveHistory:el('live-history'),liveInput:el('live-input')});
  const originalDocument=globalThis.document;globalThis.document=sandbox.document;
  try{
    chats.addLive({id:'owner-1',from:'owner',text:'Hola','ts':new Date().toISOString()});

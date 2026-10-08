@@ -1,4 +1,5 @@
 import { icon } from './icons';
+import { compareLiveMessages, liveTimestamp, normalizeLiveMessage } from './live-messages';
 import { privacyNotice, privacyLink } from './privacy/link';
 import { chatErrorText } from './chat-errors';
 import { t, translateText, translateUI, languageStore } from './i18n';
@@ -24,7 +25,7 @@ function chatPrivacy(key:'privacy.assistant'|'privacy.live'){const bar=element('
 function emptyChat(key:'chat.emptyAgent'|'chat.emptyLive'){const empty=element('p',t(key),'chat-empty');empty.dataset.i18n=key;return empty}
 const stepLabels=()=>({understand:t('step.understand'),search_nodes:t('step.search_nodes'),search_base:t('step.search_base'),design_node:t('step.design_node'),create_node:t('step.create_node'),answer:t('step.answer')});
 type AgentRun={answer:HTMLParagraphElement;path:string[];closed:boolean};
-type LiveRow={message:LiveMessage;root:HTMLElement;status:HTMLElement;state:'sending'|LiveDeliveryStatus;retryable?:boolean;error?:unknown};
+type LiveRow={message:LiveMessage;root:HTMLElement;status:HTMLElement;state:'sending'|LiveDeliveryStatus;optimistic?:boolean;retryable?:boolean;error?:unknown};
 export class Chats {
   private waitHint='';private state:ConnectionState='closed';private busy=false;private agentCooldown=0;private liveCooldown=0;private pendingSend=false;private lastQuestion='';private stopped=false;
   private inbox:EventInbox;private runs=new Map<string,AgentRun>();private activeRun:string|null=null;
@@ -33,6 +34,7 @@ export class Chats {
   private livePanel=element('section','','live-panel');private liveHistory=element('div','','chat-history live-history');
   private liveInput=element('textarea');private liveName=element('input');private nameWrap=element('label','','live-name');
   private liveHint=element('p','','chat-hint');private liveCounter=element('span','','chat-counter');private liveSend=element('button',t('common.send'),'chat-send');
+  private livePinned=true;private liveNew=element('button','','live-new-message');
   private agentHistory=element('div','','chat-history agent-history');
   private process=element('details','','agent-process');private steps=new Map<string,HTMLElement>();private sources=element('div','','rag-sources');
   private agentInput=document.getElementById('nexo-input') as HTMLInputElement;
@@ -51,7 +53,7 @@ export class Chats {
   private liveReceipts=new Map<string,{runId:string;state:LiveDeliveryStatus}>();
   resetIdentity(){
     this.universe.clearFormations?.();this.identityEpoch++;this.agentCooldown=this.liveCooldown=0;this.agentErrorValue=this.liveErrorValue=null;this.errorRows=[];this.liveRuns.clear();this.liveReceipts.clear();this.livePosts=0;
-    this.inbox.reset();this.runs.clear();this.liveRows.clear();this.liveHistory.replaceChildren();this.agentHistory.replaceChildren();
+    this.inbox.reset();this.runs.clear();this.liveRows.clear();this.liveHistory.replaceChildren();this.agentHistory.replaceChildren();this.livePinned=true;this.liveNew.hidden=true;
     for(const id of this.generated.keys())this.universe.removeGenerated(id);this.generated.clear();this.unread.clear();this.routeQueue=[];this.updateUnread();
     this.busy=false;this.activeRun=null;
   }
@@ -105,10 +107,17 @@ export class Chats {
     const surface=element('div','','panel-surface'),header=element('header','','panel-header'),title=element('h2',t('chat.title'));title.id='live-title';
     const close=element('button');close.innerHTML=icon('close');close.setAttribute('aria-label',t('chat.close'));close.onclick=()=>this.closeLive();header.append(title,close);
     const intro=element('p',content.intro,'live-intro');this.liveHistory.setAttribute('role','log');this.liveHistory.setAttribute('aria-label',t('chat.history'));this.liveHistory.setAttribute('aria-live','polite');
+    this.liveHistory.addEventListener('scroll',()=>{
+      this.livePinned=this.liveHistory.scrollHeight-this.liveHistory.clientHeight-this.liveHistory.scrollTop<=48;
+      if(this.livePinned)this.liveNew.hidden=true;
+    },{passive:true});
+    this.liveNew.type='button';this.liveNew.hidden=true;this.liveNew.innerHTML=icon('down');
+    const newLabel=element('span',t('chat.newMessage'));newLabel.dataset.i18n='chat.newMessage';this.liveNew.append(newLabel);
+    this.liveNew.onclick=()=>this.scrollLiveEnd();
     this.liveName.type='text';this.liveName.maxLength=LIMITS.liveNameMaxChars;this.liveName.value=read('nexo.live.name')||'';this.nameWrap.append(element('span',content.name_label),this.liveName);this.nameWrap.hidden=read('nexo.live.named')==='yes';
     this.liveInput.maxLength=content.max_chars;this.liveInput.rows=2;this.liveInput.placeholder=content.placeholder;this.liveInput.setAttribute('aria-label',t('chat.ownerMessage'));this.liveInput.addEventListener('input',()=>this.refresh());this.liveInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();void this.sendLive()}});
     this.liveSend.innerHTML=icon('send');this.liveSend.setAttribute('aria-label',t('common.send'));this.liveSend.type='button';this.liveSend.onclick=()=>void this.sendLive();const compose=element('div','','live-compose');const field=element('div','','compose-field');field.append(this.liveInput,this.liveSend);compose.append(this.nameWrap,field,this.liveCounter,this.liveHint);
-    surface.append(header,intro,this.liveHistory,emptyChat('chat.emptyLive'),compose,chatPrivacy('privacy.live'));if(this.simulated)surface.append(element('span',t('chat.simulated'),'simulation-label'));this.livePanel.append(surface);document.body.append(this.livePanel);
+    surface.append(header,intro,this.liveHistory,this.liveNew,emptyChat('chat.emptyLive'),compose,chatPrivacy('privacy.live'));if(this.simulated)surface.append(element('span',t('chat.simulated'),'simulation-label'));this.livePanel.append(surface);document.body.append(this.livePanel);
   }
   private buildNavigation(){
     const go=element('button',t('nav.goNow'));go.onclick=async()=>{await this.universe.exitSystem();this.routeNotice.hidden=true;void this.drainRoute()};this.routeNotice.append(this.routeLabel,go);this.routeNotice.hidden=true;document.body.append(this.routeNotice);
@@ -121,7 +130,7 @@ export class Chats {
     this.universe.morphLivePanel(this.livePanel,true,()=>{
       this.liveTransition=null;
       if(this.closeAfterOpen){this.closeAfterOpen=false;this.closeLive();return}
-      this.liveInput.focus();this.liveHistory.scrollTop=this.liveHistory.scrollHeight;
+      this.liveInput.focus();this.scrollLiveEnd();
     });
   }
   closeLive(){
@@ -134,6 +143,13 @@ export class Chats {
   }
   escape(){if(this.liveOpen){this.closeLive();return true}return false}
   private updateUnread(){this.universe.setUnread(this.unread.size);}
+  private scrollLiveEnd(){this.livePinned=true;this.liveNew.hidden=true;this.liveHistory.scrollTop=this.liveHistory.scrollHeight;}
+  private sortLive(){
+    const rows=[...this.liveRows.values()].sort((a,b)=>compareLiveMessages(a.message,b.message));
+    // Move only the rows that are out of order. Existing optimistic rows retain
+    // their timestamp when server data arrives, so acceptance cannot jump them.
+    rows.forEach((row,index)=>{const current=this.liveHistory.children[index];if(current!==row.root)this.liveHistory.insertBefore(row.root,current||null)});
+  }
   private resetHint(text:string|null){
     const value=translateText(text||'');return !value||[t('connection.retrying'),t('chat.offline'),t('guide.future'),t('chat.mockHint'),t('chat.ask')].includes(value)||!!this.waitHint&&value===translateText(this.waitHint);
   }
@@ -183,12 +199,13 @@ export class Chats {
     const temp=retry?.message.id||'pending_'+crypto.randomUUID();let row=retry;
     if(!row){this.addLive({id:temp,from:'visitor',text,ts:new Date().toISOString()},'sending');row=this.liveRows.get(temp)!}else {row.error=undefined;row.state='sending';row.status.textContent=t('chat.sending');row.root.querySelector('.message-retry')?.remove()}
     if(!retry)this.liveInput.value='';this.refresh();
+    this.scrollLiveEnd();
     const epoch=this.identityEpoch;this.livePosts++;
     try{
       const accepted=await this.backend.sendLiveMessage(text,this.liveName.value.trim()||undefined);
       if(epoch!==this.identityEpoch||this.stopped)return;
       const duplicate=this.liveRows.get(accepted.message_id);if(duplicate&&duplicate!==row){duplicate.root.remove();this.liveRows.delete(accepted.message_id)}
-      this.liveRows.delete(temp);row.message.id=accepted.message_id;this.liveRows.set(accepted.message_id,row);
+      this.liveRows.delete(temp);row.message.id=accepted.message_id;row.root.dataset.messageId=accepted.message_id;this.liveRows.set(accepted.message_id,row);
       this.delivery(accepted.message_id,'sent');this.liveRuns.set(accepted.run_id,accepted.message_id);
       const receipt=this.liveReceipts.get(accepted.message_id);this.liveReceipts.delete(accepted.message_id);
       if(receipt?.runId===accepted.run_id)this.delivery(accepted.message_id,receipt.state);
@@ -201,12 +218,19 @@ export class Chats {
     this.refresh();
   }
   private addLive(message:LiveMessage,state:'sending'|LiveDeliveryStatus='sent',restored=false){
-    if(this.liveRows.has(message.id)){if(restored)this.delivery(message.id,'delivered_to_owner');return}
+    const normalized=normalizeLiveMessage(message);if(!normalized)return;message=normalized;
+    const existing=this.liveRows.get(message.id);
+    if(existing){
+      existing.message={...message,...(existing.optimistic?{ts:existing.message.ts,created_at:existing.message.created_at}:{})};
+      existing.root.querySelector('p')!.textContent=message.text;
+      if(restored)this.delivery(message.id,'delivered_to_owner');
+      this.sortLive();return;
+    }
     if(message.from==='owner')state='delivered_to_owner';
-    const root=element('div','','chat-message '+message.from);root.append(element('span',message.from==='owner'?portfolio.meta.owner:t('common.you'),'message-author'),element('p',message.text));const status=element('span','','message-state');const meta=metadata(message.ts);meta.append(status);root.append(meta);const row={message,root,status,state};this.liveRows.set(message.id,row);this.liveHistory.append(root);
+    const root=element('div','','chat-message '+message.from);root.dataset.messageId=message.id;root.append(element('span',message.from==='owner'?portfolio.meta.owner:t('common.you'),'message-author'),element('p',message.text));const status=element('span','','message-state');const meta=metadata(liveTimestamp(message));meta.append(status);root.append(meta);const row={message,root,status,state,optimistic:state==='sending'};this.liveRows.set(message.id,row);this.liveHistory.append(root);this.sortLive();
     if(!restored)this.universe.setChatMessage(message.text,message.from);
-    if(message.from==='visitor')this.delivery(message.id,state);else if(!this.liveOpen&&(!restored||Date.parse(message.ts)>Date.parse(read('nexo.live.readAt')||'1970-01-01')))this.unread.add(message.id);
-    if(this.liveOpen){save('nexo.live.readAt',new Date().toISOString());this.liveHistory.scrollTop=this.liveHistory.scrollHeight}this.updateUnread();
+    if(message.from==='visitor')this.delivery(message.id,state);else if(!this.liveOpen&&(!restored||Date.parse(liveTimestamp(message))>Date.parse(read('nexo.live.readAt')||'1970-01-01')))this.unread.add(message.id);
+    if(this.liveOpen){save('nexo.live.readAt',new Date().toISOString());if(this.livePinned||state==='sending')this.scrollLiveEnd();else if(!restored)this.liveNew.hidden=false}this.updateUnread();
   }
   private delivery(id:string,state:'sending'|LiveDeliveryStatus,retryable?:boolean){
     const row=this.liveRows.get(id);if(!row||!['sending','sent','delivered_to_owner','failed'].includes(state))return;
