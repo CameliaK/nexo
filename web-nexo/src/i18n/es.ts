@@ -1,4 +1,7 @@
 export const es = {
+  "chat.emptyAgent": "Pregúntale a Nexo sobre Kirbith y su trabajo.",
+  "chat.emptyLive": "Escríbele a Kirbith. Tu conversación empieza aquí.",
+  "chat.privacyLine": "Tus datos y mensajes ·",
   "mobile.chat": "Chat",
   "mobile.chats": "Chats durante la partida",
   "mobile.chatUnread": "Abrir chat, mensaje nuevo",
@@ -132,8 +135,8 @@ export const es = {
   "welcome.askDetail": "Escríbele a Nexo, el asistente de Kirbith; te lleva a la respuesta o crea un nodo para ti.",
   "welcome.inspect": "Mira por dentro",
   "welcome.inspectDetail": "La ventana del sistema muestra el backend trabajando en tiempo real.",
-  "welcome.enter": "Entrar al universo",
   "welcome.skip": "Omitir",
+  "welcome.enter": "Entrar al universo",
   "welcome.reopen": "Abrir bienvenida y guía del portafolio",
   "welcome.click": "Haz clic",
   "app.explorer": "Explorador de constelaciones",

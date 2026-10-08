@@ -1,5 +1,8 @@
 import type { UIKey } from './es';
 export const en = {
+  "chat.emptyAgent": "Ask Nexo about Kirbith and his work.",
+  "chat.emptyLive": "Message Kirbith. Your conversation starts here.",
+  "chat.privacyLine": "Your data and messages ·",
   "mobile.chat": "Chat",
   "mobile.chats": "Chats during the game",
   "mobile.chatUnread": "Open chat, new message",
@@ -133,8 +136,8 @@ export const en = {
   "welcome.askDetail": "Write to Nexo, Kirbith's assistant; it takes you to the answer or creates a node for you.",
   "welcome.inspect": "Look inside",
   "welcome.inspectDetail": "The system window shows the backend working in real time.",
-  "welcome.enter": "Enter the universe",
   "welcome.skip": "Skip",
+  "welcome.enter": "Enter the universe",
   "welcome.reopen": "Open the portfolio welcome and guide",
   "welcome.click": "Click",
   "app.explorer": "Constellation explorer",
