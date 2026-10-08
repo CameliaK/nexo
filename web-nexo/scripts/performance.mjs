@@ -63,7 +63,7 @@ try{
   });
   const board=await page.locator('.chess-board').boundingBox();
   results.push({run:run+1,interactiveMs:interactive,cameraFps:fps,...opening,board});
-  if(run===0)await page.screenshot({path:output.replace(/\.json$/,'.png'),scale:'css'});
+  if(run===0&&process.env.PERF_CAPTURE!=='0')await page.screenshot({path:output.replace(/\.json$/,'.png'),scale:'css'});
   await context.close();
  }
  const average=key=>results.reduce((sum,r)=>sum+r[key],0)/results.length;

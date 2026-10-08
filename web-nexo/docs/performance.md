@@ -206,3 +206,13 @@ una primera pasada de esta revisión dio 42.1 ms / 60.2 FPS / 1 / 0.
 Se conserva el rendimiento dentro de la variación observada entre pasadas.
 Resultados y reproducción: [UI móvil](mobile/ui/README.md),
 [medición final](mobile/ui/performance.json).
+
+## Chat en vivo — 2026-10-08
+
+Producción, Apple M2 / Chrome 154, DPR 2, 1366×768 y 12 nodos generados,
+tres pasadas sin pruebas concurrentes: **43.2 ms** hasta interacción,
+**60.05 FPS** al arrastrar la cámara, **1** fotograma perdido inesperado y
+**0** tareas largas. Frente a la base publicada de 43.9 ms / 60.06 FPS / 1 / 0,
+no se observa regresión. El panel de chat normal reduce el universo a 30 FPS,
+usa una superficie opaca y cachea la geometría de cabecera fuera del bucle.
+[Medición](chat-fix/performance.json), [validación y reproducción](chat-fix/README.md).

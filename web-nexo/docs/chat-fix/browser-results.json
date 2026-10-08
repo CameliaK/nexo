@@ -1,0 +1,334 @@
+{
+  "production": true,
+  "url": "http://127.0.0.1:4196",
+  "reports": [
+    {
+      "engine": "chromium",
+      "viewport": "1366x768",
+      "docked": false,
+      "chess": false,
+      "language": "en",
+      "historyShape": "{ conversation_id, messages: [{ id, from, text, ts }] }, no status",
+      "historyOrder": "descending",
+      "verified": [
+        "receipt-before-POST",
+        "receipt-after-POST",
+        "202-without-WS",
+        "HTTP-failure-and-retry",
+        "owner-reply",
+        "scroll-reading-and-own-send",
+        "reconnection",
+        "reload",
+        "opaque-composer",
+        "four-line-draft",
+        "focus-and-ESC",
+        "visualViewport"
+      ],
+      "posts": 6,
+      "tickets": 3,
+      "screenshot": {
+        "panel": {
+          "x": 30,
+          "y": 64,
+          "width": 440,
+          "height": 680,
+          "top": 64,
+          "right": 470,
+          "bottom": 744,
+          "left": 30
+        },
+        "input": {
+          "x": 49,
+          "y": 624,
+          "width": 350,
+          "height": 46,
+          "top": 624,
+          "right": 399,
+          "bottom": 670,
+          "left": 49
+        },
+        "send": {
+          "x": 407,
+          "y": 626,
+          "width": 44,
+          "height": 44,
+          "top": 626,
+          "right": 451,
+          "bottom": 670,
+          "left": 407
+        },
+        "privacy": {
+          "x": 49,
+          "y": 686,
+          "width": 402,
+          "height": 39,
+          "top": 686,
+          "right": 451,
+          "bottom": 725,
+          "left": 49
+        },
+        "counter": {
+          "x": 49,
+          "y": 674,
+          "width": 350,
+          "height": 12,
+          "top": 674,
+          "right": 399,
+          "bottom": 686,
+          "left": 49
+        },
+        "background": "rgb(20, 37, 43)",
+        "before": "none",
+        "hit": true,
+        "height": 768,
+        "mainInert": true
+      }
+    },
+    {
+      "engine": "chromium",
+      "viewport": "1366x768",
+      "docked": false,
+      "chess": true,
+      "language": "es",
+      "historyShape": "{ conversation_id, messages: [{ id, from, text, ts }] }, no status",
+      "historyOrder": "descending",
+      "verified": [
+        "receipt-before-POST",
+        "receipt-after-POST",
+        "202-without-WS",
+        "HTTP-failure-and-retry",
+        "owner-reply",
+        "scroll-reading-and-own-send",
+        "reconnection",
+        "reload",
+        "opaque-composer",
+        "four-line-draft",
+        "focus-and-ESC",
+        "visualViewport"
+      ],
+      "posts": 6,
+      "tickets": 3,
+      "screenshot": {
+        "panel": {
+          "x": 30,
+          "y": 64,
+          "width": 440,
+          "height": 680,
+          "top": 64,
+          "right": 470,
+          "bottom": 744,
+          "left": 30
+        },
+        "input": {
+          "x": 49,
+          "y": 624,
+          "width": 350,
+          "height": 46,
+          "top": 624,
+          "right": 399,
+          "bottom": 670,
+          "left": 49
+        },
+        "send": {
+          "x": 407,
+          "y": 626,
+          "width": 44,
+          "height": 44,
+          "top": 626,
+          "right": 451,
+          "bottom": 670,
+          "left": 407
+        },
+        "privacy": {
+          "x": 49,
+          "y": 686,
+          "width": 402,
+          "height": 39,
+          "top": 686,
+          "right": 451,
+          "bottom": 725,
+          "left": 49
+        },
+        "counter": {
+          "x": 49,
+          "y": 674,
+          "width": 350,
+          "height": 12,
+          "top": 674,
+          "right": 399,
+          "bottom": 686,
+          "left": 49
+        },
+        "background": "rgb(20, 37, 43)",
+        "before": "none",
+        "hit": true,
+        "height": 768,
+        "mainInert": true
+      }
+    },
+    {
+      "engine": "webkit",
+      "viewport": "390x844",
+      "docked": false,
+      "chess": false,
+      "language": "es",
+      "historyShape": "{ conversation_id, messages: [{ id, from, text, ts }] }, no status",
+      "historyOrder": "descending",
+      "verified": [
+        "receipt-before-POST",
+        "receipt-after-POST",
+        "202-without-WS",
+        "HTTP-failure-and-retry",
+        "owner-reply",
+        "scroll-reading-and-own-send",
+        "reconnection",
+        "reload",
+        "opaque-composer",
+        "four-line-draft",
+        "focus-and-ESC",
+        "visualViewport"
+      ],
+      "posts": 6,
+      "tickets": 3,
+      "screenshot": {
+        "panel": {
+          "x": 12,
+          "y": 12,
+          "width": 366,
+          "height": 748,
+          "top": 12,
+          "right": 378,
+          "bottom": 760,
+          "left": 12
+        },
+        "input": {
+          "x": 25,
+          "y": 646,
+          "width": 288,
+          "height": 46,
+          "top": 646,
+          "right": 313,
+          "bottom": 692,
+          "left": 25
+        },
+        "send": {
+          "x": 321,
+          "y": 648,
+          "width": 44,
+          "height": 44,
+          "top": 648,
+          "right": 365,
+          "bottom": 692,
+          "left": 321
+        },
+        "privacy": {
+          "x": 25,
+          "y": 708,
+          "width": 340,
+          "height": 39,
+          "top": 708,
+          "right": 365,
+          "bottom": 747,
+          "left": 25
+        },
+        "counter": {
+          "x": 25,
+          "y": 696,
+          "width": 288,
+          "height": 12,
+          "top": 696,
+          "right": 313,
+          "bottom": 708,
+          "left": 25
+        },
+        "background": "rgb(20, 37, 43)",
+        "before": "none",
+        "hit": true,
+        "height": 844,
+        "mainInert": true
+      }
+    },
+    {
+      "engine": "webkit",
+      "viewport": "390x844",
+      "docked": true,
+      "chess": false,
+      "language": "en",
+      "historyShape": "{ conversation_id, messages: [{ id, from, text, ts }] }, no status",
+      "historyOrder": "descending",
+      "verified": [
+        "receipt-before-POST",
+        "receipt-after-POST",
+        "202-without-WS",
+        "HTTP-failure-and-retry",
+        "owner-reply",
+        "scroll-reading-and-own-send",
+        "reconnection",
+        "reload",
+        "opaque-composer",
+        "four-line-draft",
+        "focus-and-ESC",
+        "visualViewport"
+      ],
+      "posts": 6,
+      "tickets": 3,
+      "screenshot": {
+        "panel": {
+          "x": 0,
+          "y": 411.390625,
+          "width": 390,
+          "height": 360.59375,
+          "top": 411.390625,
+          "right": 390,
+          "bottom": 771.984375,
+          "left": 0
+        },
+        "input": {
+          "x": 12,
+          "y": 683.296875,
+          "width": 314,
+          "height": 46,
+          "top": 683.296875,
+          "right": 326,
+          "bottom": 729.296875,
+          "left": 12
+        },
+        "send": {
+          "x": 334,
+          "y": 685.296875,
+          "width": 44,
+          "height": 44,
+          "top": 685.296875,
+          "right": 378,
+          "bottom": 729.296875,
+          "left": 334
+        },
+        "privacy": {
+          "x": 12,
+          "y": 750.296875,
+          "width": 366,
+          "height": 11.6875,
+          "top": 750.296875,
+          "right": 378,
+          "bottom": 761.984375,
+          "left": 12
+        },
+        "counter": {
+          "x": 12,
+          "y": 733.296875,
+          "width": 314,
+          "height": 12,
+          "top": 733.296875,
+          "right": 326,
+          "bottom": 745.296875,
+          "left": 12
+        },
+        "background": "rgb(20, 37, 43)",
+        "before": "none",
+        "hit": true,
+        "height": 844,
+        "mainInert": true
+      }
+    }
+  ]
+}

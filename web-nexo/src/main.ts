@@ -59,7 +59,16 @@ async function start() {
   const access=createAccessPanel(account,{simulatedLink:setup.development?.simulatedLink,onAccount:()=>accountNode.open(),onSignedIn:()=>{if(continuation.takeChess())universe.openChess()},onRoute:()=>{if(!welcome.element.hidden)welcome.close()},onIdentity:()=>{chats.resetIdentity();void chats.connection(connection)}});
   accountNode=createAccountNode(account,()=>access.open());
   let identityKey='guest';
-  const stopAccount=account.subscribe(()=>{const key=account.me.mode+':'+(account.me.email_hint||'');if(key!==identityKey){chats?.resetIdentity();identityKey=key}universe.setOwnerGames(account.me.mode==='owner',account.ownerGames)});
+  const stopAccount=account.subscribe(()=>{
+    const key=account.me.mode+':'+(account.me.email_hint||'');
+    if(key!==identityKey){
+      chats?.resetIdentity();identityKey=key;
+      // The initial auth refresh may finish after WS history loading. Reload
+      // that history for the definitive session instead of leaving it cleared.
+      if(chats&&connection==='open')void chats.connection(connection);
+    }
+    universe.setOwnerGames(account.me.mode==='owner',account.ownerGames);
+  });
   const ownerRoute=createOwnerChessRoute(account,(id,isCurrent)=>{if(!welcome.element.hidden)welcome.close();return universe.openOwnerGame(id,isCurrent)});
   welcome.attachUniverse(()=>universe.firstRootNode());
   chats=new Chats(backend,universe,traces,setup.simulated);

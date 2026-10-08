@@ -175,7 +175,7 @@ export class Chats {
     const record=portfolio.nodes.find(n=>n.type==='live_chat')!,content=record.content as {intro:string;name_label:string;placeholder:string;note:string};
     this.livePanel.querySelector('.live-intro')!.textContent=content.intro;
     this.nameWrap.querySelector('span')!.textContent=content.name_label;this.liveInput.placeholder=content.placeholder;
-    for(const row of this.liveRows.values())if(row.message.from==='visitor')this.delivery(row.message.id,row.state,row.retryable);
+    for(const row of this.liveRows.values())this.delivery(row.message.id,row.state,row.retryable);
     for(const [id,row] of this.steps)row.textContent=stepLabels()[id as keyof ReturnType<typeof stepLabels>]+(row.dataset.state==='done'?t('step.done'):row.dataset.state==='skipped'?t('step.skipped'):'');
     const run=this.activeRun?this.runs.get(this.activeRun):undefined;if(run?.path.length)this.routeLabel.textContent=t('step.route',{path:run.path.map(id=>this.universe.nodeLabel(id)).join(' › ')});
     for(const row of this.errorRows)row.element.textContent=chatErrorText(row.error);
@@ -247,12 +247,13 @@ export class Chats {
     if(message.from==='owner')state='delivered_to_owner';
     const root=element('div','','chat-message '+message.from);root.dataset.messageId=message.id;root.append(element('span',message.from==='owner'?portfolio.meta.owner:t('common.you'),'message-author'),element('p',message.text));const status=element('span','','message-state');const meta=metadata(liveTimestamp(message));meta.append(status);root.append(meta);const row={message,root,status,state,optimistic:state==='sending'};this.liveRows.set(message.id,row);this.liveHistory.append(root);this.sortLive();
     if(!restored)this.universe.setChatMessage(message.text,message.from);
-    if(message.from==='visitor')this.delivery(message.id,state);else if(!this.liveOpen&&(!restored||Date.parse(liveTimestamp(message))>Date.parse(read('nexo.live.readAt')||'1970-01-01')))this.unread.add(message.id);
+    this.delivery(message.id,state);
+    if(message.from==='owner'&&!this.liveOpen&&(!restored||Date.parse(liveTimestamp(message))>Date.parse(read('nexo.live.readAt')||'1970-01-01')))this.unread.add(message.id);
     if(this.liveOpen){save('nexo.live.readAt',new Date().toISOString());if(this.livePinned||state==='sending')this.scrollLiveEnd();else if(!restored)this.liveNew.hidden=false}this.updateUnread();
   }
   private delivery(id:string,state:'sending'|LiveDeliveryStatus,retryable?:boolean){
     const row=this.liveRows.get(id);if(!row||!['sending','sent','delivered_to_owner','failed'].includes(state))return;
-    if(row.message.from==='owner'){row.state='delivered_to_owner';row.root.querySelector('.message-retry')?.remove();return}
+    if(row.message.from==='owner'){row.state='delivered_to_owner';row.retryable=false;row.root.dataset.delivery='delivered_to_owner';row.status.textContent=t('chat.delivered');row.root.querySelector('.message-retry')?.remove();return}
     if(row.state==='delivered_to_owner'&&state==='sent')return;
     retryable??=row.retryable??true;row.state=state;row.retryable=retryable;row.root.dataset.delivery=state;row.status.textContent={sending:t('chat.sending'),sent:t('chat.sent'),delivered_to_owner:t('chat.delivered'),failed:t('chat.failed')}[state];
     if(state!=='failed'||!retryable)row.root.querySelector('.message-retry')?.remove();

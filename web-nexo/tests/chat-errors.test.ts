@@ -157,6 +157,17 @@ test('Real live contract: only genuine POST/explicit failures allow own retry; s
  }
 });
 
+test('A receipt buffered by message ID survives a missing run.start and requires the accepted run ID',async()=>{
+ for(const sameRun of [true,false]){
+  let f;f=setup((path,request)=>{
+   if(request.method!=='POST')return ok(path);
+   f.chats.receive(event(sameRun?liveContract.accepted.run_id:'other-run',2,'live.delivery',{message_id:liveContract.accepted.message_id,status:'delivered_to_owner'}));
+   return json(liveContract.accepted,202);
+  });
+  try{await f.ready();f.chats.liveInput.value='Receipt';await f.chats.sendLive();assert.equal(f.chats.liveRows.get(liveContract.accepted.message_id).state,sameRun?'delivered_to_owner':'sent');assert.equal(f.chats.liveHistory.querySelectorAll('.message-retry').length,0)}finally{f.dispose()}
+ }
+});
+
 test('Descending history is sorted oldest first with stable ID ties; created_at is supported and optimistic echoes merge in place',async()=>{
  const history=JSON.parse(JSON.stringify(liveContract.history).replaceAll('2026-10-08','2020-10-08'));
  const f=setup((path,request)=>request.method==='POST'?json(liveContract.accepted,202):path.includes('/live/')?json(history):ok(path));
