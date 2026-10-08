@@ -68,7 +68,7 @@ export function mobileChessLayout({width,height,safeTop=0,safeBottom=0,offsetTop
  const camera={...projection,scale,x:(left+right)/2-(unit.left+unit.right)*scale/2,y:landscape?(area.top+area.bottom)/2-(unit.top+unit.bottom)*scale/2:area.top+Math.min(24,(area.bottom-area.top-(unit.bottom-unit.top)*scale)/2)-unit.top*scale};
  const bounds=chessBounds(camera),railLeft=landscape?width-184:12,railTop=landscape?top+52:bounds.bottom+8;
  return {camera,area,system,stacked:!landscape,compact:true,
-  header:{left:landscape?164:12,top:top+4,width:landscape?width-290:width-132,height:headerHeight},
+  header:{left:landscape?164:12,top:top+4,width:landscape?width-290:width-186,height:headerHeight},
   close:{left:width-12,top:top+4},
   black:{left:12,top:top+(landscape?4:50),width:landscape?140:system.left-24,height:playerHeight},
   white:{left:12,top:top+(landscape?30:76),width:landscape?140:system.left-24,height:playerHeight},

@@ -1,5 +1,6 @@
 import type { UIKey } from './es';
 export const en = {
+  "nav.touchHint": "Tap a node to explore",
   "chat.emptyAgent": "Ask Nexo about Kirbith and his work.",
   "chat.emptyLive": "Message Kirbith. Your conversation starts here.",
   "chat.privacyLine": "Your data and messages ·",

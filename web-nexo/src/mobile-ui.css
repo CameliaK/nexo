@@ -61,3 +61,52 @@ body.mobile-chess-chat .privacy-summary{display:block;font-size:9px;line-height:
 body.mobile-chess-chat[data-mobile-keyboard=true] .live-name{display:none}
 
 .panel-compose>.chat-privacy-bar{display:block;border:0;border-radius:0;background:none;margin:0;padding:0}
+
+.mobile-instruction{display:none}
+@media(max-width:650px){
+ body{--root-bottom-inset:calc(max(env(safe-area-inset-bottom),16px) + 56px)}
+ footer{bottom:var(--root-bottom-inset);left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));height:112px;display:block;border:0;padding:0}
+ footer .scene-info{position:absolute;left:0;bottom:64px;margin:0;width:158px;gap:0}
+ footer .scene-info .eyebrow{font-size:8px}
+ footer .scene-count{font-size:9px;margin-top:4px}
+ footer .privacy-footer{left:166px;right:auto;top:15px;font-size:9px;line-height:16px}
+ footer .instruction{display:flex;position:absolute;left:0;right:auto;top:auto;bottom:44px;max-width:210px;margin:0;justify-content:flex-start;font-size:9px;line-height:16px}
+ footer #instruction-text{display:none}
+ footer .mobile-instruction{display:inline}
+ .language-node{left:max(16px,env(safe-area-inset-left));bottom:var(--root-bottom-inset);width:44px;height:44px}
+ .welcome-help{left:calc(max(16px,env(safe-area-inset-left)) + 44px);bottom:var(--root-bottom-inset);width:44px;height:44px}
+ .account-node{left:calc(max(16px,env(safe-area-inset-left)) + 88px);bottom:var(--root-bottom-inset);width:44px;height:44px}
+ footer .tools{position:absolute;right:0;bottom:0;height:44px;gap:0;padding:0;background:none;border:0;backdrop-filter:none}
+ footer .tools button{width:32px;height:44px}
+ footer .tools .zoom-label{min-width:28px;font-size:9px}
+ footer .tools .tool-divider{margin:0 3px}
+ .floating-chess .floating-chess-caption{font-size:11px;width:110px;white-space:normal;line-height:1.3}
+ .floating-chess .floating-chess-caption small{display:block;font-size:8px;line-height:1.4;letter-spacing:.05em;white-space:normal}
+ .floating-chess[data-compact-caption=true] .floating-chess-caption small{display:block}
+}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:650px){
+ body{--root-bottom-inset:calc(max(env(safe-area-inset-bottom),16px) + 56px)}
+ footer{left:16px;right:16px;bottom:var(--root-bottom-inset);height:44px;border:0;padding:0;display:block}
+ .language-node,.welcome-help,.account-node{bottom:var(--root-bottom-inset);width:44px;height:44px}
+ .language-node{left:16px}.welcome-help{left:60px}.account-node{left:104px}
+ footer .scene-info{position:absolute;left:160px;bottom:0;width:158px;margin:0;height:44px;font-size:9px}
+ footer .scene-info .eyebrow{font-size:8px}
+ footer .scene-count{font-size:9px;margin-top:4px}
+ footer .instruction{display:none}
+ footer .privacy-footer{left:326px;right:auto;top:16px;font-size:10px}
+ footer .tools{position:absolute;right:0;bottom:0;height:44px;margin:0;padding:0;border:0;background:none;backdrop-filter:none}
+ footer .tools button{height:44px;width:34px}
+ .floating-chess .floating-chess-caption{width:110px;font-size:11px;line-height:1.3}
+ .floating-chess .floating-chess-caption small{display:block;font-size:8px;letter-spacing:.05em;line-height:1.4;white-space:normal}
+ .node-label{width:130px;top:calc(50% + var(--radius) + 12px);gap:4px}
+ .node-name{font-size:10px}.node-meta{font-size:8px;letter-spacing:.02em}
+ .node-name .node-index{font-size:8px}
+}
+@media(max-width:650px),(pointer:coarse) and (max-height:650px){footer .scene-info>div{font-size:8px;line-height:1.3}}
+@media(max-width:650px){#companion-target{width:52px;height:52px}}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:650px){
+ .orientation{top:80px}
+ .orientation h1{font-size:20px;margin:6px 0 7px}
+ .orientation .back-wrap{top:80px}
+}
+body.mobile-chess .chess-scene .chess-heading h2{font-size:12px;line-height:1.25;white-space:normal;overflow:visible;text-overflow:clip;margin:0}

@@ -88,7 +88,6 @@ body.mobile-chess .chess-heading{width:var(--chess-header-width)}
 body.mobile-chess .chess-heading h2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.mobile-chess .chess-history .chess-eyebrow{display:block;font-size:9px}
 @media(orientation:landscape){body.mobile-chess .mobile-chess-chat-toggle{top:calc(var(--mobile-top,0px) + env(safe-area-inset-top) + 190px);left:12px;right:auto}}
-@media(max-width:650px) and (max-height:720px){.floating-chess[data-compact-caption=true] .floating-chess-caption small{display:none}}
 body.mobile-chess-chat .privacy-notice{font-size:9px;line-height:1.25;margin:4px 0 0;flex:none}
 body.mobile-chess-chat .live-panel .privacy-notice{max-height:48px;overflow-y:auto}
 /* Transformed world nodes must not enlarge a mobile browser's layout viewport. */

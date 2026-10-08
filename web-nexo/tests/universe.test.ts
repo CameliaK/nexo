@@ -482,3 +482,14 @@ test('Focus returns from the expanded system and Back restores the system and it
 test('Manual input during the root exit cancels the subsequent automatic focus, without consuming the formation',()=>{
  const {api,frames,enter,listeners}=fixture();frames(100);enter('experiencia');enter('experiencia.infosys');api.formGenerated('exit-forming',['experiencia.infosys']);api.spawnGenerated(focusNode(),null,false,'exit-forming');frames(100);listeners['document:click']({});frames(4000);assert.equal(api.getLevel().id,'experiencia');assert.equal(api.camera().zoom,1);assert.ok(api.generatedRegistry.has('gen_focus'));api.dispose();
 });
+
+test('Nexo yields to chess and node hit areas on short phones, including reduced motion',()=>{
+ for(const [width,height]of [[360,640],[390,664],[390,844]])for(const reduced of [false,true]){
+  const {api,frames,sandbox,listeners,el}=fixture(true,reduced);
+  sandbox.innerWidth=width;sandbox.innerHeight=height;listeners.resize();el('companion-panel').hidden=true;el('content-card').hidden=true;frames(100);
+  const chess=api.chessOrbit();api.companion.locked=false;api.companion.x=chess.sx;api.companion.y=chess.sy;frames(500);
+  const hit={left:api.companion.x-26,right:api.companion.x+26,top:api.companion.y-26,bottom:api.companion.y+26};
+  const current=api.chessOrbit();assert.equal(satellite.intersects(hit,{left:current.sx-25,right:current.sx+25,top:current.sy-25,bottom:current.sy+25}),false);
+  for(const node of api.getNodes())assert.equal(satellite.intersects(hit,{left:node.sx-node.sr,right:node.sx+node.sr,top:node.sy-node.sr,bottom:node.sy+node.sr}),false,node.id+' stays tappable');
+ }
+});

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium,devices,mobileFixture} from './mobile-fixture.mjs';
-async function input(page,selector,touch){const box=await page.locator(selector).boundingBox();assert.ok(box);const x=box.x+box.width/2,y=box.y+box.height/2;if(touch)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y)}
+async function input(page,selector,touch){await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));const box=await page.locator(selector).boundingBox();assert.ok(box);const x=box.x+box.width/2,y=box.y+box.height/2;assert.ok(await page.evaluate(({selector,x,y})=>document.querySelector(selector).contains(document.elementFromPoint(x,y)),{selector,x,y}),selector+' receives input');if(touch)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y)}
 const browser=await chromium.launch();
 try{
  for(const [name,options,reduced]of [['desktop',{viewport:{width:1366,height:768}},false],['iPhone',devices['iPhone 13'],false],['reduced',{...devices['iPhone 13'],reducedMotion:'reduce'},true]]){

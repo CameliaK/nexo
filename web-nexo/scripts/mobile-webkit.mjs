@@ -22,5 +22,5 @@ try{
   await p.goto(origin+'/privacidad');await p.locator('#privacy-content h1').waitFor();assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.ok((await p.locator('#privacy-content').innerText()).includes(lang==='es'?'contacto@kirbith.dev':'contacto@kirbith.dev'));
   assert.deepEqual(f.errors,[]);reports.push({width,height,lang,passed:true});console.log(`WebKit mobile QA OK: ${width}x${height} ${lang}`);await f.context.close();
  }
- await writeFile(fileURLToPath(new URL('../docs/mobile/fix/webkit-results.json',import.meta.url)),JSON.stringify({engine:'WebKit 26.6',reports},null,2)+'\n');
+ await writeFile(fileURLToPath(new URL('../docs/mobile/ui/webkit-results.json',import.meta.url)),JSON.stringify({engine:'WebKit 26.6',reports},null,2)+'\n');
 }finally{await browser.close()}

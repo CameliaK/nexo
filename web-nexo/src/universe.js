@@ -79,7 +79,7 @@ const root=buildScene(portfolio.root.id);
 let frameId=null,lastPaint=0,hiddenAt=0;
 let width=innerWidth, height=innerHeight, dpr=1, clock=0, last=0,occupiedNodeBounds=[],occupiedMediaBounds=[];
 let zoom=1, targetZoom=1, hoverId=null, focusedId=null;
-const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+const reduced=matchMedia('(prefers-reduced-motion: reduce)'),coarse=matchMedia('(pointer:coarse)');
 let paused=reduced.matches, level=root, stack=[], nodes=[], travel=null, returnTarget=null, navigationQueue=[];
 let pointer={x:0,y:0}, parallax={x:0,y:0}, pan={x:0,y:0}, drag=null;
 const companion={x:innerWidth*.82,y:innerHeight*.67,tx:innerWidth*.82,ty:innerHeight*.67,vx:0,vy:0,present:false,touch:false};
@@ -128,7 +128,7 @@ function systemFrame(view=camera()){
     if(document.body.classList.contains('mobile-system-expanded'))return{left:12,top:top+h*.25+56,width:width-24,height:h*.60-70};
     return mobileSystemBox({width,height:h,safeTop:Number(document.body.dataset.safeTop)||0,offsetTop:Number(document.body.dataset.mobileTop)||0,chat:document.body.classList.contains('mobile-chess-chat'),landscape:width>height});
   }
-  const mobile=width<650,scale=view.zoom;
+  const mobile=compactUniverse(),scale=view.zoom;
   const w=(mobile?138:218)*scale,h=(mobile?88:120)*scale;
   const anchorX=width*(mobile?.79:.87),anchorY=height*(mobile?.25:.32);
   const x=width/2+(anchorX-width/2)*scale+view.pan.x+view.parallax.x*9;
@@ -195,6 +195,7 @@ function openChess(){
   drag=null;chessJourney={source:source(),systemFrom:distantSystemBounds(),snapshot:null,soft:null};system.chess.open(chessJourney.source,source);chessTarget.setAttribute('aria-expanded','true');chessTarget.hidden=true;
 }
 let worldLayoutKey='',worldLayout=new Map();
+function compactUniverse(){return width<650||coarse.matches&&width>height&&height<650}
 function rootWorldLayout(population){
   // Allocate once at a neutral camera. Pan and zoom only project world positions.
   const extras=population.filter(n=>n.generated||n.privatePanel);
@@ -205,20 +206,20 @@ function rootWorldLayout(population){
   const sb=distantSystemBounds(base);
   obstacles.push({left:sb.left-20,right:sb.left+sb.width+20,top:sb.top-20,bottom:sb.top+sb.height+40});
   for(const n of population.filter(n=>!n.generated&&!n.privatePanel)){
-    const p=layout(n,root,base),reach=p.r*1.85+16,half=width<650?82:115;
+    const p=layout(n,root,base),reach=p.r*1.85+16,half=compactUniverse()?82:115;
     obstacles.push({left:p.x-reach,right:p.x+reach,top:p.y-reach,bottom:p.y+reach},
-      {left:p.x-half,right:p.x+half,top:p.y+p.r,bottom:p.y+p.r+(width<650?60:95)});
+      {left:p.x-half,right:p.x+half,top:p.y+p.r,bottom:p.y+p.r+(compactUniverse()?60:95)});
   }
   const items=[...(chessTarget&&system.chessNodeVisible?[{id:'floating-chess',footprint:chessFootprint()}]:[]),...extras.filter(n=>n.privatePanel),...extras.filter(n=>n.generated)];
   for(const [index,n] of items.entries()){
     const radius=n.footprint?0:layout(n,root,base).r;
     const half=n.footprint?0:Math.max(radius*1.85+14,width<650?(n.privatePanel?75:48):(n.privatePanel?80:115));
     const footprint=n.footprint||{left:-half,right:half,top:-radius*1.85-14,bottom:radius+(n.privatePanel?65:width<650?72:95)};
-    const preferred={x:width*(index%2?.72:.28),y:height*.76+Math.floor(index/2)*150};
+    const preferred=n.id==='floating-chess'&&compactUniverse()?{x:width>height?67:width*.80,y:width>height?height*.48:height-(ownerMode&&height>=720?235:195)}:{x:width*(index%2?.72:.28),y:height*.76+Math.floor(index/2)*150};
     // Crowded worlds extend below the viewport and remain reachable by panning.
     // A forced screen clamp would cause overlap and make these nodes feel fixed.
     const searchWidth=Math.max(width,footprint.right-footprint.left+32);
-    const lowerBand={left:0,right:searchWidth,top:0,bottom:height*.6};
+    const lowerBand={left:0,right:searchWidth,top:0,bottom:height*(compactUniverse()&&width>height?.35:.6)};
     let point=placeSatellite({width:searchWidth,height,obstacles:[...obstacles,lowerBand],preferred,footprint});
     for(let rows=1;!point;rows++)point=placeSatellite({width:searchWidth,height:height+rows*220,obstacles:[...obstacles,lowerBand],preferred,footprint});
     worldLayout.set(n.id,point);
@@ -233,9 +234,9 @@ function projectWorld(point,view,seed=0){
 }
 function chessOrbit(population=nodes,view=camera()){
   const position=projectWorld(rootWorldLayout(population).get('floating-chess')||{x:width*.28,y:height*.76},view,7.2);
-  return{type:'orb',seed:7.2,color:colors.mint,hover:chessHover?.5:0,weightTier:2,sx:position.x,sy:position.y,sr:(width<650?17:27)*view.zoom*(1+(chessHover?.1:0))};
+  return{type:'orb',seed:7.2,color:colors.mint,hover:chessHover?.5:0,weightTier:2,sx:position.x,sy:position.y,sr:(compactUniverse()?17:27)*view.zoom*(1+(chessHover?.1:0))};
 }
-function chessFootprint(){const access=system.chessAccess?.();if(width<650&&height<720&&(!access||!access.locked&&access.label!==t('auth.soon')))return{left:-55,right:55,top:-35,bottom:48};return width<650?{left:-55,right:55,top:-45,bottom:75}:{left:-80,right:80,top:-60,bottom:95}}
+function chessFootprint(){return compactUniverse()?{left:-55,right:55,top:-30,bottom:75}:{left:-80,right:80,top:-60,bottom:95}}
 const satelliteBox=(position,shape)=>({left:position.x+shape.left,right:position.x+shape.right,top:position.y+shape.top,bottom:position.y+shape.bottom});
 let fixedCache=null,fixedCacheAt=-Infinity;
 function fixedObstacles(){
@@ -243,7 +244,7 @@ function fixedObstacles(){
   if(fixedCache&&now-fixedCacheAt<100)return fixedCache;
   const obstacles=[];
   const add=rect=>{if(rect?.width>0&&rect?.height>0)obstacles.push({left:rect.left,right:rect.left+rect.width,top:rect.top,bottom:rect.top+rect.height})};
-  for(const element of document.querySelectorAll?.('.topbar, .orientation, .level-mark, footer, .language-node, .welcome-help, .account-node, .scene-info, .development-panel, .generated-inventory, .route-notice, .chess-heading, .chess-close, .chess-aside, .chess-player, .chess-help, .chess-popover-backdrop, .owner-pagination')||[]){
+  for(const element of document.querySelectorAll?.(`.topbar, .orientation, .level-mark, ${compactUniverse()?'footer .instruction, footer .tools, footer .privacy-footer, footer .scene-info':'footer'}, .language-node, .welcome-help, .account-node, .scene-info, .development-panel, .generated-inventory, .route-notice, .chess-heading, .chess-close, .chess-aside, .chess-player, .chess-help, .chess-popover-backdrop, .owner-pagination`)||[]){
     if(element.hidden||element.closest?.('[hidden]')||getComputedStyle(element).visibility==='hidden'||getComputedStyle(element).display==='none')continue;
     add(element.getBoundingClientRect());
   }
@@ -605,7 +606,7 @@ document.body.append(flowLegend);
 
 function resize(){
   fixedCache=null;
-  width=innerWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,MOTION.maxDpr);
+  fixedCache=null;worldLayoutKey='';width=innerWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,MOTION.maxDpr);
   if(ownerMode){ownerSignature='';setOwnerGames(ownerMode,ownerKnownGames)}
   canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+'px';canvas.style.height=height+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
   companion.x=clamp(companion.x,30,width-30);companion.y=clamp(companion.y,30,height-30);
@@ -613,16 +614,19 @@ function resize(){
 }
 function camera(){return{zoom,pan:{...pan},parallax:{...parallax}}}
 function layout(n,scene=level,view=camera()){
+  const landscapeMobile=compactUniverse()&&width>height;
   const mobile=width<650,usableH=Math.max(210,height-(mobile?340:280));
   const rootSatellites=scene===root&&chessTarget&&system.chessNodeVisible;
-  const xSpan=mobile?width*.61:Math.min(width*(rootSatellites?.58:.52),rootSatellites?800:740),ySpan=mobile?usableH*(rootSatellites?.54:.81):usableH*.76;
+  const xSpan=landscapeMobile&&scene===root?width:mobile?width*(scene===root?.54:.61):Math.min(width*(rootSatellites?.58:.52),rootSatellites?800:740),ySpan=mobile?usableH*(rootSatellites?.54:.81):usableH*.76;
   const offsetY=mobile?(rootSatellites?-Math.min(78,height*.095):30):0;
   let x=n.x,y=n.y;
   if(mobile&&scene===root){const rootPositions=[[0,-.4],[.49,-.1],[.32,.4],[-.36,.4],[-.49,-.1]];const innerPositions=scene.nodes.length===3?[[-.43,.16],[0,-.34],[.43,.16]]:[[-.12,-.05],[.44,-.34],[.4,.37],[-.46,.39],[-.5,-.37]];const index=scene.nodes.indexOf(n.data||n);[x,y]=(scene===root?rootPositions:innerPositions)[index]||[x,y]}
   if(mobile&&scene!==root&&!scene.system){const index=scene.nodes.indexOf(n.data||n),count=scene.nodes.length;if(count===1){x=0;y=.02}else if(count===2){x=index? .43:-.43;y=.02}else{const rows=Math.ceil(count/2);x=index%2?.49:-.49;y=-.43+Math.floor(index/2)*(.88/Math.max(1,rows-1));if(index===count-1&&count%2)x=0}}
   if(mobile&&scene.system){const points={browser:[0,-.52],traefik:[0,-.34],gateway:[-.46,-.14],redis:[.46,-.14],agent:[0,.05],n8n:[-.46,.26],llm:[.46,.26],postgres:[-.46,.49],owner_channel:[.46,.49]};[x,y]=points[n.id];const row={browser:0,traefik:1,gateway:2,redis:2,agent:3,n8n:4,llm:4,postgres:5,owner_channel:5}[n.id],top=Math.min(274,height*.34),bottom=height-282;y=(top+(bottom-top)*row/5-height*.53-30)/ySpan}
+  if(mobile&&scene===root&&rootSatellites&&!n.generated&&!n.privatePanel){const index=scene.nodes.findIndex(node=>node.id===n.id),lift=height<720?40:ownerMode?32:0;if(index===2||index===3)y-=lift/ySpan}
+  if(landscapeMobile&&scene===root&&!n.generated&&!n.privatePanel){const index=scene.nodes.findIndex(node=>node.id===n.id);x=.26+index*.155-.5;y=(height*.48-height*.53-offsetY)/ySpan}
   const mobileScale=rootSatellites?.48:scene===root&&scene.nodes.some(node=>node.generated)?.44:scene.architecture?.50:.60;
-  return{x:width/2+x*xSpan*view.zoom+view.pan.x+view.parallax.x*(n.r/8),y:height*.53+(offsetY+y*ySpan)*view.zoom+view.pan.y+view.parallax.y*(n.r/8),r:n.r*(mobile?mobileScale:Math.min(1.06,width/1250+.1))*view.zoom};
+  return{x:width/2+x*xSpan*view.zoom+view.pan.x+view.parallax.x*(n.r/8),y:height*.53+(offsetY+y*ySpan)*view.zoom+view.pan.y+view.parallax.y*(n.r/8),r:n.r*(landscapeMobile&&scene===root?.30:mobile?mobileScale:Math.min(1.06,width/1250+.1))*view.zoom};
 }
 function instantiate(scene){return scene.nodes.map((n,i)=>({...n,data:n,dx:0,dy:0,vx:0,vy:0,seed:i*1.7+1.3,hover:0,sx:0,sy:0,sr:0}))}
 function project(state){
@@ -950,13 +954,16 @@ function drawCompanion(dt){
   if(selected&&!travel){const dx=tx-selected.sx,dy=ty-selected.sy,d=Math.hypot(dx,dy)||1,min=selected.sr+radius+24;if(d<min){tx=selected.sx+dx/d*min;ty=selected.sy+dy/d*min}}
   tx=clamp(tx,margin,width-margin);ty=clamp(ty,margin,height-margin);
   if(panelOpen){const bounds=$('companion-panel').getBoundingClientRect();const dockX=clamp(bounds.left-radius-18,margin,width-margin),dockY=clamp(bounds.top+32,margin,height-margin),ease=reduced.matches?1:1-Math.exp(-dt*.18);companion.x=lerp(companion.x,dockX,ease);companion.y=lerp(companion.y,dockY,ease)}
-  if(!paused&&!reduced.matches&&!companion.locked&&!panelOpen){
-    const ease=1-Math.exp(-dt*.055),obstacles=[];
+  const chess=chessTarget&&!chessTarget.hidden?chessOrbit():null,shape=chessFootprint(),chessBox=chess?satelliteBox({x:chess.sx,y:chess.sy},{left:shape.left*zoom,right:shape.right*zoom,top:shape.top*zoom,bottom:shape.bottom*zoom}):null;
+  const obstacles=[...fixedObstacles(),...(chessBox?[chessBox]:[]),...nodes.filter(node=>Number.isFinite(node.sx)).map(node=>({left:node.sx-node.sr-6,right:node.sx+node.sr+6,top:node.sy-node.sr-6,bottom:node.sy+node.sr+6}))],reach=radius+14;
+  const blocked=obstacles.some(box=>companion.x+reach>box.left&&companion.x-reach<box.right&&companion.y+reach>box.top&&companion.y-reach<box.bottom);
+  if((!paused&&!reduced.matches||blocked)&&!companion.locked&&!panelOpen){
+    const ease=paused||reduced.matches?1:1-Math.exp(-dt*.055);
     if(chatPosition&&!livePanelOpen&&!chatMorph){
       obstacles.push(satelliteBox(chatPosition,satelliteFootprint(width<650?17:21,chatPosition.caption)));
       if(chatPosition.bubble&&previewTimer.visible)obstacles.push(satelliteBox(chatPosition,chatPosition.bubble));
     }
-    const reach=radius+14,position=placeSatellite({width,height,obstacles,preferred:{x:tx,y:ty},previous:{x:companion.x,y:companion.y},footprint:{left:-reach,right:reach,top:-reach,bottom:reach},ease});
+    const position=placeSatellite({width,height,obstacles,preferred:{x:tx,y:ty},previous:{x:companion.x,y:companion.y},footprint:{left:-reach,right:reach,top:-reach,bottom:reach},ease});
     if(position){companion.x=position.x;companion.y=position.y}
   }
   // A small delay and gaze keep the character alive without replacing the cursor.

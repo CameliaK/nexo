@@ -1,0 +1,23 @@
+{
+  "engine": "WebKit 26.6",
+  "reports": [
+    {
+      "width": 390,
+      "height": 844,
+      "lang": "es",
+      "passed": true
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "lang": "en",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 640,
+      "lang": "en",
+      "passed": true
+    }
+  ]
+}
