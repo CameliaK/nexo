@@ -1,3 +1,4 @@
+import { icon } from './icons';
 import { t, translateUI } from './i18n';
 import { placeSatellite } from './live-satellite.js';
 
@@ -38,11 +39,11 @@ export function createMediaUI(doc:Document=document) {
   const layer=create('section','media-windows');layer.hidden=true;layer.setAttribute('aria-label',t('media.node'));
   const viewer=create('dialog','media-viewer');viewer.setAttribute('aria-labelledby','media-viewer-title');
   const surface=create('div','media-viewer-surface'),header=create('header','media-viewer-header'),title=create('h2','',t('media.images'));title.id='media-viewer-title';
-  const closeButton=create('button','media-viewer-close','×');closeButton.type='button';closeButton.setAttribute('aria-label',t('media.close'));
+  const closeButton=create('button','media-viewer-close');closeButton.innerHTML=icon('close');closeButton.type='button';closeButton.setAttribute('aria-label',t('media.close'));
   const figure=create('figure'),image=create('img','media-viewer-image');image.width=1600;image.height=1067;image.decoding='async';
-  const caption=create('figcaption','media-viewer-caption'),navigation=create('nav','media-viewer-navigation'),previous=create('button','','←'),next=create('button','','→'),counter=create('span');
+  const caption=create('figcaption','media-viewer-caption'),navigation=create('nav','media-viewer-navigation'),previous=create('button'),next=create('button'),counter=create('span');
   navigation.setAttribute('aria-label',t('media.navigation'));counter.setAttribute('aria-live','polite');
-  previous.type=next.type='button';previous.setAttribute('aria-label',t('media.previous'));next.setAttribute('aria-label',t('media.next'));
+  previous.innerHTML=icon('back');next.innerHTML=icon('next');previous.type=next.type='button';previous.setAttribute('aria-label',t('media.previous'));next.setAttribute('aria-label',t('media.next'));
   header.append(title,closeButton);figure.append(image,caption);navigation.append(previous,counter,next);surface.append(header,figure,navigation);viewer.append(surface);doc.body.append(layer,viewer);
   let tiles:Tile[]=[],key='',nodeLabel='',index=0,returnFocus:HTMLElement|null=null,last=0;
   const usable=()=>tiles.filter(tile=>!tile.failed);

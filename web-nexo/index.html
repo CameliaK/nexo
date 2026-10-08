@@ -34,7 +34,7 @@
       <h1 id="level-title" data-i18n-initial="app.home"></h1>
       <p id="level-description" data-i18n-initial="app.subtitle"></p>
       <span id="example-badge" hidden></span>
-      <div id="scene-facts"></div><div id="scene-highlights"></div><div class="back-wrap"><button id="back" class="back-button" hidden aria-label="" data-i18n-aria-label="common.back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg> <span data-i18n="common.back"></span> <kbd>ESC</kbd></button></div>
+      <div id="scene-facts"></div><div id="scene-highlights"></div><div class="back-wrap"><button id="back" class="back-button" hidden aria-label="" data-i18n-aria-label="common.back"><svg class="ui-icon" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg> <span data-i18n="common.back"></span> <kbd>ESC</kbd></button></div>
     </section>
     <div class="level-mark"><span class="eyebrow" data-i18n="nav.depth"></span><div><span id="depth-number">00</span><span class="depth-line"></span><span id="depth-label" data-i18n-initial="nav.overview"></span></div></div>
     <div id="node-targets" aria-label="" data-i18n-aria-label="nav.nodesAria"></div>
@@ -46,24 +46,24 @@
   </aside>
   <section id="companion-panel" class="companion-panel" role="dialog" aria-modal="false" aria-labelledby="panel-title" hidden>
     <div class="panel-surface">
-      <header class="panel-header"><button id="panel-handle" class="panel-handle" aria-label="" data-i18n-aria-label="guide.move" title="" data-i18n-title="guide.moveHint"><span class="eyebrow" data-i18n="guide.companion"></span><span id="panel-title">Nexo</span></button><button id="close-panel" aria-label="" data-i18n-aria-label="guide.close" title="" data-i18n-title="common.close">×</button></header>
+      <header class="panel-header"><button id="panel-handle" class="panel-handle" aria-label="" data-i18n-aria-label="guide.move" title="" data-i18n-title="guide.moveHint"><span class="eyebrow" data-i18n="guide.companion"></span><span id="panel-title">Nexo</span></button><button id="close-panel" aria-label="" data-i18n-aria-label="guide.close" title="" data-i18n-title="common.close"><svg class="ui-icon" data-icon="close" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
       <div class="panel-body"><span id="panel-context" class="panel-context" data-i18n-initial="app.home"></span><p id="panel-message" data-i18n-initial="guide.description"></p></div>
-      <div class="panel-compose"><label for="nexo-input" data-i18n="guide.write"></label><div><input id="nexo-input" type="text" maxlength="500" autocomplete="off" placeholder="" data-i18n-placeholder="guide.message" aria-describedby="compose-hint"><button type="button" disabled aria-label="">↗</button></div><small id="compose-hint" data-i18n-initial="guide.future"></small></div><div class="panel-footer"><span class="live-dot" aria-hidden="true"></span> <span data-i18n="guide.keepExploring"></span></div>
+      <div class="panel-compose"><label for="nexo-input" data-i18n="guide.write"></label><div><input id="nexo-input" type="text" maxlength="500" autocomplete="off" placeholder="" data-i18n-placeholder="guide.message" aria-describedby="compose-hint"><button type="button" disabled aria-label=""><svg class="ui-icon" data-icon="send" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 4 17 8-17 8 3-8Zm3 8h14"/></svg></button></div><small id="compose-hint" data-i18n-initial="guide.future"></small></div><div class="panel-footer"><span class="live-dot" aria-hidden="true"></span> <span data-i18n="guide.keepExploring"></span></div>
     </div>
   </section>
-  <section id="content-card" class="content-card" aria-labelledby="content-title" hidden><div class="panel-surface"><header class="panel-header"><h2 id="content-title"></h2><button id="close-content" aria-label="" data-i18n-aria-label="guide.closeInfo">×</button></header><div id="content-body" class="panel-body"></div></div></section>
+  <section id="content-card" class="content-card" aria-labelledby="content-title" hidden><div class="panel-surface"><header class="panel-header"><h2 id="content-title"></h2><button id="close-content" aria-label="" data-i18n-aria-label="guide.closeInfo"><svg class="ui-icon" data-icon="close" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header><div id="content-body" class="panel-body"></div></div></section>
   <footer>
     <a class="privacy-footer" href="/privacidad" data-i18n="privacy.link"></a>
     <div class="scene-info"><span class="scene-cross" aria-hidden="true">+</span><div><span class="eyebrow"><span data-i18n="nav.constellation"></span> <span id="scene-number">01</span></span><div class="scene-count"><span id="node-count"></span><span class="tiny-divider">/</span><span id="edge-count"></span></div></div></div>
     <p class="instruction"><span class="mouse-icon" aria-hidden="true"></span><span id="instruction-text" data-i18n-initial="nav.instruction"></span></p>
     <div class="tools" aria-label="" data-i18n-aria-label="motion.controls">
-      <button id="pause" title="" aria-label="" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></button>
+      <button id="pause" title="" aria-label="" aria-pressed="false"><svg class="ui-icon" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></button>
       <span class="tool-divider"></span>
-      <button id="zoom-out" title="" data-i18n-title="motion.out" aria-label="" data-i18n-aria-label="motion.out"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+      <button id="zoom-out" title="" data-i18n-title="motion.out" aria-label="" data-i18n-aria-label="motion.out"><svg class="ui-icon" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
       <span id="zoom-label" class="zoom-label">100%</span>
-      <button id="zoom-in" title="" data-i18n-title="motion.in" aria-label="" data-i18n-aria-label="motion.in"><svg viewBox="0 0 24 24"><path d="M6 12h12M12 6v12"/></svg></button>
+      <button id="zoom-in" title="" data-i18n-title="motion.in" aria-label="" data-i18n-aria-label="motion.in"><svg class="ui-icon" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 12h12M12 6v12"/></svg></button>
       <span class="tool-divider"></span>
-      <button id="reset" title="" data-i18n-title="motion.center" aria-label="" data-i18n-aria-label="motion.center"><svg viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2"/></svg></button>
+      <button id="reset" title="" data-i18n-title="motion.center" aria-label="" data-i18n-aria-label="motion.center"><svg class="ui-icon" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2"/></svg></button>
     </div>
   </footer>
   <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>

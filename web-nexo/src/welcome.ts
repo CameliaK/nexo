@@ -1,14 +1,11 @@
+import { icon as uiIcon } from './icons';
 import { languageStore, t, type UIKey } from './i18n';
 
 export const WELCOME_KEY = 'nexo.welcome.dismissed.v1';
 type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
 interface WelcomeOptions {document?:Document;storage?:StorageLike}
 const frame = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 57 17 57 47 32 61 7 47 7 17Z M32 3v15M7 17l12 7M57 17l-12 7M7 47l12-7M57 47l-12-7M32 61V46"/></svg>';
-const icons = [
-  '<path d="M16 2 29 9v14l-13 7L3 23V9Z M16 2v14M3 9l13 7 13-7M16 16v14"/>',
-  '<path d="M5 6h22v16H14l-7 5v-5H5Z M10 12h12M10 16h7"/>',
-  '<path d="M3 5h26v22H3Z M3 11h26M9 17l-3 3 3 3M23 17l3 3-3 3M18 16l-4 8"/>',
-];
+const icons = ['expand','chat','history'] as const;
 
 /** A modal guide; rendering and backend initialization continue independently. */
 export function createWelcome(options:WelcomeOptions={}) {
@@ -41,7 +38,7 @@ export function createWelcome(options:WelcomeOptions={}) {
   const copy:Array<[UIKey,UIKey]>=[['welcome.explore','welcome.exploreDetail'],['welcome.ask','welcome.askDetail'],['welcome.inspect','welcome.inspectDetail']];
   copy.forEach(([heading,detail],index)=>{
     const item=doc.createElement('li'),icon=doc.createElement('span');icon.className='welcome-step-icon';
-    icon.innerHTML='<svg viewBox="0 0 32 32" aria-hidden="true">'+icons[index]+'</svg>';
+    icon.innerHTML=uiIcon(icons[index]);
     const text=doc.createElement('div');text.append(label('h2',heading),label('p',detail));item.append(icon,text);steps.append(item);
   });
   const actions=doc.createElement('div');actions.className='welcome-actions';

@@ -1,3 +1,4 @@
+import { icon as uiIcon } from '../icons';
 import { motion, easeOut, resumeStart } from '../motion';
 import { AccountChess, errorText } from '../auth/session';
 import { t, translateUI } from '../i18n';
@@ -33,7 +34,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   dialog.innerHTML=`
     <div class="chess-shell">
       <div class="chess-heading"><span class="chess-eyebrow">${t('chess.eyebrow')}</span><h2 id="chess-title">${t('chess.title')}</h2><span class="chess-local">${t('chess.local')}</span></div>
-      <button class="chess-close" type="button" aria-label="${t('chess.close')}">↙ <span>${t('chess.fold')}</span> <kbd>ESC</kbd></button>
+      <button class="chess-close" type="button" aria-label="${t('chess.close')}">${uiIcon('back')} <span>${t('chess.fold')}</span> <kbd>ESC</kbd></button>
       <div class="chess-layout">
         <div class="chess-play">
           <div class="chess-player" data-color="b"><span class="chess-avatar chess-avatar-black">K</span><div class="chess-player-info"><strong>Kirbith</strong><span>${t('chess.blackHost')}</span></div><span class="chess-captures" data-captured-by="b" aria-label="${t('chess.capturesOwner')}"></span><span class="chess-turn-dot"></span></div>
@@ -42,8 +43,8 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
         </div>
         <aside class="chess-aside">
           <div class="chess-status"><span class="chess-eyebrow">${t('chess.status')}</span><h2 class="chess-status-title"></h2><p class="chess-status-detail"></p></div>
-          <details class="chess-history"><summary class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span><span class="chess-last-move">—</span></summary><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></details>
-          <div class="chess-actions"><button type="button" class="chess-flip">⇄ <span>${t('chess.flip')}</span></button><button type="button" class="chess-restart">↻ <span>${t('chess.new')}</span></button><button type="button" class="chess-claim" hidden>${t('chess.claim')}</button></div>
+          <details class="chess-history"><summary class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span><span class="chess-last-move">—</span><span class="history-chevron">${uiIcon('back')}</span></summary><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></details>
+          <div class="chess-actions"><button type="button" class="chess-flip">${uiIcon('flip')} <span>${t('chess.flip')}</span></button><button type="button" class="chess-restart">${uiIcon('restart')} <span>${t('chess.new')}</span></button><button type="button" class="chess-claim" hidden>${t('chess.claim')}</button></div>
           <p class="chess-local-note">${t('chess.note')}</p>
         </aside>
       </div>
@@ -161,7 +162,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     dialog.classList.toggle('chess-ended',!!record&&record.status!=='active');dialog.setAttribute('aria-busy',String(remote.busy||!remote.ready));
     remoteError.textContent=remote.error?errorText(remote.error):'';remoteError.hidden=!remote.error;
     sessionLine.hidden=remote.me.mode==='guest';sessionText.textContent=t('account.signedAs',{email:remote.me.email_hint||''});accountLink.textContent=t('account.node');
-    resign.textContent=t('chess.resign');resign.hidden=!record||record.status!=='active';resign.disabled=remote.busy;
+    resign.innerHTML=uiIcon('flag')+'<span>'+t('chess.resign')+'</span>';resign.setAttribute('aria-label',t('chess.resign'));resign.hidden=!record||record.status!=='active';resign.disabled=remote.busy;
     $('.chess-restart').hidden=!!remote.ownerId;($<HTMLButtonElement>('.chess-restart')).disabled=remote.busy||record?.status==='active';
     $('.chess-claim').hidden=true;
     online.replaceChildren();

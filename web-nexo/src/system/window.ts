@@ -1,3 +1,4 @@
+import { icon } from '../icons';
 import { t } from '../i18n';
 import type { BackendArchitecture, ConnectionState } from '../backend/types';
 import type { TracePlayer } from './traces';
@@ -15,7 +16,7 @@ export function systemPositions(architecture: BackendArchitecture) {
 export function createSystemWindow(architecture:BackendArchitecture,traces:TracePlayer,simulated:boolean){
   const portal=document.createElement('aside');portal.id='system-window';portal.className='system-aperture';
   const enter=document.createElement('button');enter.className='system-enter';enter.type='button';enter.setAttribute('aria-label',t('system.open'));
-  const caption=document.createElement('span');caption.className='system-caption';caption.textContent=t('system.caption');
+  const caption=document.createElement('span');caption.className='system-caption';const captionText=document.createElement('span');captionText.textContent=t('system.caption');const glyph=document.createElement('span');glyph.innerHTML=icon('external');caption.append(captionText,glyph);
   const status=document.createElement('span');status.className='sr-only';status.id='system-connection';
   const activity=document.createElement('span');activity.className='sr-only';activity.id='system-activity';
   enter.setAttribute('aria-describedby','system-connection system-activity');enter.append(caption);portal.append(enter,status,activity);document.body.append(portal);

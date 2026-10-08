@@ -1,3 +1,4 @@
+import { icon } from '../icons';
 import { privacyNotice } from '../privacy/link';
 import { t, languageStore } from '../i18n';
 import { AccountChess, errorText } from './session';
@@ -8,7 +9,7 @@ export function createAccessPanel(session: AccountChess, options: { document?: D
   const root = doc.createElement('section'); root.className = 'access-overlay'; root.hidden = true;
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'access-title');
   const box = doc.createElement('div'); box.className = 'access-glass';
-  const close = doc.createElement('button'); close.type = 'button'; close.className = 'access-close'; close.textContent = '×';
+  const close = doc.createElement('button'); close.type = 'button'; close.className = 'access-close'; close.innerHTML = icon('close');
   const title = doc.createElement('h2'); title.id = 'access-title';
   const detail = doc.createElement('p'); const form = doc.createElement('form');
   const label = doc.createElement('label'); const fieldName = doc.createElement('span');

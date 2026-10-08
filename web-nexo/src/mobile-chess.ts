@@ -1,3 +1,4 @@
+import { icon } from './icons';
 import type { BackendArchitecture } from './backend/types';
 import { t,languageStore } from './i18n';
 import type { Chats } from './chat';
@@ -6,12 +7,12 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  const body=document.body,agent=document.getElementById('companion-panel')!,live=document.getElementById('live-panel')!;
  const button=document.createElement('button');button.type='button';button.className='mobile-chess-chat-toggle';
  const badge=document.createElement('span');badge.className='mobile-chat-badge';badge.hidden=true;
- const label=document.createElement('span');button.append(label,badge);button.setAttribute('aria-controls','mobile-chat-controls');button.setAttribute('aria-expanded','false');
+ const label=document.createElement('span');const glyph=document.createElement('span');glyph.innerHTML=icon('chat');button.append(glyph,label,badge);button.setAttribute('aria-controls','mobile-chat-controls');button.setAttribute('aria-expanded','false');
  const controls=document.createElement('nav');controls.id='mobile-chat-controls';controls.className='mobile-chat-controls';controls.hidden=true;
  const assistant=document.createElement('button'),owner=document.createElement('button'),close=document.createElement('button');
- for(const item of [assistant,owner,close])item.type='button';close.textContent='×';controls.append(assistant,owner,close);
+ for(const item of [assistant,owner,close])item.type='button';close.innerHTML=icon('close');controls.append(assistant,owner,close);
  const sheetHeader=document.createElement('header');sheetHeader.className='mobile-system-header';
- const title=document.createElement('h2'),systemClose=document.createElement('button');systemClose.type='button';systemClose.textContent='×';sheetHeader.append(title,systemClose);portal.element.append(sheetHeader);
+ const title=document.createElement('h2'),systemClose=document.createElement('button');systemClose.type='button';systemClose.innerHTML=icon('close');sheetHeader.append(title,systemClose);portal.element.append(sheetHeader);
  const summary=document.createElement('ul');summary.id='mobile-system-components';summary.className='sr-only';summary.dataset.i18nIgnore='';summary.hidden=true;portal.element.append(summary);
  const safe=document.createElement('div');safe.className='mobile-safe-probe';safe.setAttribute('aria-hidden','true');body.append(button,controls,safe);
  const hiddenState=new Map<HTMLElement,boolean>();
