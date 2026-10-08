@@ -1,5 +1,6 @@
 // @ts-nocheck -- This lightweight DOM fixture exercises the unchanged Canvas renderer.
 import { icon } from '../src/icons';
+import { chatSurfaceBounds, placeChatUnderlay, setChatSurfaceBounds } from '../src/chat-surface';
 import { mobileSystemBox } from '../src/mobile-layout';
 import { createCameraGestures, clampZoom } from '../src/camera-gestures';
 import { formationPhase } from '../src/node-forming';
@@ -43,11 +44,12 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  const listeners={},listen=(k,f)=>{const previous=listeners[k];listeners[k]=previous?e=>{previous(e);f(e)}:f},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
  if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,progress:()=>chessOpen?1:0,isAnimating:()=>false,render(){},open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
- const sandbox={icon,mobileSystemBox,createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
+ const sandbox={icon,chatSurfaceBounds,placeChatUnderlay,mobileSystemBox,createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let mediaFrame;
  if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { motion as MOTION, easeOut, resumeStart } from './motion';",'').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
+ source=source.replace("import { chatSurfaceBounds, placeChatUnderlay } from './chat-surface';",'');
  source=source.replace("import { icon } from './icons';",'');
  source=source.replace("import { mobileSystemBox } from './mobile-layout';",'');
  source=source.replace("import { createCameraGestures, clampZoom } from './camera-gestures';",'');
@@ -84,14 +86,25 @@ test('Live chat fragments into its panel and reassembles as a node',()=>{
  frames(800);assert.equal(closed,1);assert.equal(api.chatTarget.hidden,false);assert.equal(api.getMorphCanvas().hidden,true);
 });
 
-test('An open live panel disables camera pan/zoom and reduces the universe cadence without changing its level',()=>{
+test('An open glass chat keeps camera pan/zoom and the universe cadence available without changing its level',()=>{
  const {api,el,frames,listeners}=fixture();frames(100);const before=JSON.stringify(api.camera()),level=api.getLevel().id;
  api.setLiveOpen(true);
  el('space').handlers.pointerdown({pointerType:'mouse',clientX:700,clientY:400,pointerId:1});
  listeners.pointermove({pointerType:'mouse',clientX:780,clientY:430,target:el('space')});
  el('space').handlers.wheel({preventDefault(){},deltaY:-1});frames(300);
- assert.equal(JSON.stringify(api.camera()),before);assert.equal(api.getLevel().id,level);assert.equal(el('body').dataset.canvasFps,'30');
+ assert.notEqual(JSON.stringify(api.camera()),before);assert.equal(api.getLevel().id,level);assert.equal(el('body').dataset.canvasFps,'60');
  api.setLiveOpen(false);frames(100);assert.equal(el('body').dataset.canvasFps,'60');
+});
+
+test('Glass occlusion hides only intersecting projected node labels and clears them when its surface closes',()=>{
+ const {api,frames,el}=fixture();frames(100);const node=api.getNodes()[0],other=api.getNodes().find(n=>Math.abs(n.sx-node.sx)>200);
+ const panel=el('live-panel');
+ try{
+  setChatSurfaceBounds(panel,{left:node.sx-150,right:node.sx+150,top:node.sy-100,bottom:node.sy+120});frames(100);
+  assert.equal(node.el.classList.contains('chat-underlay-hidden'),true);assert.equal(other.el.classList.contains('chat-underlay-hidden'),false);
+  assert.equal(api.getLevel().id,'root');
+  setChatSurfaceBounds(panel,null);assert.equal(node.el.classList.contains('chat-underlay-hidden'),false);
+ }finally{setChatSurfaceBounds(panel,null)}
 });
 test('System portal preserves camera and level; live-in never navigates; both entry points share the view',()=>{
  const {api,el,frames,enter,traces}=fixture();frames(100);enter('experiencia');api.setCamera({x:75,y:-30},1.2);const previous=JSON.stringify(api.camera());api.openPanel();api.enterSystem();frames();assert.equal(api.getLevel().id,'system');assert.equal(api.getNodes().length,9);assert.equal(api.panelOpen(),true);

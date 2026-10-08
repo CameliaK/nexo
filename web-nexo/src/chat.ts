@@ -1,6 +1,6 @@
 import { icon } from './icons';
 import { compareLiveMessages, liveTimestamp, normalizeLiveMessage } from './live-messages';
-import { lockLivePanel } from './live-modal';
+import { attachGlassPanel } from './chat-surface';
 import { privacyNotice, privacyLink } from './privacy/link';
 import { chatErrorText } from './chat-errors';
 import { t, translateText, translateUI, languageStore } from './i18n';
@@ -143,7 +143,8 @@ export class Chats {
   openLive(){
     if(this.liveOpen||this.liveTransition)return;
     this.liveOpen=true;this.liveTransition='opening';this.livePanel.hidden=false;this.universe.setLiveOpen(true);
-    this.releaseLiveSurface=lockLivePanel(this.livePanel,()=>this.closeLive());this.resizeLiveDraft();
+    if(typeof window!=='undefined')document.body.classList.add('live-chat-open');
+    this.releaseLiveSurface=attachGlassPanel(this.livePanel,()=>this.closeLive());this.resizeLiveDraft();
     this.unread.clear();save('nexo.live.readAt',new Date().toISOString());this.updateUnread();
     this.universe.morphLivePanel(this.livePanel,true,()=>{
       this.liveTransition=null;
@@ -156,7 +157,7 @@ export class Chats {
     if(!this.liveOpen||this.liveTransition)return;
     this.liveTransition='closing';this.liveInput.blur();
     this.universe.morphLivePanel(this.livePanel,false,()=>{
-      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode();
+      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;if(typeof window!=='undefined')document.body.classList.remove('live-chat-open');this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode();
     });
   }
   escape(){if(this.liveOpen){this.closeLive();return true}return false}
