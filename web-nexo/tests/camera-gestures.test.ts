@@ -65,6 +65,16 @@ test('Chess unfolds over 1.4 seconds before its pieces fade in; the same phases 
 });
 
 import {mobileSystemBox,mobileViewport} from '../src/mobile-layout';
+test('A four-line live draft with the keyboard open leaves reachable controls and keeps the board above the dock',()=>{
+ for(const composerHeight of [46,118]){
+  const viewport={width:390,height:320,chat:true,browserInset:8,composerHeight};
+  const dock=mobileViewport(viewport),layout=mobileChessLayout(viewport),bounds=chessBounds(layout.camera);
+  assert.ok(dock.dock-64>=composerHeight+40,'Textarea, counter and privacy link fit below the tabs');
+  assert.ok(dock.dockTop>=44,'Tabs remain below the game header');
+  assert.ok(dock.dockTop+dock.dock<=312,'Bottom stays above the keyboard safe margin');
+  assert.ok(bounds.bottom<dock.dockTop,'The shared game layout clears the enlarged chat dock');
+ }
+});
 test('Portrait game preserves the board width and reserves Safari space below all controls',()=>{
  for(const [width,height]of [[360,640],[390,844]]){
   const layout=mobileChessLayout({width,height}),bounds=chessBounds(layout.camera);

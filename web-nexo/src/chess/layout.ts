@@ -57,9 +57,9 @@ export function chessLayout({width,height}:ChessViewport,view:ChessView={zoom:1,
 }
 
 /** Mobile keeps the camera independent of the universe underneath the game. */
-export function mobileChessLayout({width,height,safeTop=0,safeBottom=0,offsetTop=0,chat=false,landscape=width>height,browserInset}:MobileViewport){
+export function mobileChessLayout({width,height,safeTop=0,safeBottom=0,offsetTop=0,chat=false,landscape=width>height,browserInset,composerHeight=0}:MobileViewport){
  const compactChat=chat&&height<480,headerHeight=44,playerHeight=24;
- const {bottom}=mobileViewport({width,height,safeBottom,offsetTop,chat,landscape,browserInset});
+ const {bottom}=mobileViewport({width,height,safeBottom,offsetTop,chat,landscape,browserInset,composerHeight});
  const top=offsetTop+safeTop,system=mobileSystemBox({width,height,safeTop,offsetTop,chat,landscape});
  const left=landscape?164:6,right=landscape?width-196:compactChat?system.left-10:width-6;
  const area={left,right,top:landscape||compactChat?top+44:system.top+system.height+12,bottom:Math.max(top+72,bottom-(chat?6:landscape?12:104))};

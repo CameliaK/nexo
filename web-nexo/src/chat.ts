@@ -1,5 +1,6 @@
 import { icon } from './icons';
 import { compareLiveMessages, liveTimestamp, normalizeLiveMessage } from './live-messages';
+import { lockLivePanel } from './live-modal';
 import { privacyNotice, privacyLink } from './privacy/link';
 import { chatErrorText } from './chat-errors';
 import { t, translateText, translateUI, languageStore } from './i18n';
@@ -35,6 +36,21 @@ export class Chats {
   private liveInput=element('textarea');private liveName=element('input');private nameWrap=element('label','','live-name');
   private liveHint=element('p','','chat-hint');private liveCounter=element('span','','chat-counter');private liveSend=element('button',t('common.send'),'chat-send');
   private livePinned=true;private liveNew=element('button','','live-new-message');
+  private releaseLiveSurface:(()=>void)|null=null;
+  private resizeLiveDraft=()=>{
+    if(typeof getComputedStyle!=='function')return;
+    this.liveInput.style.height='auto';
+    const style=getComputedStyle(this.liveInput),line=parseFloat(style.lineHeight)||24;
+    const padding=parseFloat(style.paddingTop)+parseFloat(style.paddingBottom)+parseFloat(style.borderTopWidth)+parseFloat(style.borderBottomWidth);
+    const maximum=line*4+padding;
+    const height=Math.min(maximum,Math.max(line+padding,this.liveInput.scrollHeight));
+    this.liveInput.style.height=height+'px';
+    this.liveInput.style.overflowY=this.liveInput.scrollHeight>maximum?'auto':'hidden';
+    if(document.body.dataset.liveComposerHeight!==String(height)){
+      document.body.dataset.liveComposerHeight=String(height);window.dispatchEvent(new Event('nexo:live-compose'));
+    }
+    if(this.liveOpen&&this.livePinned)this.scrollLiveEnd();
+  };
   private agentHistory=element('div','','chat-history agent-history');
   private process=element('details','','agent-process');private steps=new Map<string,HTMLElement>();private sources=element('div','','rag-sources');
   private agentInput=document.getElementById('nexo-input') as HTMLInputElement;
@@ -115,9 +131,10 @@ export class Chats {
     const newLabel=element('span',t('chat.newMessage'));newLabel.dataset.i18n='chat.newMessage';this.liveNew.append(newLabel);
     this.liveNew.onclick=()=>this.scrollLiveEnd();
     this.liveName.type='text';this.liveName.maxLength=LIMITS.liveNameMaxChars;this.liveName.value=read('nexo.live.name')||'';this.nameWrap.append(element('span',content.name_label),this.liveName);this.nameWrap.hidden=read('nexo.live.named')==='yes';
-    this.liveInput.maxLength=content.max_chars;this.liveInput.rows=2;this.liveInput.placeholder=content.placeholder;this.liveInput.setAttribute('aria-label',t('chat.ownerMessage'));this.liveInput.addEventListener('input',()=>this.refresh());this.liveInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();void this.sendLive()}});
+    this.liveInput.maxLength=content.max_chars;this.liveInput.rows=1;this.liveInput.placeholder=content.placeholder;this.liveInput.setAttribute('aria-label',t('chat.ownerMessage'));this.liveInput.addEventListener('input',()=>{this.resizeLiveDraft();this.refresh()});this.liveInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();void this.sendLive()}});
     this.liveSend.innerHTML=icon('send');this.liveSend.setAttribute('aria-label',t('common.send'));this.liveSend.type='button';this.liveSend.onclick=()=>void this.sendLive();const compose=element('div','','live-compose');const field=element('div','','compose-field');field.append(this.liveInput,this.liveSend);compose.append(this.nameWrap,field,this.liveCounter,this.liveHint);
     surface.append(header,intro,this.liveHistory,this.liveNew,emptyChat('chat.emptyLive'),compose,chatPrivacy('privacy.live'));if(this.simulated)surface.append(element('span',t('chat.simulated'),'simulation-label'));this.livePanel.append(surface);document.body.append(this.livePanel);
+    if(typeof window!=='undefined'){window.addEventListener('resize',this.resizeLiveDraft);window.visualViewport?.addEventListener('resize',this.resizeLiveDraft)}
   }
   private buildNavigation(){
     const go=element('button',t('nav.goNow'));go.onclick=async()=>{await this.universe.exitSystem();this.routeNotice.hidden=true;void this.drainRoute()};this.routeNotice.append(this.routeLabel,go);this.routeNotice.hidden=true;document.body.append(this.routeNotice);
@@ -126,6 +143,7 @@ export class Chats {
   openLive(){
     if(this.liveOpen||this.liveTransition)return;
     this.liveOpen=true;this.liveTransition='opening';this.livePanel.hidden=false;this.universe.setLiveOpen(true);
+    this.releaseLiveSurface=lockLivePanel(this.livePanel,()=>this.closeLive());this.resizeLiveDraft();
     this.unread.clear();save('nexo.live.readAt',new Date().toISOString());this.updateUnread();
     this.universe.morphLivePanel(this.livePanel,true,()=>{
       this.liveTransition=null;
@@ -138,7 +156,7 @@ export class Chats {
     if(!this.liveOpen||this.liveTransition)return;
     this.liveTransition='closing';this.liveInput.blur();
     this.universe.morphLivePanel(this.livePanel,false,()=>{
-      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode();
+      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode();
     });
   }
   escape(){if(this.liveOpen){this.closeLive();return true}return false}
@@ -198,7 +216,7 @@ export class Chats {
     this.liveErrorValue=null;
     const temp=retry?.message.id||'pending_'+crypto.randomUUID();let row=retry;
     if(!row){this.addLive({id:temp,from:'visitor',text,ts:new Date().toISOString()},'sending');row=this.liveRows.get(temp)!}else {row.error=undefined;row.state='sending';row.status.textContent=t('chat.sending');row.root.querySelector('.message-retry')?.remove()}
-    if(!retry)this.liveInput.value='';this.refresh();
+    if(!retry){this.liveInput.value='';this.resizeLiveDraft()}this.refresh();
     this.scrollLiveEnd();
     const epoch=this.identityEpoch;this.livePosts++;
     try{
@@ -281,5 +299,5 @@ export class Chats {
     if(event.type==='run.done'||event.type==='run.error'){this.universe.finishForming?.(event.run_id);this.liveRuns.delete(event.run_id);}
     this.refresh();
   }
-  dispose(){this.stopped=true;clearInterval(this.timer);this.inbox.reset();this.universe.clearFormations?.()}
+  dispose(){this.stopped=true;clearInterval(this.timer);this.inbox.reset();this.universe.clearFormations?.();this.releaseLiveSurface?.();if(typeof window!=='undefined'){window.removeEventListener('resize',this.resizeLiveDraft);window.visualViewport?.removeEventListener('resize',this.resizeLiveDraft)}}
 }
