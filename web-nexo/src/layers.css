@@ -11,3 +11,4 @@ body.mobile-chess-chat .live-panel,body.mobile-chess-chat .companion-panel{z-ind
 body.mobile-chess .mobile-chat-controls{z-index:calc(var(--z-panels,40) + 1)}
 .access-overlay,.account-overlay,.welcome-overlay,.media-viewer,body.mobile-system-expanded .system-aperture{z-index:var(--z-modals,80)}
 .chat-underlay-hidden,.chat-underlay-hidden *{visibility:hidden!important;pointer-events:none!important}
+body:has(.chess-popover-backdrop:not([hidden])) .chess-scene{z-index:var(--z-modals,80)}

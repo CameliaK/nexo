@@ -140,16 +140,17 @@ export class Chats {
     const go=element('button',t('nav.goNow'));go.onclick=async()=>{await this.universe.exitSystem();this.routeNotice.hidden=true;void this.drainRoute()};this.routeNotice.append(this.routeLabel,go);this.routeNotice.hidden=true;document.body.append(this.routeNotice);
     this.inventory.append(element('summary',t('generated.label')),this.inventoryList);this.inventory.hidden=true;document.body.append(this.inventory);
   }
-  openLive(){
+  private liveOpener:HTMLElement|null=null;
+  openLive(opener:HTMLElement|null=null){
     if(this.liveOpen||this.liveTransition)return;
-    this.liveOpen=true;this.liveTransition='opening';this.livePanel.hidden=false;this.universe.setLiveOpen(true);
+    this.liveOpener=opener;this.liveOpen=true;this.liveTransition='opening';this.livePanel.hidden=false;this.universe.setLiveOpen(true);
     if(typeof window!=='undefined')document.body.classList.add('live-chat-open');
     this.releaseLiveSurface=attachGlassPanel(this.livePanel,()=>this.closeLive());this.resizeLiveDraft();
     this.unread.clear();save('nexo.live.readAt',new Date().toISOString());this.updateUnread();
     this.universe.morphLivePanel(this.livePanel,true,()=>{
       this.liveTransition=null;
       if(this.closeAfterOpen){this.closeAfterOpen=false;this.closeLive();return}
-      this.liveInput.focus();this.scrollLiveEnd();
+      this.liveInput.focus({preventScroll:true});this.scrollLiveEnd();
     });
   }
   closeLive(){
@@ -157,7 +158,7 @@ export class Chats {
     if(!this.liveOpen||this.liveTransition)return;
     this.liveTransition='closing';this.liveInput.blur();
     this.universe.morphLivePanel(this.livePanel,false,()=>{
-      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;if(typeof window!=='undefined')document.body.classList.remove('live-chat-open');this.universe.setLiveOpen(false);this.updateUnread();this.universe.focusLiveNode();
+      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;if(typeof window!=='undefined')document.body.classList.remove('live-chat-open');this.universe.setLiveOpen(false);this.updateUnread();if(this.liveOpener)this.liveOpener.focus({preventScroll:true});else this.universe.focusLiveNode();this.liveOpener=null;
     });
   }
   escape(){if(this.liveOpen){this.closeLive();return true}return false}

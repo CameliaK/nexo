@@ -1,3 +1,4 @@
+import { chessChatProgress, desktopChatRegions } from './chess-chat-layout';
 import { icon } from './icons';
 import { chatSurfaceBounds, placeChatUnderlay } from './chat-surface';
 import { mobileSystemBox } from './mobile-layout';
@@ -137,16 +138,20 @@ function systemFrame(view=camera()){
   for(const rect of systemHeaderRects)if(anchorX+baseWidth/2>rect.left&&anchorX-baseWidth/2<rect.right)anchorY=Math.max(anchorY,rect.bottom+18+baseHeight/2);
   const x=width/2+(anchorX-width/2)*scale+view.pan.x+view.parallax.x*9;
   const y=height*.53+(anchorY-height*.53)*scale+view.pan.y+view.parallax.y*9;
-  return{left:x-w/2,top:y-h/2,width:w,height:h};
+  const ordinary={left:x-w/2,top:y-h/2,width:w,height:h};
+  const progress=system.chess?.isOpen()?chessChatProgress():0,target=desktopChatRegions(width,height).system;
+  return Object.fromEntries(['left','top','width','height'].map(key=>[key,lerp(ordinary[key],target[key],progress)]));
 }
 function apertureNodes(bounds,population=systemPopulation){
   return population.map(n=>{const point=system.positions.find(p=>p.id===n.id);return{...n,sx:bounds.left+bounds.width*(.1+.8*point.x/258),sy:bounds.top+bounds.height*(.09+.8*point.y/136),sr:n.r*bounds.width/1020,hover:apertureHover?.18:0,miniature:true}});
 }
+const systemCaption=system.portal.element?.querySelector('.system-caption');
 function renderDistantSystem(expanded=false){
   if(document.body.classList.contains('mobile-system-expanded')&&!expanded)return;
   const button=system.portal.button;button.style.opacity=level.system||systemTravel?'0':'1';button.disabled=!!level.system||!!systemTravel;button.style.pointerEvents=button.disabled?'none':'';
   if(level.system||systemTravel)return;
   const bounds=distantSystemBounds(),items=apertureNodes(bounds);
+  placeChatUnderlay(systemCaption,{left:bounds.left,right:bounds.left+bounds.width,top:bounds.top-32,bottom:bounds.top+bounds.height+40});
   if(expanded){ctx.fillStyle='#0b161eef';ctx.beginPath();ctx.roundRect(0,bounds.top-56,width,height-bounds.top+56,[24,24,0,0]);ctx.fill();}
   if(system.portal.element){
     const style=system.portal.element.style,flip=chessJourney&&system.chess?.isOpen()&&!expanded;
@@ -352,10 +357,10 @@ function panelTriangles(bounds){
   return triangles.sort((a,b)=>Math.atan2(a[0][1]+a[1][1]+a[2][1]-cy*3,a[0][0]+a[1][0]+a[2][0]-cx*3)-Math.atan2(b[0][1]+b[1][1]+b[2][1]-cy*3,b[0][0]+b[1][0]+b[2][0]-cx*3));
 }
 function morphLivePanel(panel,opening,complete){
-  if(document.body.classList.contains('mobile-chess')){panel.style.opacity='';panel.style.pointerEvents='';complete();return}
+  if(document.body.classList.contains('chess-chat-open')){panel.style.opacity='';panel.style.pointerEvents='';complete();return}
   const origin=chatOrbit();
   if(opening&&document.body.classList.contains('live-chat-open')){
-    // The modal follows visualViewport through CSS; a world-node anchor would
+    // The sheet follows visualViewport through CSS; a world-node anchor would
     // leave an inline top behind when the mobile keyboard changes the viewport.
     panel.style.left=panel.style.top=panel.style.bottom='';
   }else if(opening){
@@ -894,7 +899,7 @@ let hoverEdge=null, panelOpen=false, speech=null, pendingSpeech=null;
 const panelWorld={x:0,y:0};let panelDrag=null;
 function panelProjection(){return{x:width/2+panelWorld.x*zoom+pan.x+parallax.x*6,y:height*.53+panelWorld.y*zoom+pan.y+parallax.y*6}}
 function anchorPanel(x,y){panelWorld.x=(x-width/2-pan.x-parallax.x*6)/zoom;panelWorld.y=(y-height*.53-pan.y-parallax.y*6)/zoom}
-function placePanel(){if(!panelOpen)return;if(document.body.classList.contains('mobile-chess'))return;if(pinnedAgent){anchorPanel(pinnedAgent.x,pinnedAgent.y);$('companion-panel').style.transform=`translate(${pinnedAgent.x}px,${pinnedAgent.y}px) scale(1)`;return}const p=panelProjection();$('companion-panel').style.transform=`translate(${p.x}px,${p.y}px) scale(${zoom})`}
+function placePanel(){if(!panelOpen)return;if(document.body.classList.contains('chess-chat-open'))return;if(pinnedAgent){anchorPanel(pinnedAgent.x,pinnedAgent.y);$('companion-panel').style.transform=`translate(${pinnedAgent.x}px,${pinnedAgent.y}px) scale(1)`;return}const p=panelProjection();$('companion-panel').style.transform=`translate(${p.x}px,${p.y}px) scale(${zoom})`}
 
 function say(title,text,key='context',duration=8500){
   if(!text)return;pendingSpeech=null;
@@ -911,7 +916,7 @@ function releaseSpeech(prefix){
   if(speech?.key.startsWith(prefix))speech.expires=performance.now()+1700;
 }
 function openPanel(keyboard=false){
-  if(system.chess?.isOpen()&&!document.body.classList.contains('mobile-chess')){system.chess.closeForNavigation?.(()=>openPanel(keyboard));return}
+  if(system.chess?.isOpen()&&!document.body.classList.contains('chess-chat-open')){system.chess.closeForNavigation?.(()=>openPanel(keyboard));return}
   if(panelOpen){closePanel(keyboard);return}
   panelOpen=true;anchorPanel(width<650?Math.max(16,(width-320)/2):Math.max(30,width-662),Math.max(100,Math.min(height*.27,height-615)));placePanel();companion.locked=true;companion.keyboard=keyboard;
   $('companion-panel').hidden=false;$('speech-bubble').hidden=true;
@@ -1005,7 +1010,10 @@ function drawChatSatellite(now){
   chatTarget.style.transform=`translate(${x-radius-8}px,${y-radius-8}px)`;
   if(morphCanvas&&!morphCanvas.hidden)morphCanvas.hidden=true;
 }
+let renderedChatProgress=-1;
 function render(now){
+  const dockProgress=chessChatProgress(now);
+  if(Math.abs(dockProgress-renderedChatProgress)>.00001){renderedChatProgress=dockProgress;document.body.style.setProperty('--chess-chat-progress',dockProgress);if(typeof dispatchEvent==='function')dispatchEvent(new Event('nexo:chat-layout')); }
   frameId=null;
   if(disposed||document.hidden)return;
   gestures.flush();

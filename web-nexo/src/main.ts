@@ -15,6 +15,7 @@ import './icons.css';
 import './mobile-ui.css';
 import './live-panel.css';
 import './layers.css';
+import './chess-chat.css';
 import { createWelcome } from './welcome';
 import { architecture, applyContent, registerTranslations } from './i18n/content';
 import { initializeLanguage } from './i18n';
