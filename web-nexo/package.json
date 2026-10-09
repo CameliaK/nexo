@@ -22,7 +22,8 @@
     "test:mobile": "node scripts/mobile-browser.mjs && node scripts/mobile-webkit.mjs",
     "test:mobile-ui": "node scripts/mobile-ui-browser.mjs",
     "test:chat-glass": "node scripts/chat-glass-browser.mjs",
-    "test:chess-cleanup": "node scripts/chess-cleanup-browser.mjs"
+    "test:chess-cleanup": "node scripts/chess-cleanup-browser.mjs",
+    "test:chess-geometry": "node scripts/chess-geometry-browser.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

@@ -139,7 +139,7 @@ function systemFrame(view=camera()){
   const x=width/2+(anchorX-width/2)*scale+view.pan.x+view.parallax.x*9;
   const y=height*.53+(anchorY-height*.53)*scale+view.pan.y+view.parallax.y*9;
   const ordinary={left:x-w/2,top:y-h/2,width:w,height:h};
-  const progress=system.chess?.isOpen()?chessChatProgress():0,target=desktopChatRegions(width,height).system;
+  const progress=system.chess?.isOpen()?1:0,target=desktopChatRegions(width,height).system;
   return Object.fromEntries(['left','top','width','height'].map(key=>[key,lerp(ordinary[key],target[key],progress)]));
 }
 function apertureNodes(bounds,population=systemPopulation){
@@ -201,7 +201,7 @@ function openChess(){
   if(!chessTarget||travel||systemTravel||chatMorph)return;
   if(system.onChessAccess&&!system.onChessAccess())return;
   const source=()=>{const node=chessOrbit();return{x:node.sx,y:node.sy,r:node.sr,faces:meshFaces(node)}};
-  drag=null;chessJourney={source:source(),systemFrom:distantSystemBounds(),snapshot:null,soft:null};system.chess.open(chessJourney.source,source);chessTarget.setAttribute('aria-expanded','true');chessTarget.hidden=true;
+  drag=null;chessJourney={source:source(),systemFrom:distantSystemBounds(),snapshot:null,soft:null,chatFrom:chatOrbit()};system.chess.open(chessJourney.source,source);chessTarget.setAttribute('aria-expanded','true');chessTarget.hidden=true;
 }
 let worldLayoutKey='',worldLayout=new Map();
 function compactUniverse(){return width<650||coarse.matches&&width>height&&height<650}
@@ -299,7 +299,7 @@ function chatObstacles(includeCompanion=false){
 }
 function chatOrbit(){return chatPosition?{...chatPosition,r:width<650?17:21}:{x:width*.79,y:height*.69,r:width<650?17:21}}
 function positionChat(now){
-  if(system.chess?.isOpen()){if(width<=900)return null;chatCaption.style.visibility='visible';chatPreview.style.visibility='hidden';return chatPosition={x:150,y:height*.56,r:21,caption:true};}
+  if(system.chess?.isOpen()){if(width<=900)return null;const region=desktopChatRegions(width,height),u=easeOut(system.chess.progress?.()||1),from=chessJourney?.chatFrom||chatPosition||{x:region.left+region.width/2,y:region.top};chatCaption.style.visibility='visible';chatPreview.style.visibility='hidden';return chatPosition={x:lerp(from.x,region.left+region.width/2,u),y:lerp(from.y,(region.top+height-region.bottom)/2,u),r:21,caption:true};}
 
   const r=width<650?17:21,drift=paused||reduced.matches?0:1;
   const preferred=chatHovered&&chatPosition?chatPosition:{x:width*(width<650?.80:.82)+Math.sin(clock*.46+.7)*27*drift,y:height*(width<650?.69:.71)+Math.cos(clock*.37+.9)*31*drift};

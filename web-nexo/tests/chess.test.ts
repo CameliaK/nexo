@@ -103,12 +103,12 @@ test('Chess information follows the visible board with comfortable gaps on tall,
       const blackGap=bounds.top-layout.black.top-layout.black.height,whiteGap=layout.white.top-bounds.bottom;
       assert.ok(blackGap>=8-1e-7&&blackGap<=12+1e-7,'Host stays close to the tallest piece without covering it');
       assert.ok(whiteGap>=8-1e-7&&whiteGap<=12+1e-7,'Visitor stays close to the board coordinates');
-      assert.ok(layout.black.top-layout.header.top-layout.header.height<=8+1e-7,'Heading stays with the player row');
+      if(width<=900)assert.ok(layout.black.top-layout.header.top-layout.header.height<=8+1e-7,'Heading stays with the player row');
       if(layout.stacked){
         assert.ok(Math.abs(layout.aside.top-layout.white.top-layout.white.height-10)<1e-7,'Stacked controls follow the player row');
         const centerOffset=Math.abs((layout.aside.left+layout.aside.width/2)-(bounds.left+bounds.right)/2);
         assert.ok(centerOffset<=(layout.aside.width-(bounds.right-bounds.left))/2+1e-7,'Stacked information stays with the board, allowing room at viewport edges');
-      }else{
+      }else if(width<=900){
         assert.ok(Math.abs(layout.aside.left-bounds.right-20)<1e-7,'Side controls follow the actual right edge');
         assert.ok(Math.abs(layout.aside.top-bounds.top-8)<1e-7,'Side controls start next to the board');
       }
@@ -130,7 +130,7 @@ test('Camera fitting keeps board picking correct and preserves the same perspect
 
 test('Desktop chess approaches the requested viewport size and still fits at 50–200% camera zoom',()=>{
  for(const [width,height] of [[1366,768],[1920,1080],[1440,900]]){
-  const normal=chessBounds(chessLayout({width,height}).camera),desired=Math.min(880,height*.78,width*.7);
+  const fitted=chessLayout({width,height}),normal=chessBounds(fitted.camera),desired=Math.min(880,fitted.area.right-fitted.area.left);
   assert.ok(normal.right-normal.left>=desired*.85,'Board is close to min(78vh, 70vw), including its 3D envelope');
   for(const zoom of [.5,2]){const layout=chessLayout({width,height},{zoom,pan:{x:width*.5,y:height*.4}}),bounds=chessBounds(layout.camera);assert.ok(contained([bounds.left,bounds.top],layout.area));assert.ok(contained([bounds.right,bounds.bottom],layout.area))}
  }

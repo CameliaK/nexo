@@ -11,11 +11,12 @@ test('Chess, system and chat share a 250 ms ease-out clock; reduced motion is im
  setChessChatLayout(true,true,700);assert.equal(chessChatProgress(700),1);assert.equal(chessChatAnimating(700),false);
  setChessChatLayout(false,true,800);
 });
-test('Desktop chat reservation keeps the entire board and game controls left of its column at every camera zoom',()=>{
- for(const [width,height]of [[1440,900],[1366,768],[1280,720],[1024,700],[1440,550]])for(const zoom of [.5,1,2]){
-  const dock=desktopChatRegions(width,height),layout=chessLayout({width,height},{zoom,pan:{x:width*.25,y:-height*.2}},dock.reserved),bounds=chessBounds(layout.camera);
-  assert.ok(bounds.right<dock.left);assert.ok(bounds.left>=0);
-  for(const r of [layout.header,layout.black,layout.white,layout.aside])assert.ok(r.left+r.width<dock.left,'Game information clears glass column');
-  assert.ok(dock.system.left+dock.system.width<dock.left);assert.ok(dock.system.top+dock.system.height<height);
+test('Three columns reserve the same board geometry with chat closed/open and keep the center at least 520 px',()=>{
+ for(const [width,height]of [[1920,1080],[1440,900],[1280,720],[1024,768]])for(const zoom of [.5,1,2]){
+  const dock=desktopChatRegions(width,height),layout=chessLayout({width,height},{zoom,pan:{x:width*.25,y:-height*.2}}),bounds=chessBounds(layout.camera);
+  assert.ok(bounds.left>=dock.center.left&&bounds.right<=dock.center.right);assert.ok(dock.left+dock.width<bounds.left);
+  assert.ok(bounds.right<dock.system.left);assert.ok(dock.system.top+dock.system.height<layout.aside.top);
+  assert.ok(layout.aside.top+layout.aside.height<=height-40);if(width>=1180)assert.ok(dock.center.right-dock.center.left>=520);
+  assert.deepEqual(chessLayout({width,height},{zoom,pan:{x:0,y:0}},0),chessLayout({width,height},{zoom,pan:{x:0,y:0}},428));
  }
 });

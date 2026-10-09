@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {fileURLToPath} from 'node:url';
+const output=fileURLToPath(new URL('../docs/chess-layout/',import.meta.url));
 import {mkdir,writeFile} from 'node:fs/promises';
 import {mobileFixture,chromium,webkit,devices} from './mobile-fixture.mjs';
 const reports=[];
@@ -17,4 +19,4 @@ for(const [name,engine,options]of [['desktop',chromium,{viewport:{width:1440,hei
   await p.locator('#floating-live-chat').waitFor();assert.equal(await p.locator('#floating-live-chat').getAttribute('data-unread'),'1');assert.deepEqual(f.errors,[]);reports.push({name,passed:true});console.log(name+' sole node, preserved game, mobile isolation and unread OK');
  }finally{await browser.close()}
 }
-await mkdir('docs/chess-layout',{recursive:true});await writeFile('docs/chess-layout/A-results.json',JSON.stringify(reports,null,2)+'\n');
+await mkdir(output,{recursive:true});await writeFile(output+'A-results.json',JSON.stringify(reports,null,2)+'\n');

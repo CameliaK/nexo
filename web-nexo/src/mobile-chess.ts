@@ -22,7 +22,7 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  const isMobile=()=>innerWidth<=900;
  const emit=()=>dispatchEvent(new Event('nexo:mobile-layout'));
  function measure(){
-  const regions=desktopChatRegions(innerWidth,innerHeight);for(const [key,value]of Object.entries({left:regions.left,width:regions.width,top:regions.top,panelTop:regions.panelTop,bottom:regions.bottom}))body.style.setProperty('--desktop-chat-'+key,value+'px');
+  const regions=desktopChatRegions(innerWidth,innerHeight);for(const [key,value]of Object.entries({left:regions.left,width:regions.width,top:regions.top,panelTop:regions.panelTop,bottom:regions.bottom,tabsHeight:regions.tabsHeight}))body.style.setProperty('--desktop-chat-'+key,value+'px');
   const visual=window.visualViewport,styles=getComputedStyle(safe),stable=safe.getBoundingClientRect().height;const height=Math.min(visual?.height||innerHeight,stable||innerHeight);
   body.style.setProperty('--mobile-height',height+'px');body.style.setProperty('--mobile-top',(visual?.offsetTop||0)+'px');
   body.dataset.mobileKeyboard=String(height<innerHeight*.75);
