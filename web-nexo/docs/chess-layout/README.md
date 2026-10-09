@@ -37,3 +37,18 @@ tamaños solicitados, con chat cerrado y ambas pestañas.
 [B-geometry.json](B-geometry.json) contiene rectángulos, controles y comprobación
 de desbordamientos. La fixture hace pan real antes del clic si un nodo del mundo
 queda inicialmente fuera del viewport; no fuerza el clic sobre un elemento oculto.
+
+## C — formación reversible del mismo nodo
+
+Se parametrizó el reproductor existente del menú inicial con el destino de la
+columna izquierda y el token de 900 ms. Conserva un único canvas, nodo y panel;
+un cierre o reapertura intermedios parten de la geometría actual. El render usa
+60 fps durante la formación y un fundido de 100 ms con movimiento reducido.
+Las pestañas cambian sin repetir la formación; conservan borradores y mensajes.
+Escape cierra primero el chat, devuelve el foco al nodo y después permite replegar
+el ajedrez. Los nodos generados mantienen el aviso sin desplazar la cámara.
+
+194 pruebas y build en verde. `npm run test:chess-morph` verifica ambos motores
+con y sin movimiento reducido, interrupciones, foco, borradores, pestaña y aviso:
+[C-morph.json](C-morph.json). Las medidas admiten menos de 0,5 px de redondeo,
+como las pruebas de geometría; no admiten reflujo del tablero.

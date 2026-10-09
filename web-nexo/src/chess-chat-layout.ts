@@ -1,14 +1,3 @@
-import { easeOut, motion } from './motion';
-/** One clock for the canvas board, system window and the sliding chat column. */
-let from=0,to=0,start=0;
-export function chessChatProgress(now=performance.now()){
- return from+(to-from)*easeOut((now-start)/motion.chessChat);
-}
-export function setChessChatLayout(open:boolean,reduced=false,now=performance.now()){
- from=chessChatProgress(now);to=open?1:0;start=now;
- if(reduced)from=to;
-}
-export function chessChatAnimating(now=performance.now()){return from!==to&&now-start<motion.chessChat}
 /** Fixed columns; the user prioritizes a 520 px center between 1180 and 1363 px. */
 export function desktopChatRegions(width:number,height:number){
  const margin=40,gap=32,compact=width<1180;

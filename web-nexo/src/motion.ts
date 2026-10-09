@@ -1,7 +1,7 @@
 /** Shared timing in ms. Travel and chess timings are 30% shorter than the baseline. */
 export const motion = {
   hover: 150, panel: 245, language: 196,
-  chessChat: 250,
+  chessChat: 900,
   enter: 1715, exit: 1575, system: 1540, livePanel: 504, generated: 840,
   formingSources: 600, formingThreads: 800, formingBuild: 600, formingPulse: 400, generatedFocus: 900, formingWait: 15000,
   chessApproach: 280, chessUnfold: 740, chessPieces: 380, chessOpen: 1400, chessClose: 1400, chessMove: 364, chessReady: 140,

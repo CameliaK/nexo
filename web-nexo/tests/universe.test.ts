@@ -1,6 +1,6 @@
 // @ts-nocheck -- This lightweight DOM fixture exercises the unchanged Canvas renderer.
 import { icon } from '../src/icons';
-import { chessChatProgress, desktopChatRegions } from '../src/chess-chat-layout';
+import { desktopChatRegions } from '../src/chess-chat-layout';
 import { chatSurfaceBounds, placeChatUnderlay, setChatSurfaceBounds } from '../src/chat-surface';
 import { mobileSystemBox } from '../src/mobile-layout';
 import { createCameraGestures, clampZoom } from '../src/camera-gestures';
@@ -45,12 +45,12 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  const listeners={},listen=(k,f)=>{const previous=listeners[k];listeners[k]=previous?e=>{previous(e);f(e)}:f},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
  if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,progress:()=>chessOpen?1:0,isAnimating:()=>false,render(){},open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
- const sandbox={icon,chatSurfaceBounds,placeChatUnderlay,chessChatProgress,desktopChatRegions,mobileSystemBox,createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
+ const sandbox={icon,chatSurfaceBounds,placeChatUnderlay,desktopChatRegions,mobileSystemBox,createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let mediaFrame;
  if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { motion as MOTION, easeOut, resumeStart } from './motion';",'').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
- source=source.replace("import { chessChatProgress, desktopChatRegions } from './chess-chat-layout';",'').replace("import { chatSurfaceBounds, placeChatUnderlay } from './chat-surface';",'');
+ source=source.replace("import { desktopChatRegions } from './chess-chat-layout';",'').replace("import { chatSurfaceBounds, placeChatUnderlay } from './chat-surface';",'');
  source=source.replace("import { icon } from './icons';",'');
  source=source.replace("import { mobileSystemBox } from './mobile-layout';",'');
  source=source.replace("import { createCameraGestures, clampZoom } from './camera-gestures';",'');
@@ -81,7 +81,7 @@ test('Live chat fragments into its panel and reassembles as a node',()=>{
  const {api,el,frames}=fixture();frames(100);
  const panel=el('live-panel');panel.hidden=false;let opened=0,closed=0;
  api.setLiveOpen(true);api.morphLivePanel(panel,true,()=>opened++);
- assert.equal(api.chatTarget.hidden,true);assert.equal(panel.style.pointerEvents,'none');
+ assert.equal(api.chatTarget.hidden,false);assert.equal(api.chatTarget.style.opacity,'0');assert.equal(panel.style.pointerEvents,'none');
  frames(800);assert.equal(opened,1);assert.equal(api.getMorphCanvas().hidden,true);assert.equal(panel.style.opacity,'');
  api.morphLivePanel(panel,false,()=>{closed++;api.setLiveOpen(false)});
  frames(800);assert.equal(closed,1);assert.equal(api.chatTarget.hidden,false);assert.equal(api.getMorphCanvas().hidden,true);
@@ -522,4 +522,12 @@ test('Nexo yields to chess and node hit areas on short phones, including reduced
 test('The sole chat node stays in desktop chess, and mobile chess never invokes access',()=>{
  const {api,frames,chessTarget,sandbox,listeners}=fixture(true);frames(100);let opened=0;sandbox.bridge.onLiveOpen=()=>opened++;chessTarget().click();frames(1600);api.chatTarget.click();assert.equal(opened,1);assert.equal(sandbox.bridge.chess.isOpen(),true);
  sandbox.innerWidth=900;listeners.resize();frames(100);api.chatTarget.click();assert.equal(opened,1);assert.equal(sandbox.bridge.chess.isOpen(),true);
+});
+
+test('The shared chess chat morph runs 900 ms and reverses from its current geometry without completing the canceled opening',()=>{
+ const {api,el,frames,chessTarget}=fixture(true);frames(100);chessTarget().click();frames(1600);el('body').classList.add('chess-chat-open');const panel=el('live-panel');panel.hidden=false;let opened=0,closed=0;api.morphLivePanel(panel,true,()=>opened++);frames(450);assert.equal(opened,0);assert.equal(el('body').dataset.canvasFps,'60');assert.equal(api.getMorphCanvas().hidden,false);
+ api.morphLivePanel(panel,false,()=>{closed++;el('body').classList.remove('chess-chat-open')});frames(900);assert.equal(opened,0);assert.equal(closed,1);assert.equal(api.getMorphCanvas().hidden,true);assert.equal(api.getLevel().id,portfolio.root.id);
+});
+test('Reduced motion fades the shared surface without wire work; reopening wins over an interrupted close',()=>{
+ const {api,el,frames}=fixture(false,true);frames(100);const panel=el('live-panel');panel.hidden=false;let opened=0,closed=0;api.morphLivePanel(panel,true,()=>opened++);frames(150);assert.equal(opened,1);api.morphLivePanel(panel,false,()=>closed++);frames(30);api.morphLivePanel(panel,true,()=>opened++);frames(150);assert.equal(closed,0);assert.equal(opened,2);assert.equal(panel.style.opacity,'');assert.equal(panel.style.pointerEvents,'');
 });
