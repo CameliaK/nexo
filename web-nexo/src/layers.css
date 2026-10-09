@@ -6,7 +6,6 @@ main{position:relative;z-index:var(--z-labels,5)}
 .topbar,footer,.system-aperture,#companion-target,.floating-live-chat,.floating-chess,.language-node,.welcome-help,.account-node,.owner-pagination,.media-windows{z-index:var(--z-controls,20)}
 .companion-panel,.live-panel,.content-card,.speech-bubble,.route-notice,.generated-inventory,.generated-camera-controls{z-index:var(--z-panels,40)}
 body.mobile-chess .system-aperture{z-index:var(--z-controls,20)}
-body.mobile-chess .mobile-chess-chat-toggle{z-index:var(--z-controls,20)}
 body.mobile-chess-chat .live-panel,body.mobile-chess-chat .companion-panel{z-index:var(--z-panels,40)}
 body.mobile-chess .mobile-chat-controls{z-index:calc(var(--z-panels,40) + 1)}
 .access-overlay,.account-overlay,.welcome-overlay,.media-viewer,body.mobile-system-expanded .system-aperture{z-index:var(--z-modals,80)}

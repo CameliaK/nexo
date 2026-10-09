@@ -51,8 +51,9 @@ const innerRootHeight=result=>result.rect.bottom;
 async function game(f,touch,reduced){
  const p=f.page;if(!touch){await p.reload();await p.waitForFunction(()=>!document.querySelector('#floating-chess')?.classList.contains('is-locked'));await p.waitForTimeout(200)}
  await f.chess();const before=await p.locator('.chess-board').boundingBox();
+ if(touch){assert.equal(await p.locator('#floating-live-chat').isVisible(),false);await p.keyboard.press('Escape');await p.waitForFunction(()=>!document.body.classList.contains('is-chess'));return {mobileWithoutChat:true};}
  const squares=await p.locator('.chess-board [data-square]').count();assert.equal(squares,64);
- await press(p,'.chess-chat-toggle',touch);await p.waitForTimeout(350);assert.equal(await p.locator('body.is-chess').count(),1);
+ await press(p,'#floating-live-chat',touch);await p.waitForTimeout(350);assert.equal(await p.locator('body.is-chess').count(),1);
  const result=await glass(p),board=await p.locator('.chess-board').boundingBox(),system=await p.locator('#system-window').boundingBox();assert.equal(overlap(board,result.rect),false);assert.equal(overlap(system,result.rect),false);
  if(!touch){assert.ok(board.width<before.width,'Board reflows to make room');assert.equal(overlap(system,board),false)}
  assert.equal(await p.locator('.chess-board [data-square]').count(),squares,'Existing squares are reused during reflow');
@@ -67,10 +68,9 @@ async function game(f,touch,reduced){
  const node={id:'gen_glass_node',generated:true,label:'A node for you',summary:'Glass fixture',created_at:new Date().toISOString(),sources:[{title:'Portfolio'}],layout:'text',content:{body:'An answer'}};
  f.send('run.start',1,{kind:'chat',content_version:3},'mobile-chat');f.send('node.spawn',2,{anchor:null,node},'mobile-chat');f.send('answer.chunk',3,{text:'The new node is ready.'},'mobile-chat');f.send('run.done',4,{outcome:'generated',duration_ms:50},'mobile-chat');
  await p.waitForFunction(()=>document.querySelector('.generated-camera-controls')?.textContent.includes('A node for you'));assert.equal(await p.locator('.chess-board').getAttribute('style'),camera,'Generated node does not move game camera');assert.equal(await p.locator('body.is-chess').count(),1);
- await p.keyboard.press('Escape');await p.locator('.chess-chat-controls').waitFor({state:'hidden'});await p.waitForTimeout(300);assert.equal(await p.locator('.chess-chat-toggle').evaluate(e=>e===document.activeElement),true);
+ await p.keyboard.press('Escape');await p.locator('.chess-chat-controls').waitFor({state:'hidden'});await p.waitForTimeout(300);assert.equal(await p.locator('#floating-live-chat').evaluate(e=>e===document.activeElement),true);
  assert.equal(await p.locator('body.is-chess').count(),1);if(!touch){const restored=await p.locator('.chess-board').boundingBox();assert.ok(Math.abs(restored.width-before.width)<1)}
- f.send('run.start',1,{kind:'live_in',content_version:3},'glass-unread');f.send('live.message',2,{conversation_id:'mobile',message:{id:'glass-unread-message',from:'owner',text:'A reply while playing',ts:new Date().toISOString()}},'glass-unread');await p.locator('.mobile-chat-badge:not([hidden])').waitFor();
- const pulse=await p.locator('.mobile-chat-badge').evaluate(e=>getComputedStyle(e).animationName);assert.equal(pulse,reduced?'none':'chess-chat-unread');
+ f.send('run.start',1,{kind:'live_in',content_version:3},'glass-unread');f.send('live.message',2,{conversation_id:'mobile',message:{id:'glass-unread-message',from:'owner',text:'A reply while playing',ts:new Date().toISOString()}},'glass-unread');await p.locator('.chess-return-unread:not([hidden])').waitFor();
  // Legal keyboard move also drives the visible system, independently of chat.
  await p.locator('[data-square="e2"]').focus();await p.keyboard.press('Enter');await p.locator('[data-square="e4"]').focus();await p.keyboard.press('Enter');
  await p.waitForFunction(()=>document.querySelector('.chess-move-count')?.textContent==='01');assert.ok(f.requests.some(r=>r.path==='/api/v1/chess/game/move'&&r.body.uci==='e2e4'));await p.waitForTimeout(400);

@@ -518,3 +518,8 @@ test('Nexo yields to chess and node hit areas on short phones, including reduced
   for(const node of api.getNodes())assert.equal(satellite.intersects(hit,{left:node.sx-node.sr,right:node.sx+node.sr,top:node.sy-node.sr,bottom:node.sy+node.sr}),false,node.id+' stays tappable');
  }
 });
+
+test('The sole chat node stays in desktop chess, and mobile chess never invokes access',()=>{
+ const {api,frames,chessTarget,sandbox,listeners}=fixture(true);frames(100);let opened=0;sandbox.bridge.onLiveOpen=()=>opened++;chessTarget().click();frames(1600);api.chatTarget.click();assert.equal(opened,1);assert.equal(sandbox.bridge.chess.isOpen(),true);
+ sandbox.innerWidth=900;listeners.resize();frames(100);api.chatTarget.click();assert.equal(opened,1);assert.equal(sandbox.bridge.chess.isOpen(),true);
+});

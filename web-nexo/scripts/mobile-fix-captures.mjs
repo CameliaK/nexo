@@ -16,7 +16,7 @@ try{
   await page.waitForFunction(()=>document.querySelector('.chess-scene').dataset.transition==='resting');if(!chatOnly)await shot('chess');
   if(options.hasTouch){
    await page.locator('.system-enter').tap();await page.waitForTimeout(120);if(!chatOnly)await shot('system');await page.locator('.mobile-system-header button').tap();
-   await page.locator('.mobile-chess-chat-toggle').tap();await page.waitForTimeout(120);await shot('chat');
+   await page.locator('.chess-close').tap();await page.locator('.chess-scene').waitFor({state:'hidden'});await page.locator('#floating-live-chat').press('Enter');await page.waitForTimeout(120);await shot('chat');
   }
   assert.deepEqual(f.errors,[]);await f.context.close();
  }

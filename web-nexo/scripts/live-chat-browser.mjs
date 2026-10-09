@@ -96,7 +96,7 @@ async function scenarios(f,{engine,touch,docked,lang,chess=false}){
  const rows=p.locator('.live-history .chat-message'),input=p.locator('#live-panel textarea'),send=p.locator('#live-panel .chat-send');
  const open=async()=>{
   if(docked||chess){await tap(p,'#floating-chess',touch);await p.locator('.chess-scene.is-ready').waitFor();await p.waitForFunction(()=>document.querySelector('.chess-scene').dataset.transition==='resting')}
-  if(docked||chess)await tap(p,'.chess-chat-toggle',touch);else await tap(p,'#floating-live-chat',touch);
+  if(docked||chess)await tap(p,'#floating-live-chat',touch);else await tap(p,'#floating-live-chat',touch);
   await p.waitForFunction(()=>!document.querySelector('#live-panel').hidden&&document.querySelector('#live-panel').style.pointerEvents!=='none');
   if(chess)await p.waitForTimeout(300);
  };
@@ -155,7 +155,7 @@ for(const [engine,provider,options,touch,docked,lang,chess]of [
  ['chromium',chromium,{viewport:{width:1440,height:900}},false,false,'es',true],
  ['chromium',chromium,{...devices['Pixel 7'],viewport:{width:393,height:851}},true,false,'en'],
  ['webkit',webkit,{...devices['iPhone 13'],viewport:{width:390,height:844}},true,false,'es'],
- ['webkit',webkit,{...devices['iPhone 13'],viewport:{width:390,height:844}},true,true,'en']
+
 ]){
  if(process.env.CHAT_CASE&&process.env.CHAT_CASE!==`${engine}-${docked||chess?'chess':'normal'}`)continue;
  const browser=await provider.launch();let f;

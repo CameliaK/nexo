@@ -170,7 +170,7 @@ const chatCaption=document.createElement('span');chatCaption.className='floating
 const chatPreview=document.createElement('span');chatPreview.className='floating-live-preview';chatPreview.hidden=true;
 const chatAuthor=document.createElement('span');chatAuthor.className='floating-live-author';
 const chatMessage=document.createElement('span');chatMessage.className='floating-live-message';chatPreview.append(chatAuthor,chatMessage);const chatGlyph=document.createElement('span');chatGlyph.className='floating-live-glyph';chatGlyph.innerHTML=icon('chat');chatTarget.append(chatGlyph,chatCaption,chatPreview);
-chatTarget.addEventListener('click',()=>{if(system.chess?.isOpen()){system.chess.closeForNavigation?.(()=>system.onLiveOpen?.());return}system.onLiveOpen?.()});document.body.append(chatTarget);
+chatTarget.addEventListener('click',()=>{if(system.chess?.isOpen()&&width<=900)return;system.onLiveOpen?.()});document.body.append(chatTarget);
 const previewTimer=new LivePreview();let chatHovered=false,chatFocused=false,chatPosition=null,chatFrameTime=0,chatViewport='';
 chatTarget.addEventListener('pointerenter',()=>{chatHovered=true;companion.locked=true;previewTimer.hover(true)});
 chatTarget.addEventListener('pointerleave',()=>{chatHovered=false;previewTimer.hover(false);if(!chatFocused&&!panelOpen&&!companion.keyboard)companion.locked=false});
@@ -299,6 +299,8 @@ function chatObstacles(includeCompanion=false){
 }
 function chatOrbit(){return chatPosition?{...chatPosition,r:width<650?17:21}:{x:width*.79,y:height*.69,r:width<650?17:21}}
 function positionChat(now){
+  if(system.chess?.isOpen()){if(width<=900)return null;chatCaption.style.visibility='visible';chatPreview.style.visibility='hidden';return chatPosition={x:150,y:height*.56,r:21,caption:true};}
+
   const r=width<650?17:21,drift=paused||reduced.matches?0:1;
   const preferred=chatHovered&&chatPosition?chatPosition:{x:width*(width<650?.80:.82)+Math.sin(clock*.46+.7)*27*drift,y:height*(width<650?.69:.71)+Math.cos(clock*.37+.9)*31*drift};
   const opacity=previewTimer.opacity(reduced.matches);chatPreview.hidden=!previewTimer.visible;chatPreview.style.opacity=String(opacity);
@@ -916,6 +918,8 @@ function releaseSpeech(prefix){
   if(speech?.key.startsWith(prefix))speech.expires=performance.now()+1700;
 }
 function openPanel(keyboard=false){
+  if(system.chess?.isOpen()&&width<=900)return;
+
   if(system.chess?.isOpen()&&!document.body.classList.contains('chess-chat-open')){system.chess.closeForNavigation?.(()=>openPanel(keyboard));return}
   if(panelOpen){closePanel(keyboard);return}
   panelOpen=true;anchorPanel(width<650?Math.max(16,(width-320)/2):Math.max(30,width-662),Math.max(100,Math.min(height*.27,height-615)));placePanel();companion.locked=true;companion.keyboard=keyboard;

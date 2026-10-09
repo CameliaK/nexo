@@ -5,9 +5,8 @@ export const en = {
   "chat.emptyAgent": "Ask Nexo about Kirbith and his work.",
   "chat.emptyLive": "Message Kirbith. Your conversation starts here.",
   "chat.privacyLine": "Your data and messages ·",
-  "mobile.chat": "Chat",
+  "chess.messageUnread": "New message from Kirbith",
   "mobile.chats": "Chats during the game",
-  "mobile.chatUnread": "Open chat, new message",
   "mobile.assistant": "Assistant · Nexo",
   "mobile.live": "Chat with Kirbith",
 

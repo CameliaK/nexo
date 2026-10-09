@@ -158,7 +158,7 @@ export class Chats {
     if(!this.liveOpen||this.liveTransition)return;
     this.liveTransition='closing';this.liveInput.blur();
     this.universe.morphLivePanel(this.livePanel,false,()=>{
-      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;if(typeof window!=='undefined')document.body.classList.remove('live-chat-open');this.universe.setLiveOpen(false);this.updateUnread();if(this.liveOpener)this.liveOpener.focus({preventScroll:true});else this.universe.focusLiveNode();this.liveOpener=null;
+      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;if(typeof window!=='undefined')document.body.classList.remove('live-chat-open');this.universe.setLiveOpen(false);this.updateUnread();if(this.liveOpener&&this.liveOpener.id!=='floating-live-chat')this.liveOpener.focus({preventScroll:true});else this.universe.focusLiveNode();this.liveOpener=null;
     });
   }
   escape(){if(this.liveOpen){this.closeLive();return true}return false}

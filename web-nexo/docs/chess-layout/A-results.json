@@ -1,0 +1,14 @@
+[
+  {
+    "name": "desktop",
+    "passed": true
+  },
+  {
+    "name": "iphone",
+    "passed": true
+  },
+  {
+    "name": "900",
+    "passed": true
+  }
+]
