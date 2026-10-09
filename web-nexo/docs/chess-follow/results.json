@@ -1,0 +1,26 @@
+[
+  {
+    "engine": "chromium",
+    "mobile": false,
+    "passed": true,
+    "hold": "native input"
+  },
+  {
+    "engine": "chromium",
+    "mobile": true,
+    "passed": true,
+    "hold": "native input"
+  },
+  {
+    "engine": "webkit",
+    "mobile": false,
+    "passed": true,
+    "hold": "native input"
+  },
+  {
+    "engine": "webkit",
+    "mobile": true,
+    "passed": true,
+    "hold": "DOM PointerEvent timing; native taps for navigation"
+  }
+]

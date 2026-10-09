@@ -27,7 +27,8 @@
     "test:chess-morph": "node scripts/chess-morph-browser.mjs",
     "test:assistant-glass": "node scripts/assistant-glass-browser.mjs",
     "test:chess-layout": "node scripts/chess-layout-browser.mjs",
-    "capture:chess-layout": "node scripts/chess-layout-captures.mjs"
+    "capture:chess-layout": "node scripts/chess-layout-captures.mjs",
+    "test:chess-follow": "node scripts/chess-follow-browser.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

@@ -75,7 +75,7 @@ async function start() {
   const ownerRoute=createOwnerChessRoute(account,(id,isCurrent)=>{if(!welcome.element.hidden)welcome.close();return universe.openOwnerGame(id,isCurrent)});
   welcome.attachUniverse(()=>universe.firstRootNode());
   chats=new Chats(backend,universe,traces,setup.simulated);
-  const mobile=createMobileChess(chats,universe,portal,architecture);
+  const mobile=createMobileChess(chats,universe,portal);
   let transitionTimer:ReturnType<typeof setTimeout>;
   const stopLanguage=languageStore.subscribe(()=>{
     document.documentElement.lang=languageStore.language;

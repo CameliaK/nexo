@@ -1,5 +1,5 @@
 /* One desktop layout. Only the history scrolls, never the whole control rail. */
-body.desktop-chess .chess-scene .chess-aside{height:var(--chess-aside-height);max-height:none;overflow:visible;display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid #b6f3dc30;border-radius:12px;background:rgba(8,19,26,.64);min-width:0}
+body.desktop-chess .chess-scene .chess-aside{height:var(--chess-aside-height);max-height:none;overflow-y:auto;overflow-x:hidden;clip-path:none;display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid #b6f3dc30;border-radius:12px;background:rgba(8,19,26,.64);min-width:0;overscroll-behavior:contain}
 body.desktop-chess .chess-status{flex:none;min-width:0}.chess-status-title{overflow-wrap:anywhere}
 body.desktop-chess .chess-status-title{font-size:21px;margin:6px 0;line-height:1.15}
 body.desktop-chess .chess-status-detail:empty{display:none}
@@ -27,3 +27,5 @@ body.desktop-chess .chess-scene .chess-close{width:144px;min-width:144px;height:
 body.desktop-chess .chess-close:active{transform:translateX(-100%) scale(.94)}
 .chess-history .history-chevron>.ui-icon{width:12px;height:12px}
 body.desktop-chess #companion-target{visibility:hidden;pointer-events:none}
+body.desktop-chess #companion-panel{display:none!important}
+@media(max-height:560px){body.desktop-chess .chess-scene .chess-heading h2{font-size:18px}body.desktop-chess .chess-heading .chess-eyebrow,body.desktop-chess .chess-local{display:none}}
