@@ -3,7 +3,7 @@ import {mkdir,writeFile,access} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {mobileFixture,chromium,webkit,devices} from './mobile-fixture.mjs';
 import {activateChat,readyChat,geometry,historyGame} from './chess-layout-browser.mjs';
-const output=fileURLToPath(new URL('../docs/chess-layout/',import.meta.url)),capture=process.env.QA_CAPTURE==='1',files=[];
+const output=fileURLToPath(new URL('../docs/chess-follow/',import.meta.url)),capture=process.env.QA_CAPTURE==='1',files=[];
 if(capture){await assert.rejects(access(output+'captures.json'),'Capture batch must run only once');await mkdir(output,{recursive:true})}
 for(const [engine,provider,width,height]of [['chromium',chromium,1440,900],['chromium',chromium,1280,720],['webkit',webkit,390,844]]){
  const browser=await provider.launch();try{
@@ -12,7 +12,7 @@ for(const [engine,provider,width,height]of [['chromium',chromium,1440,900],['chr
   await f.chess();await geometry(p,width);await shot('chess-closed');
   if(width>900){
    await activateChat(p);await p.waitForTimeout(400);assert.equal(await p.locator('#live-panel').getAttribute('data-chat-morph'),'opening');await shot('chess-forming');await readyChat(p);await geometry(p,width);await shot('chess-live');
-   await p.locator('.chess-chat-controls button').first().click();await readyChat(p,'agent');await shot('chess-assistant');await p.keyboard.press('Escape');await p.locator('#companion-panel').waitFor({state:'hidden'});
+   await p.keyboard.press('Escape');await p.locator('#live-panel').waitFor({state:'hidden'});
   }else{
    f.send('run.start',1,{kind:'live_in',content_version:3},'capture-in');f.send('live.message',2,{conversation_id:'mobile',message:{id:'capture-reply',from:'owner',text:'Un mensaje mientras juegas',ts:new Date().toISOString()}},'capture-in');await p.locator('.chess-return-unread:not([hidden])').waitFor();await shot('chess-unread');
   }

@@ -1,4 +1,5 @@
 // @ts-nocheck -- This lightweight DOM fixture exercises the unchanged Canvas renderer.
+import {companionDestination,followCompanion,companionHold} from '../src/companion';
 import { icon } from '../src/icons';
 import { desktopChatRegions } from '../src/chess-chat-layout';
 import { chatSurfaceBounds, placeChatUnderlay, attachGlassPanel, setChatSurfaceBounds } from '../src/chat-surface';
@@ -45,12 +46,13 @@ function fixture(withChess=false,reducedMotion=false,withMedia=false){
  const listeners={},listen=(k,f)=>{const previous=listeners[k];listeners[k]=previous?e=>{previous(e);f(e)}:f},traces=new TracePlayer(architecture,()=>now),bridge={architecture,simulated:true,traces,positions:systemPositions(architecture),portal:{element:new Element(),button:new Element(),render(){}},connection:()=> 'open'};
  let chessOpen=false,closeChess;
  if(withChess){bridge.chessNodeVisible=true;bridge.chess={isOpen:()=>chessOpen,progress:()=>chessOpen?1:0,isAnimating:()=>false,render(){},open:origin=>{assert.ok([20,80].includes(origin.faces.length));chessOpen=true},setOnClosed:fn=>closeChess=fn};}
- const sandbox={icon,chatSurfaceBounds,placeChatUnderlay,attachGlassPanel,setChatSurfaceBounds,desktopChatRegions,mobileSystemBox,createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
+ const sandbox={companionDestination,followCompanion,companionHold,icon,chatSurfaceBounds,placeChatUnderlay,attachGlassPanel,setChatSurfaceBounds,desktopChatRegions,mobileSystemBox,createCameraGestures,clampZoom,t,translateText,translateUI:root=>translateUI(root||sandbox.document),languageStore,MOTION,formationPhase,easeOut,resumeStart,console,Math,Date,portfolio,bridge,setTimeout,innerWidth:1440,innerHeight:900,devicePixelRatio:1,performance:{now:()=>now},matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),requestAnimationFrame:f=>raf=f,addEventListener:listen,document:{getElementById:el,querySelector:el,querySelectorAll:selector=>selector.includes('overlay')&&blocked?[{}]:[],createElement:tag=>{const item=new Element();item.tagName=tag;if(tag==='canvas')item.getContext=()=>context;return item},createTextNode:t=>t,addEventListener:(key,fn)=>listen('document:'+key,fn),body:el('body'),hidden:false,get activeElement(){return activeElement}}};
  let mediaFrame;
  if(withMedia){bridge.media=createMediaUI(sandbox.document);const render=bridge.media.render;bridge.media.render=args=>{mediaFrame=args;return render(args)}}
  vm.runInNewContext(satelliteSource+';globalThis.satellite={LivePreview,placeSatellite,satelliteFootprint}',sandbox);Object.assign(sandbox,sandbox.satellite);
  let source=fs.readFileSync('src/universe.js','utf8').replace("import { motion as MOTION, easeOut, resumeStart } from './motion';",'').replace("import { portfolio } from './i18n/content';",'').replace("import { t, translateText, translateUI } from './i18n';",'').replace('export default function createUniverse(system) {','globalThis.universe=(function(system){');
  source=source.replace("import { desktopChatRegions } from './chess-chat-layout';",'').replace("import { chatSurfaceBounds, placeChatUnderlay, attachGlassPanel, setChatSurfaceBounds } from './chat-surface';",'');
+ source=source.replace("import { companionDestination, followCompanion, companionHold } from './companion';",'');
  source=source.replace("import { icon } from './icons';",'');
  source=source.replace("import { mobileSystemBox } from './mobile-layout';",'');
  source=source.replace("import { createCameraGestures, clampZoom } from './camera-gestures';",'');
@@ -233,9 +235,7 @@ test('Approaching companion and speech never displace or hide chat before hover'
  assert.equal(api.getChatPosition().y,control.api.getChatPosition().y);
  let opens=0;sandbox.bridge.onLiveOpen=()=>opens++;api.chatTarget.click();assert.equal(opens,1);
  api.companion.locked=false;frames(1000);
- const chat=translated(satellite.satelliteFootprint(21,api.getChatPosition().caption),api.getChatPosition());
- const orb={left:api.companion.x-24,right:api.companion.x+24,top:api.companion.y-26,bottom:api.companion.y+26};
- assert.equal(satellite.intersects(chat,orb),false,'The companion yields to the chat target');
+ assert.equal(api.chatTarget.hidden,false);api.chatTarget.click();assert.equal(opens,2,'Chat access remains independent of the following companion');
  assert.equal(api.chatTarget.hidden,false);
 });
 
@@ -508,15 +508,16 @@ test('Manual input during the root exit cancels the subsequent automatic focus, 
  const {api,frames,enter,listeners}=fixture();frames(100);enter('experiencia');enter('experiencia.infosys');api.formGenerated('exit-forming',['experiencia.infosys']);api.spawnGenerated(focusNode(),null,false,'exit-forming');frames(100);listeners['document:click']({});frames(4000);assert.equal(api.getLevel().id,'experiencia');assert.equal(api.camera().zoom,1);assert.ok(api.generatedRegistry.has('gen_focus'));api.dispose();
 });
 
-test('Nexo yields to chess and node hit areas on short phones, including reduced motion',()=>{
- for(const [width,height]of [[360,640],[390,664],[390,844]])for(const reduced of [false,true]){
-  const {api,frames,sandbox,listeners,el}=fixture(true,reduced);
-  sandbox.innerWidth=width;sandbox.innerHeight=height;listeners.resize();el('companion-panel').hidden=true;el('content-card').hidden=true;frames(100);
-  const chess=api.chessOrbit();api.companion.locked=false;api.companion.x=chess.sx;api.companion.y=chess.sy;frames(500);
-  const hit={left:api.companion.x-26,right:api.companion.x+26,top:api.companion.y-26,bottom:api.companion.y+26};
-  const current=api.chessOrbit();assert.equal(satellite.intersects(hit,{left:current.sx-25,right:current.sx+25,top:current.sy-25,bottom:current.sy+25}),false);
-  for(const node of api.getNodes())assert.equal(satellite.intersects(hit,{left:node.sx-node.sr,right:node.sx+node.sr,top:node.sy-node.sr,bottom:node.sy+node.sr}),false,node.id+' stays tappable');
+test('Nexo keeps following across primary node hit areas instead of finding another free zone',()=>{
+ const {api,frames,listeners,el}=fixture();frames(100);const node=api.getNodes()[0];
+ for(const offset of [-30,0,30]){
+  const x=node.sx+offset,y=node.sy;listeners.pointermove({pointerType:'mouse',clientX:x,clientY:y,target:node.el});frames(1200);
+  const desired=companionDestination(1440,900,{x,y},false);assert.ok(Math.hypot(api.companion.x-desired.x,api.companion.y-desired.y)<5);assert.equal(api.companion.locked,false);
  }
+ el('companion-target').handlers.keydown({key:'p',preventDefault(){},stopPropagation(){}});frames(800);const dock=companionDestination(1440,900,null,true);assert.equal(api.companion.pinned,true);assert.ok(Math.hypot(api.companion.x-dock.x,api.companion.y-dock.y)<1);
+ listeners.pointermove({pointerType:'touch',clientX:100,clientY:200,target:el('space')});frames(500);assert.ok(Math.hypot(api.companion.x-dock.x,api.companion.y-dock.y)<1);
+ el('companion-target').handlers.keydown({key:'p',preventDefault(){},stopPropagation(){}});frames(800);assert.equal(api.companion.pinned,false);assert.ok(api.companion.x<200);
+ api.openPanel();el('companion-target').handlers.keydown({key:'p',preventDefault(){},stopPropagation(){}});frames(800);assert.ok(Math.hypot(api.companion.x-dock.x,api.companion.y-dock.y)<1,'Pin works while the assistant is open');
 });
 
 test('The sole chat node stays in desktop chess, and mobile chess never invokes access',()=>{

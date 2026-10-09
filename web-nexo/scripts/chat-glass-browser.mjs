@@ -62,14 +62,7 @@ async function game(f,touch,reduced){
  await p.waitForFunction(()=>document.querySelector('#system-window').dataset.active==='true');
  f.send('trace.hop',3,{hop_id:'glass-hop',from:'gateway',to:'owner_channel',phase:'end',duration_ms:20},'glass-live-hop');f.send('run.done',4,{outcome:'delivered',duration_ms:20},'glass-live-hop');
  if(capture&&!touch&&!reduced)await p.screenshot({path:output+'/desktop-chess-chat.png',scale:'css'});
- // The shared assistant tab must leave the same game open, including generated notices.
- await p.locator('.chess-chat-controls button').first().click();await p.locator('#companion-panel').waitFor();await p.locator('#nexo-input').fill('Create a node');await p.locator('.panel-compose > div > button').first().click();
- const camera=await p.locator('.chess-board').getAttribute('style');
- const node={id:'gen_glass_node',generated:true,label:'A node for you',summary:'Glass fixture',created_at:new Date().toISOString(),sources:[{title:'Portfolio'}],layout:'text',content:{body:'An answer'}};
- f.send('run.start',1,{kind:'chat',content_version:3},'mobile-chat');f.send('node.spawn',2,{anchor:null,node},'mobile-chat');f.send('answer.chunk',3,{text:'The new node is ready.'},'mobile-chat');f.send('run.done',4,{outcome:'generated',duration_ms:50},'mobile-chat');
- await p.waitForFunction(()=>document.querySelector('.generated-camera-controls')?.textContent.includes('A node for you'));assert.equal(await p.locator('.chess-board').getAttribute('style'),camera,'Generated node does not move game camera');assert.equal(await p.locator('body.is-chess').count(),1);
- await p.keyboard.press('Escape');await p.locator('.chess-chat-controls').waitFor({state:'hidden'});await p.waitForTimeout(300);assert.equal(await p.locator('#floating-live-chat').evaluate(e=>e===document.activeElement),true);
- assert.equal(await p.locator('body.is-chess').count(),1);if(!touch){const restored=await p.locator('.chess-board').boundingBox();assert.ok(Math.abs(restored.width-before.width)<1)}
+ assert.equal(await p.locator('.chess-chat-controls button').count(),1);assert.equal(await p.locator('#companion-panel').isVisible(),false);await p.keyboard.press('Escape');await p.locator('#live-panel').waitFor({state:'hidden'});assert.equal(await p.locator('body.is-chess').count(),1);
  f.send('run.start',1,{kind:'live_in',content_version:3},'glass-unread');f.send('live.message',2,{conversation_id:'mobile',message:{id:'glass-unread-message',from:'owner',text:'A reply while playing',ts:new Date().toISOString()}},'glass-unread');await p.locator('.chess-return-unread:not([hidden])').waitFor();
  // Legal keyboard move also drives the visible system, independently of chat.
  await p.locator('[data-square="e2"]').focus();await p.keyboard.press('Enter');await p.locator('[data-square="e4"]').focus();await p.keyboard.press('Enter');
