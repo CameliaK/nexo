@@ -1,0 +1,102 @@
+{
+  "interactiveMeasurement": "click-capture-raf-legal-selection-v2",
+  "at": "2026-10-08T22:14:39.438Z",
+  "url": "http://127.0.0.1:4196",
+  "browser": "154.0.8037.98",
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M2",
+    "cores": 8
+  },
+  "viewport": "1366x768",
+  "dpr": 2,
+  "generatedNodes": 12,
+  "openingWindowMs": 1800,
+  "summary": {
+    "interactiveMs": 53.699999998013176,
+    "cameraFps": 60.03219728921001,
+    "glassCameraFps": 60.015228725086224,
+    "glassLongTasks": 0,
+    "lostFrames": 11.333333333333334,
+    "unexpectedLostFrames": 1,
+    "longTasks": 0
+  },
+  "results": [
+    {
+      "run": 1,
+      "interactiveMs": 56,
+      "cameraFps": 60.2013355925446,
+      "glassCamera": {
+        "fps": 60.05888125613347,
+        "maxFrameMs": 21.399999976158142,
+        "longTasks": [],
+        "surface": {
+          "background": "rgba(8, 19, 26, 0.64)",
+          "blur": "blur(20px) saturate(1.1)"
+        }
+      },
+      "unexpectedLostFrames": 1,
+      "lostFrames": 11,
+      "frameIntervals": 95,
+      "longTasks": [],
+      "maxFrameMs": 33.89999997615814,
+      "board": {
+        "x": 348,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 2,
+      "interactiveMs": 68.09999999403954,
+      "cameraFps": 60.11510564497759,
+      "glassCamera": {
+        "fps": 59.98320470296919,
+        "maxFrameMs": 21.400000005960464,
+        "longTasks": [],
+        "surface": {
+          "background": "rgba(8, 19, 26, 0.64)",
+          "blur": "blur(20px) saturate(1.1)"
+        }
+      },
+      "unexpectedLostFrames": 1,
+      "lostFrames": 11,
+      "frameIntervals": 94,
+      "longTasks": [],
+      "maxFrameMs": 33.5,
+      "board": {
+        "x": 348,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    },
+    {
+      "run": 3,
+      "interactiveMs": 37,
+      "cameraFps": 59.78015063010783,
+      "glassCamera": {
+        "fps": 60.00360021615603,
+        "maxFrameMs": 19.80000001192093,
+        "longTasks": [],
+        "surface": {
+          "background": "rgba(8, 19, 26, 0.64)",
+          "blur": "blur(20px) saturate(1.1)"
+        }
+      },
+      "unexpectedLostFrames": 1,
+      "lostFrames": 12,
+      "frameIntervals": 95,
+      "longTasks": [],
+      "maxFrameMs": 35.20000001788139,
+      "board": {
+        "x": 348,
+        "y": 224,
+        "width": 587.046875,
+        "height": 359.078125
+      }
+    }
+  ]
+}

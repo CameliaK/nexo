@@ -1,4 +1,6 @@
+import { chessChatProgress, desktopChatRegions } from './chess-chat-layout';
 import { icon } from './icons';
+import { chatSurfaceBounds, placeChatUnderlay } from './chat-surface';
 import { mobileSystemBox } from './mobile-layout';
 import { createCameraGestures, clampZoom } from './camera-gestures';
 import { formationPhase } from './node-forming';
@@ -136,16 +138,20 @@ function systemFrame(view=camera()){
   for(const rect of systemHeaderRects)if(anchorX+baseWidth/2>rect.left&&anchorX-baseWidth/2<rect.right)anchorY=Math.max(anchorY,rect.bottom+18+baseHeight/2);
   const x=width/2+(anchorX-width/2)*scale+view.pan.x+view.parallax.x*9;
   const y=height*.53+(anchorY-height*.53)*scale+view.pan.y+view.parallax.y*9;
-  return{left:x-w/2,top:y-h/2,width:w,height:h};
+  const ordinary={left:x-w/2,top:y-h/2,width:w,height:h};
+  const progress=system.chess?.isOpen()?chessChatProgress():0,target=desktopChatRegions(width,height).system;
+  return Object.fromEntries(['left','top','width','height'].map(key=>[key,lerp(ordinary[key],target[key],progress)]));
 }
 function apertureNodes(bounds,population=systemPopulation){
   return population.map(n=>{const point=system.positions.find(p=>p.id===n.id);return{...n,sx:bounds.left+bounds.width*(.1+.8*point.x/258),sy:bounds.top+bounds.height*(.09+.8*point.y/136),sr:n.r*bounds.width/1020,hover:apertureHover?.18:0,miniature:true}});
 }
+const systemCaption=system.portal.element?.querySelector('.system-caption');
 function renderDistantSystem(expanded=false){
   if(document.body.classList.contains('mobile-system-expanded')&&!expanded)return;
   const button=system.portal.button;button.style.opacity=level.system||systemTravel?'0':'1';button.disabled=!!level.system||!!systemTravel;button.style.pointerEvents=button.disabled?'none':'';
   if(level.system||systemTravel)return;
   const bounds=distantSystemBounds(),items=apertureNodes(bounds);
+  placeChatUnderlay(systemCaption,{left:bounds.left,right:bounds.left+bounds.width,top:bounds.top-32,bottom:bounds.top+bounds.height+40});
   if(expanded){ctx.fillStyle='#0b161eef';ctx.beginPath();ctx.roundRect(0,bounds.top-56,width,height-bounds.top+56,[24,24,0,0]);ctx.fill();}
   if(system.portal.element){
     const style=system.portal.element.style,flip=chessJourney&&system.chess?.isOpen()&&!expanded;
@@ -266,6 +272,7 @@ function drawChessSatellite(){
   }
   const node=chessOrbit();drawNode(node,.92);chessTarget.style.transform=`translate(${node.sx}px,${node.sy}px) translate(-50%,-50%)`;
   chessTarget.style.width=chessTarget.style.height=node.sr*2+16*zoom+'px';chessTarget.style.setProperty('--node-label-zoom',zoom);chessTarget.style.setProperty('--caption-gap',10*zoom+'px');
+  const footprint=chessFootprint();placeChatUnderlay(chessTarget,{left:node.sx+footprint.left*zoom,right:node.sx+footprint.right*zoom,top:node.sy+footprint.top*zoom,bottom:node.sy+footprint.bottom*zoom});
 }
 function chatObstacles(includeCompanion=false){
   const obstacles=[...occupiedNodeBounds,...occupiedMediaBounds,...fixedObstacles(),{left:width*.41,right:width*.59,top:height*.43,bottom:height*.63}];
@@ -330,7 +337,7 @@ function renderMedia(now){
     obstacles.push({left:chatPosition.x+shape.left,right:chatPosition.x+shape.right,top:chatPosition.y+shape.top,bottom:chatPosition.y+shape.bottom});
     if(chatPosition.bubble&&previewTimer.visible){const b=chatPosition.bubble;obstacles.push({left:chatPosition.x+b.left,right:chatPosition.x+b.right,top:chatPosition.y+b.top,bottom:chatPosition.y+b.bottom})}
   }
-  if(livePanelOpen&&!$('live-panel')?.hidden){const b=$('live-panel').getBoundingClientRect();obstacles.push({left:b.left,right:b.right,top:b.top,bottom:b.bottom})}
+  obstacles.push(...chatSurfaceBounds());
   for(let i=0;i<level.edges.length;i++){
     const [from,to,note]=level.edges[i],a=nodes[from],b=nodes[to];if(!a||!b)continue;
     const bend=(i%2?1:-1)*(level.system?.11:.085),points=Array.from({length:25},(_,j)=>bezier(a,b,j/24,bend));
@@ -350,10 +357,10 @@ function panelTriangles(bounds){
   return triangles.sort((a,b)=>Math.atan2(a[0][1]+a[1][1]+a[2][1]-cy*3,a[0][0]+a[1][0]+a[2][0]-cx*3)-Math.atan2(b[0][1]+b[1][1]+b[2][1]-cy*3,b[0][0]+b[1][0]+b[2][0]-cx*3));
 }
 function morphLivePanel(panel,opening,complete){
-  if(document.body.classList.contains('mobile-chess')){panel.style.opacity='';panel.style.pointerEvents='';complete();return}
+  if(document.body.classList.contains('chess-chat-open')){panel.style.opacity='';panel.style.pointerEvents='';complete();return}
   const origin=chatOrbit();
-  if(opening&&document.body.classList.contains('live-chat-modal')){
-    // The modal follows visualViewport through CSS; a world-node anchor would
+  if(opening&&document.body.classList.contains('live-chat-open')){
+    // The sheet follows visualViewport through CSS; a world-node anchor would
     // leave an inline top behind when the mobile keyboard changes the viewport.
     panel.style.left=panel.style.top=panel.style.bottom='';
   }else if(opening){
@@ -851,7 +858,7 @@ function drawEdges(scene,items,alpha=1){
     if(!a.pending&&!b.pending&&!note?.related&&scene.confidence!=='low'){const q=bezier(a,b,(clock*.055+i*.173)%1,bend),pulse=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,8);pulse.addColorStop(0,rgba(c,.7));pulse.addColorStop(.14,rgba(c,.6));pulse.addColorStop(.4,rgba(c,.15));pulse.addColorStop(1,rgba(c,0));ctx.fillStyle=pulse;ctx.fillRect(q.x-8,q.y-8,16,16)}ctx.restore();
   }
 }
-function placeTargets(alpha,transform){for(const n of nodes){const projected=transform?{sx:width/2+(n.sx-width/2)*transform.scale+transform.x,sy:height*.53+(n.sy-height*.53)*transform.scale+transform.y,sr:n.sr*transform.scale}:n;const forming=n.formation?formationPhase(performance.now()-n.formation.start,reduced.matches||paused):null;const opacity=alpha*(forming?forming.build:1)*(hoverId&&hoverId!==n.id?.55:1)*(n.ownerGame?(n.ownerGame.status!=='active'?.45:n.ownerGame.turn==='owner'?1:.65):1);n.el.style.transform=`translate(${projected.sx}px,${projected.sy}px) translate(-50%,-50%)`;const size=Math.max(48,projected.sr*2)+'px';if(n.el.style.width!==size)n.el.style.width=n.el.style.height=size;n.el.style.setProperty('--radius',projected.sr+'px');n.el.style.setProperty('--node-label-zoom',level===root?zoom:1);n.el.style.setProperty('--label-gap',(width<650?12:19)*(level===root?zoom:1)+'px');if(forming)n.el.disabled=!forming.done;n.el.style.opacity=opacity;n.el.style.visibility=opacity<.02?'hidden':'visible'}}
+function placeTargets(alpha,transform){for(const n of nodes){const projected=transform?{sx:width/2+(n.sx-width/2)*transform.scale+transform.x,sy:height*.53+(n.sy-height*.53)*transform.scale+transform.y,sr:n.sr*transform.scale}:n;const forming=n.formation?formationPhase(performance.now()-n.formation.start,reduced.matches||paused):null;const opacity=alpha*(forming?forming.build:1)*(hoverId&&hoverId!==n.id?.55:1)*(n.ownerGame?(n.ownerGame.status!=='active'?.45:n.ownerGame.turn==='owner'?1:.65):1);n.el.style.transform=`translate(${projected.sx}px,${projected.sy}px) translate(-50%,-50%)`;const size=Math.max(48,projected.sr*2)+'px';if(n.el.style.width!==size)n.el.style.width=n.el.style.height=size;n.el.style.setProperty('--radius',projected.sr+'px');n.el.style.setProperty('--node-label-zoom',level===root?zoom:1);n.el.style.setProperty('--label-gap',(width<650?12:19)*(level===root?zoom:1)+'px');if(forming)n.el.disabled=!forming.done;n.el.style.opacity=opacity;n.el.style.visibility=opacity<.02?'hidden':'visible';const half=(width<650?82:115)*(level===root?zoom:1);placeChatUnderlay(n.el,{left:projected.sx-Math.max(half,projected.sr),right:projected.sx+Math.max(half,projected.sr),top:projected.sy-projected.sr,bottom:projected.sy+projected.sr+(width<650?60:80)*(level===root?zoom:1)})}}
 function entryTransform(entry,u){const move=smooth(u/.5);return{scale:1+.6*move,x:(width/2-entry.sx)*move,y:(height*.53-entry.sy)*move}}
 function drawChessWorld(now){
   const reveal=system.chess.progress(now),mobile=document.body.classList.contains('mobile-chess');
@@ -892,7 +899,7 @@ let hoverEdge=null, panelOpen=false, speech=null, pendingSpeech=null;
 const panelWorld={x:0,y:0};let panelDrag=null;
 function panelProjection(){return{x:width/2+panelWorld.x*zoom+pan.x+parallax.x*6,y:height*.53+panelWorld.y*zoom+pan.y+parallax.y*6}}
 function anchorPanel(x,y){panelWorld.x=(x-width/2-pan.x-parallax.x*6)/zoom;panelWorld.y=(y-height*.53-pan.y-parallax.y*6)/zoom}
-function placePanel(){if(!panelOpen)return;if(document.body.classList.contains('mobile-chess'))return;if(pinnedAgent){anchorPanel(pinnedAgent.x,pinnedAgent.y);$('companion-panel').style.transform=`translate(${pinnedAgent.x}px,${pinnedAgent.y}px) scale(1)`;return}const p=panelProjection();$('companion-panel').style.transform=`translate(${p.x}px,${p.y}px) scale(${zoom})`}
+function placePanel(){if(!panelOpen)return;if(document.body.classList.contains('chess-chat-open'))return;if(pinnedAgent){anchorPanel(pinnedAgent.x,pinnedAgent.y);$('companion-panel').style.transform=`translate(${pinnedAgent.x}px,${pinnedAgent.y}px) scale(1)`;return}const p=panelProjection();$('companion-panel').style.transform=`translate(${p.x}px,${p.y}px) scale(${zoom})`}
 
 function say(title,text,key='context',duration=8500){
   if(!text)return;pendingSpeech=null;
@@ -909,7 +916,7 @@ function releaseSpeech(prefix){
   if(speech?.key.startsWith(prefix))speech.expires=performance.now()+1700;
 }
 function openPanel(keyboard=false){
-  if(system.chess?.isOpen()&&!document.body.classList.contains('mobile-chess')){system.chess.closeForNavigation?.(()=>openPanel(keyboard));return}
+  if(system.chess?.isOpen()&&!document.body.classList.contains('chess-chat-open')){system.chess.closeForNavigation?.(()=>openPanel(keyboard));return}
   if(panelOpen){closePanel(keyboard);return}
   panelOpen=true;anchorPanel(width<650?Math.max(16,(width-320)/2):Math.max(30,width-662),Math.max(100,Math.min(height*.27,height-615)));placePanel();companion.locked=true;companion.keyboard=keyboard;
   $('companion-panel').hidden=false;$('speech-bubble').hidden=true;
@@ -990,7 +997,7 @@ function drawCompanion(dt){
   const blink=paused||reduced.matches?1:1-Math.pow(Math.max(0,Math.cos(clock*1.1)),48)*.85;
   ctx.save();ctx.strokeStyle='rgba(227,255,246,.91)';ctx.lineWidth=2;ctx.lineCap='round';
   for(const eye of[-1,1]){const x=orb.sx+eye*radius*.23+gazeX,y=orb.sy+gazeY;ctx.beginPath();ctx.moveTo(x,y-1.6*blink);ctx.lineTo(x,y+1.6*blink);ctx.stroke()}ctx.restore();
-  const hitSize=width<650?52:62;$('companion-target').style.transform=`translate(${orb.sx-hitSize/2}px,${orb.sy-hitSize/2}px)`;
+  const hitSize=width<650?52:62;$('companion-target').style.transform=`translate(${orb.sx-hitSize/2}px,${orb.sy-hitSize/2}px)`;placeChatUnderlay($('companion-target'),{left:orb.sx-hitSize/2,right:orb.sx+hitSize/2,top:orb.sy-hitSize/2,bottom:orb.sy+hitSize/2});
 }
 function drawChatSatellite(now){
   const position=positionChat(now);
@@ -1003,11 +1010,14 @@ function drawChatSatellite(now){
   chatTarget.style.transform=`translate(${x-radius-8}px,${y-radius-8}px)`;
   if(morphCanvas&&!morphCanvas.hidden)morphCanvas.hidden=true;
 }
+let renderedChatProgress=-1;
 function render(now){
+  const dockProgress=chessChatProgress(now);
+  if(Math.abs(dockProgress-renderedChatProgress)>.00001){renderedChatProgress=dockProgress;document.body.style.setProperty('--chess-chat-progress',dockProgress);if(typeof dispatchEvent==='function')dispatchEvent(new Event('nexo:chat-layout')); }
   frameId=null;
   if(disposed||document.hidden)return;
   gestures.flush();
-  const obscured=livePanelOpen||(document.querySelectorAll?.('.welcome-overlay:not([hidden]), .access-overlay:not([hidden]), .account-overlay:not([hidden])')||[]).length>0;
+  const obscured=(document.querySelectorAll?.('.welcome-overlay:not([hidden]), .access-overlay:not([hidden]), .account-overlay:not([hidden])')||[]).length>0;
   const restingChess=system.chess?.isOpen()&&!system.chess?.isAnimating?.();
   const interval=obscured||restingChess?1000/MOTION.idleFps:0;
   const cadence=interval?'30':'60';if(document.body.dataset.canvasFps!==cadence)document.body.dataset.canvasFps=cadence;
@@ -1042,18 +1052,18 @@ function render(now){
   drawFormations(now);drawGeneratedPulse(now);placePanel();drawCompanion(dt);drawChessSatellite();renderGuide();system.chess?.render?.(ctx,now,{zoom,pan,paused,systemBounds:!level.system?distantSystemBounds():undefined});renderMedia(now);drawChatSatellite(now);drawLiveMorph(now);frameId=requestAnimationFrame(render);
 }
 function setPaused(value){paused=value;$('pause').setAttribute('aria-pressed',String(value));$('pause').setAttribute('aria-label',value?t('motion.resume'):t('motion.pause'));$('pause').title=value?t('motion.resume'):t('motion.pause');$('pause').innerHTML=icon(value?'play':'pause');$('motion-status').textContent=value?t('motion.paused'):t('motion.running');document.querySelector('.live-dot').style.background=value?'#7d8790':'var(--mint)'}
-function changeZoom(amount){if(livePanelOpen||travel||systemTravel)return;targetZoom=clampZoom(targetZoom+amount);syncZoomUI()}
+function changeZoom(amount){if(travel||systemTravel)return;targetZoom=clampZoom(targetZoom+amount);syncZoomUI()}
 $('pause').addEventListener('click',()=>setPaused(!paused));$('back').addEventListener('click',goBack);$('zoom-in').addEventListener('click',()=>changeZoom(.1));$('zoom-out').addEventListener('click',()=>changeZoom(-.1));
 $('reset').addEventListener('click',()=>{if(travel||systemTravel)return;pan={x:0,y:0};if(panelOpen){panelWorld.x=(width<650?24:width-366)-width/2;panelWorld.y=Math.max(100,height*.32)-height*.53}targetZoom=1;changeZoom(0)});
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();if(travel||systemTravel)return;if(level.system){exitSystem();return}if(stack.length)goBackTo(0);else{pan={x:0,y:0};targetZoom=1;changeZoom(0)}});
-function trackPointer(e){if(livePanelOpen||system.chess?.isOpen())return;if(e.target?.closest?.('.floating-live-chat, .media-window, .media-viewer')){companion.locked=true;return}pointer={x:(e.clientX/width-.5)*2,y:(e.clientY/height-.5)*2};companion.tx=e.clientX;companion.ty=e.clientY;companion.present=true;companion.touch=e.pointerType==='touch';const d=Math.hypot(e.clientX-companion.x,e.clientY-companion.y),r=width<650?18:24;companion.keyboard=false;if(!panelOpen){if(d<r+15)companion.locked=true;else if(d>r+52)companion.locked=false}}
+function trackPointer(e){if(system.chess?.isOpen()||e.target?.closest?.('.live-panel, .chat-glass'))return;if(e.target?.closest?.('.floating-live-chat, .media-window, .media-viewer')){companion.locked=true;return}pointer={x:(e.clientX/width-.5)*2,y:(e.clientY/height-.5)*2};companion.tx=e.clientX;companion.ty=e.clientY;companion.present=true;companion.touch=e.pointerType==='touch';const d=Math.hypot(e.clientX-companion.x,e.clientY-companion.y),r=width<650?18:24;companion.keyboard=false;if(!panelOpen){if(d<r+15)companion.locked=true;else if(d>r+52)companion.locked=false}}
 addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;trackPointer(e);if(drag&&!travel&&!systemTravel){pan.x=clamp(drag.px+e.clientX-drag.x,Math.min(-width*.5,drag.px-width*.5),Math.max(width*.5,drag.px+width*.5));pan.y=clamp(drag.py+e.clientY-drag.y,Math.min(-height*.4,drag.py-height*.4),Math.max(height*.4,drag.py+height*.4))}else if(e.target===canvas&&!travel)setEdgeHover(hitEdge(e.clientX,e.clientY));else if(!travel)setEdgeHover(null)});
 addEventListener('pointerdown',trackPointer);
 canvas.addEventListener('contextmenu',event=>event.preventDefault());
 const cancelFocusInput=()=>{if(generatedRequest||generatedFocus)cancelGeneratedFocus()};
 addEventListener('pointerdown',cancelFocusInput,{capture:true});addEventListener('wheel',cancelFocusInput,{capture:true,passive:true});addEventListener('keydown',cancelFocusInput,{capture:true});document.addEventListener('click',cancelFocusInput,{capture:true});
-canvas.addEventListener('pointerdown',e=>{if(livePanelOpen||e.pointerType==='touch'||system.chess?.isOpen()||travel||systemTravel)return;const edge=hitEdge(e.clientX,e.clientY);if(edge!==null){setEdgeHover(edge);const note=level.edges[edge][2];if(note?.text)say(note.label,note.text,'edge:'+level.title+':'+edge,10000);return}drag={x:e.clientX,y:e.clientY,px:pan.x,py:pan.y};canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';setHover(null);setEdgeHover(null)});
-const gestures=createCameraGestures({root:document,canvas,eligible:target=>target===canvas||!!target?.closest?.('#node-targets, .floating-chess'),enabled:()=>!livePanelOpen&&!travel&&!systemTravel&&!system.chess?.isOpen()&&!document.querySelector?.('.welcome-overlay:not([hidden]), .access-overlay:not([hidden]), .account-overlay:not([hidden])'),read:()=>({...camera(),center:{x:width/2,y:height*.53}}),apply:view=>{zoom=targetZoom=view.zoom;pan={...view.pan};syncZoomUI()},onStart:()=>{drag=null;cancelGeneratedFocus();setHover(null);setEdgeHover(null)}});
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||system.chess?.isOpen()||travel||systemTravel)return;const edge=hitEdge(e.clientX,e.clientY);if(edge!==null){setEdgeHover(edge);const note=level.edges[edge][2];if(note?.text)say(note.label,note.text,'edge:'+level.title+':'+edge,10000);return}drag={x:e.clientX,y:e.clientY,px:pan.x,py:pan.y};canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';setHover(null);setEdgeHover(null)});
+const gestures=createCameraGestures({root:document,canvas,eligible:target=>target===canvas||!!target?.closest?.('#node-targets, .floating-chess'),enabled:()=>!travel&&!systemTravel&&!system.chess?.isOpen()&&!document.querySelector?.('.welcome-overlay:not([hidden]), .access-overlay:not([hidden]), .account-overlay:not([hidden])'),read:()=>({...camera(),center:{x:width/2,y:height*.53}}),apply:view=>{zoom=targetZoom=view.zoom;pan={...view.pan};syncZoomUI()},onStart:()=>{drag=null;cancelGeneratedFocus();setHover(null);setEdgeHover(null)}});
 canvas.addEventListener('click',e=>{if(e.pointerType!=='touch'||system.chess?.isOpen()||travel||systemTravel)return;const edge=hitEdge(e.clientX,e.clientY);if(edge!==null){const note=level.edges[edge][2];if(note?.text)say(note.label,note.text,'edge:'+level.title+':'+edge,10000)}});
 const endDrag=()=>{gestures.cancel();drag=null;canvas.style.cursor='default'};canvas.addEventListener('pointerup',e=>{if(e.pointerType!=='touch')endDrag()});canvas.addEventListener('pointercancel',e=>{if(e.pointerType!=='touch')endDrag()});canvas.addEventListener('lostpointercapture',e=>{if(e.pointerType!=='touch')endDrag()});
 document.addEventListener('mouseleave',()=>{pointer={x:0,y:0};companion.present=false});addEventListener('blur',()=>{endDrag();panelDrag=null;companion.present=false});

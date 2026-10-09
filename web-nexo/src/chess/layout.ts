@@ -20,7 +20,8 @@ export function fitChessCamera(camera:Camera,area:Rect):Camera{
   return {...camera,scale,x:clamp(camera.x,area.left-unit.left*scale,area.right-unit.right*scale),y:clamp(camera.y,area.top-unit.top*scale,area.bottom-unit.bottom*scale)};
 }
 
-export function chessLayout({width,height}:ChessViewport,view:ChessView={zoom:1,pan:{x:0,y:0}}){
+export function chessLayout({width,height}:ChessViewport,view:ChessView={zoom:1,pan:{x:0,y:0}},reservedRight=0){
+  width=Math.max(320,width-reservedRight);
   const short=height<600,stacked=width<960&&!(width>=700&&height<650);
   const margin=width<650?12:28,footer=short?84:width<650?height<720?86:100:104;
   const headerTop=short?64:stacked?82:108,headerHeight=short?26:56;

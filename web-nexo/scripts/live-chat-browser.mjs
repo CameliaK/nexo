@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium,webkit,devices} from 'playwright';
 
 const url=process.env.CHAT_URL||'http://127.0.0.1:4196';
-const output=fileURLToPath(new URL('../docs/chat-fix/',import.meta.url));
+const output=fileURLToPath(new URL(process.env.CHAT_QA_OUTPUT||'../docs/chat-glass/live-regression/',import.meta.url));
 const capture=process.env.QA_CAPTURE==='1',reports=[];
 const contract=JSON.parse(await readFile(new URL('../tests/fixtures/live-contract.json',import.meta.url),'utf8'));
 const initialGame={id:'live-chat-game',color:'w',fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',moves:[],turn:'player',status:'active',updated_at:new Date().toISOString()};
@@ -81,12 +81,14 @@ async function header(page){
 async function layout(page,docked){
  const metrics=await page.evaluate(()=>{
   const panel=document.querySelector('#live-panel'),input=panel.querySelector('textarea'),send=panel.querySelector('.chat-send'),privacy=panel.querySelector('.chat-privacy-bar'),counter=panel.querySelector('.chat-counter');
-  return {panel:panel.getBoundingClientRect().toJSON(),input:input.getBoundingClientRect().toJSON(),send:send.getBoundingClientRect().toJSON(),privacy:privacy.getBoundingClientRect().toJSON(),counter:counter.getBoundingClientRect().toJSON(),background:getComputedStyle(panel.firstElementChild).backgroundColor,before:getComputedStyle(panel.firstElementChild,'::before').display,hit:input.contains(document.elementFromPoint(input.getBoundingClientRect().x+20,input.getBoundingClientRect().y+20)),height:visualViewport.height+visualViewport.offsetTop,mainInert:document.querySelector('main').inert};
+  return {panel:panel.getBoundingClientRect().toJSON(),input:input.getBoundingClientRect().toJSON(),send:send.getBoundingClientRect().toJSON(),privacy:privacy.getBoundingClientRect().toJSON(),counter:counter.getBoundingClientRect().toJSON(),background:getComputedStyle(panel.firstElementChild).backgroundColor,blur:getComputedStyle(panel.firstElementChild).backdropFilter,before:getComputedStyle(panel.firstElementChild,'::before').display,hit:input.contains(document.elementFromPoint(input.getBoundingClientRect().x+20,input.getBoundingClientRect().y+20)),height:visualViewport.height+visualViewport.offsetTop,mainInert:document.querySelector('main').inert};
  });
- assert.equal(metrics.background,'rgb(20, 37, 43)');assert.equal(metrics.before,'none');assert.ok(metrics.hit);assert.equal(intersects(metrics.input,metrics.send),false,'Send sits beside the textarea');assert.equal(intersects(metrics.input,metrics.privacy),false);assert.equal(intersects(metrics.send,metrics.privacy),false);assert.equal(intersects(metrics.counter,metrics.privacy),false);assert.ok(metrics.counter.height>0);
+ assert.match(metrics.background,/rgba\(8, 19, 26, 0\.64\)/);assert.match(metrics.blur,/blur\(/);assert.equal(metrics.before,'none');assert.ok(metrics.hit);assert.equal(intersects(metrics.input,metrics.send),false,'Send sits beside the textarea');assert.equal(intersects(metrics.input,metrics.privacy),false);assert.equal(intersects(metrics.send,metrics.privacy),false);assert.equal(intersects(metrics.counter,metrics.privacy),false);assert.ok(metrics.counter.height>0);
  for(const r of [metrics.input,metrics.send,metrics.privacy])assert.ok(r.y+r.height<=metrics.height+.5,'Composer stays within visualViewport: '+JSON.stringify(metrics));
- if(!docked){assert.ok(metrics.mainInert);assert.equal(await page.locator('#live-panel').getAttribute('aria-modal'),'true');assert.equal(await page.locator('.floating-chess:visible').count(),0);assert.equal(await page.locator('.node-target:visible').count(),0)}
- else {const board=await page.locator('.chess-board').boundingBox(),nav=await page.locator('.mobile-chat-controls').boundingBox();assert.ok(board.y+board.height<=nav.y+1,'The game clears the chat controls even with a four-line draft and keyboard')}
+ assert.equal(await page.locator('#live-panel').getAttribute('aria-modal'),'false');
+ if(!docked)assert.equal(metrics.mainInert,false);
+ if(docked){const board=await page.locator('.chess-board').boundingBox(),nav=await page.locator('.mobile-chat-controls').boundingBox();assert.ok(board.y+board.height<=nav.y+1,'The game clears the chat controls even with a four-line draft and keyboard')}
+ if(await page.locator('body.desktop-chess-chat').count()){const board=await page.locator('.chess-board').boundingBox();assert.ok(board.x+board.width<metrics.panel.x,'Desktop board clears chat column')}
  return metrics;
 }
 async function scenarios(f,{engine,touch,docked,lang,chess=false}){
@@ -94,14 +96,15 @@ async function scenarios(f,{engine,touch,docked,lang,chess=false}){
  const rows=p.locator('.live-history .chat-message'),input=p.locator('#live-panel textarea'),send=p.locator('#live-panel .chat-send');
  const open=async()=>{
   if(docked||chess){await tap(p,'#floating-chess',touch);await p.locator('.chess-scene.is-ready').waitFor();await p.waitForFunction(()=>document.querySelector('.chess-scene').dataset.transition==='resting')}
-  if(docked)await tap(p,'.mobile-chess-chat-toggle',touch);else await tap(p,'#floating-live-chat',touch);
+  if(docked||chess)await tap(p,'.chess-chat-toggle',touch);else await tap(p,'#floating-live-chat',touch);
   await p.waitForFunction(()=>!document.querySelector('#live-panel').hidden&&document.querySelector('#live-panel').style.pointerEvents!=='none');
+  if(chess)await p.waitForTimeout(300);
  };
  const noRetry=async()=>{assert.equal(await rows.locator('.message-retry').count(),0);assert.equal(await rows.filter({has:p.locator('.message-retry')}).count(),0)};
  const bottom=async()=>assert.ok(await p.locator('.live-history').evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop<=2),'Scrolled to last message');
  const textOrder=async()=>{const timestamps=await rows.locator('time').evaluateAll(ns=>ns.map(n=>Date.parse(n.dateTime)));assert.deepEqual(timestamps,[...timestamps].sort((a,b)=>a-b))};
  await header(p);
- if(touch&&!docked){await p.setViewportSize({width:844,height:390});await header(p);await p.setViewportSize({width:390,height:844});await header(p)}
+ if(touch&&!docked&&engine==='webkit'){await p.setViewportSize({width:844,height:390});await header(p);await p.setViewportSize({width:390,height:844});await header(p)}
  if(capture&&engine==='webkit'&&!docked)await p.screenshot({path:output+'/390x844-universe.png',scale:'css'});
  await open();await noRetry();await textOrder();await bottom();await layout(p,docked);
  assert.deepEqual(await rows.evaluateAll(ns=>ns.map(n=>n.dataset.messageId)),Array.from({length:40},(_,i)=>`history-${String(i).padStart(2,'0')}`));
@@ -129,8 +132,8 @@ async function scenarios(f,{engine,touch,docked,lang,chess=false}){
  const beforeReconnect=await rows.evaluateAll(ns=>ns.map(n=>n.dataset.messageId));f.disconnect();await noRetry();await p.waitForFunction(()=>document.querySelector('#live-panel textarea')?.disabled===false);await f.ready();await noRetry();assert.deepEqual(await rows.evaluateAll(ns=>ns.map(n=>n.dataset.messageId)),beforeReconnect,'History merges without duplicate/jump');assert.ok(f.tickets.length>=2);
  const compact=await input.boundingBox();await input.fill('Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6');const expanded=await input.boundingBox();assert.ok(expanded.height>compact.height&&expanded.height<=120,'Textarea grows up to four lines');await layout(p,docked);await input.fill('');
  if(!docked){
-  await p.keyboard.press('Tab');assert.equal(await p.locator('#live-panel').evaluate(e=>e.contains(document.activeElement)),true);
-  if(!touch){const zoom=await p.locator('#zoom-label').textContent();await p.mouse.move(1200,500);await p.mouse.wheel(0,-100);assert.equal(await p.locator('#zoom-label').textContent(),zoom)}
+  await p.keyboard.press('Tab');assert.equal(await p.locator('main').evaluate(e=>e.inert),false,'Glass panel leaves outside focus available');
+  if(!touch&&!chess){const zoom=await p.locator('#zoom-label').textContent();await p.mouse.move(1200,500);await p.mouse.wheel(0,-100);await p.waitForTimeout(350);assert.notEqual(await p.locator('#zoom-label').textContent(),zoom)}
  }
  const screenshot=await layout(p,docked);
  if(capture&&engine==='webkit')await p.screenshot({path:output+`/390x844-${docked?'chess-chat':'live-chat'}.png`,scale:'css'});
@@ -142,14 +145,15 @@ async function scenarios(f,{engine,touch,docked,lang,chess=false}){
  await p.reload();await f.ready();await open();await noRetry();await textOrder();await bottom();assert.equal(await rows.count(),f.history.length);
  assert.equal(await rows.locator('.owner .message-retry').count(),0);assert.equal(await p.locator('.live-history .owner .message-retry').count(),0);
  await p.keyboard.press('Escape');await p.locator('#live-panel').waitFor({state:'hidden'});
- if(!docked){assert.equal(await p.locator('main').evaluate(e=>e.inert),false);assert.equal(await p.locator('#floating-live-chat').evaluate(e=>e===document.activeElement),true)}
+ if(!docked&&!chess){assert.equal(await p.locator('main').evaluate(e=>e.inert),false);assert.equal(await p.locator('#floating-live-chat').evaluate(e=>e===document.activeElement),true)}
  assert.deepEqual(f.errors,[]);
- reports.push({engine,viewport:touch?'390x844':'1366x768',docked,chess,language:lang,historyShape:'{ conversation_id, messages: [{ id, from, text, ts }] }, no status',historyOrder:'descending',verified:['receipt-before-POST','receipt-after-POST','202-without-WS','HTTP-failure-and-retry','owner-reply','scroll-reading-and-own-send','reconnection','reload','opaque-composer','four-line-draft','focus-and-ESC','visualViewport'],posts:f.posts.length,tickets:f.tickets.length,screenshot});
+ reports.push({engine,viewport:p.viewportSize().width+'x'+p.viewportSize().height,docked,chess,language:lang,historyShape:'{ conversation_id, messages: [{ id, from, text, ts }] }, no status',historyOrder:'descending',verified:['receipt-before-POST','receipt-after-POST','202-without-WS','HTTP-failure-and-retry','owner-reply','scroll-reading-and-own-send','reconnection','reload','glass-composer','four-line-draft','focus-and-ESC','visualViewport'],posts:f.posts.length,tickets:f.tickets.length,screenshot});
  console.log(`${engine} ${docked?'chess dock':chess?'desktop chess chat':'normal panel'} OK`);
 }
 for(const [engine,provider,options,touch,docked,lang,chess]of [
  ['chromium',chromium,{viewport:{width:1366,height:768}},false,false,'en'],
- ['chromium',chromium,{viewport:{width:1366,height:768}},false,false,'es',true],
+ ['chromium',chromium,{viewport:{width:1440,height:900}},false,false,'es',true],
+ ['chromium',chromium,{...devices['Pixel 7'],viewport:{width:393,height:851}},true,false,'en'],
  ['webkit',webkit,{...devices['iPhone 13'],viewport:{width:390,height:844}},true,false,'es'],
  ['webkit',webkit,{...devices['iPhone 13'],viewport:{width:390,height:844}},true,true,'en']
 ]){

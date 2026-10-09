@@ -1,28 +1,22 @@
-/* Opaque surfaces need no backdrop filter while the canvas is moving. */
-.live-backdrop{position:fixed;inset:0;z-index:78;background:#03090dbd;touch-action:none}
-.live-chat-modal #space{opacity:.32}
-.live-chat-modal .chess-scene{opacity:.32}
-.live-chat-modal #node-targets,.live-chat-modal #edge-targets,.live-chat-modal #content-card,.live-chat-modal #scene-facts,.live-chat-modal #scene-highlights{visibility:hidden!important;pointer-events:none!important}
-.live-chat-modal .node-target,.live-chat-modal .node-label,.live-chat-modal .edge-target{visibility:hidden!important;pointer-events:none!important}
-.live-chat-modal main,.live-chat-modal .topbar,.live-chat-modal footer,.live-chat-modal .floating-chess,.live-chat-modal .floating-live-chat,.live-chat-modal #companion-target,.live-chat-modal .speech-bubble,.live-chat-modal .companion-panel,.live-chat-modal .system-aperture,.live-chat-modal .language-node,.live-chat-modal .welcome-help,.live-chat-modal .account-node,.live-chat-modal .media-windows,.live-chat-modal .owner-pagination,.live-chat-modal .generated-inventory{visibility:hidden!important;pointer-events:none!important}
-.live-panel{z-index:80;width:min(440px,calc(100vw - 48px));bottom:24px;height:min(680px,calc(var(--mobile-height,100dvh) - 48px));filter:none}
-.live-panel>.panel-surface{height:100%;max-height:none;display:flex;flex-direction:column;overflow:hidden;clip-path:none;border:1px solid #b6f3dc30;border-radius:18px;background:#14252b;backdrop-filter:none;padding:18px}
+/* Frosted glass keeps the working universe visible; the composer has its own contrast. */
+.live-panel{z-index:var(--z-panels,40);left:24px;right:auto;top:112px;bottom:28px;width:min(380px,calc(100vw - 48px));height:auto;filter:none}
+.live-panel>.panel-surface{height:100%;max-height:none;display:flex;flex-direction:column;overflow:hidden;clip-path:none;border:1px solid #b6f3dc30;border-radius:18px;background:rgba(8,19,26,var(--chat-glass-alpha,.64));backdrop-filter:blur(var(--chat-glass-blur,20px)) saturate(1.1);-webkit-backdrop-filter:blur(var(--chat-glass-blur,20px)) saturate(1.1);box-shadow:0 12px 32px #0003;padding:18px}
 .live-panel>.panel-surface:before{display:none}
 .live-panel .panel-header,.live-panel .live-intro,.live-panel .live-compose,.live-panel .chat-privacy-bar{flex:none}
 .live-panel .panel-header button{min-width:44px;min-height:44px;border:0;background:none}
 .live-panel .live-history{flex:1;min-height:0;max-height:none;margin:8px 0 12px;overscroll-behavior:contain;overflow-anchor:none;touch-action:pan-y}
 .live-panel .live-history:empty~.chat-empty{display:flex;flex:1;min-height:0;align-items:center;justify-content:center;text-align:center;font-size:12px;color:#92afa4;margin:0;padding:12px}
-.live-panel .chat-message{border-radius:14px}
+.live-panel .chat-message{border-radius:14px;background:rgba(12,28,35,.88);border:1px solid #b6f3dc22;color:#e6f1ec}.live-panel .chat-message.visitor{background:rgba(21,45,53,.92)}.live-panel .message-meta,.live-panel .message-state,.live-panel .message-author{color:#adc4be}.live-panel .chat-message p{color:#e6f1ec}
 .live-panel .live-compose{display:block;padding:0}
 .live-panel .compose-field{display:flex;align-items:flex-end;gap:8px;border:0;background:none;border-radius:0}
-.live-panel .compose-field textarea{display:block;flex:1;min-width:0;width:0;height:44px;min-height:44px;max-height:118px;resize:none;margin:0;padding:10px 12px;border:1px solid #b6f3dc30;border-radius:16px;background:#09151b;font:14px/24px 'DM Sans',sans-serif;touch-action:pan-y}
+.live-panel .compose-field textarea{display:block;flex:1;min-width:0;width:0;height:44px;min-height:44px;max-height:118px;resize:none;margin:0;padding:10px 12px;border:1px solid #b6f3dc30;border-radius:16px;background:rgba(9,21,27,.94);color:#e7f5ef;font:14px/24px 'DM Sans',sans-serif;touch-action:pan-y}
 .live-panel .compose-field .chat-send{position:static;flex:none;width:44px;height:44px;min-height:44px;margin:0;padding:10px;border:1px solid #b6f3dc30;border-radius:50%;background:#1e3933;display:grid;place-items:center}
 .live-panel .chat-counter{display:block;font-size:9px;line-height:12px;margin:4px 52px 0 0}
 .live-panel .chat-hint{margin:4px 0 0}.live-panel .chat-hint:empty{display:none}
 .live-panel .privacy-notice{font-size:10px;line-height:1.45;margin:10px 0 0}
-body.mobile-chess-chat .live-panel>.panel-surface,body.mobile-chess .mobile-chat-controls:not([hidden]){background:#14252b;backdrop-filter:none}
+body.mobile-chess-chat .live-panel>.panel-surface,body.mobile-chess .mobile-chat-controls:not([hidden]){background:rgba(8,19,26,var(--chat-glass-alpha,.64));backdrop-filter:blur(var(--chat-glass-blur-mobile,16px)) saturate(1.1);-webkit-backdrop-filter:blur(var(--chat-glass-blur-mobile,16px)) saturate(1.1)}
 body.mobile-chess-chat .live-panel .compose-field{border:0;background:none;gap:8px;align-items:flex-end}
-body.mobile-chess-chat .live-panel .compose-field textarea{padding:10px 12px;line-height:24px;border:1px solid #b6f3dc30;border-radius:16px;background:#09151b;max-height:118px;height:44px}
+body.mobile-chess-chat .live-panel .compose-field textarea{padding:10px 12px;line-height:24px;border:1px solid #b6f3dc30;border-radius:16px;background:rgba(9,21,27,.94);color:#e7f5ef;max-height:118px;height:44px}
 body.mobile-chess-chat .live-panel .compose-field .chat-send{position:static;border:1px solid #b6f3dc30;background:#1e3933;flex:none}
 body.mobile-chess-chat .live-panel .chat-counter{display:block}
 body.mobile-chess-chat.live-chat-open[data-mobile-keyboard=true] .mobile-chat-controls{height:44px;padding:0 12px}
@@ -30,10 +24,13 @@ body.mobile-chess-chat.live-chat-open[data-mobile-keyboard=true] .mobile-chat-co
 body.mobile-chess-chat.live-chat-open[data-mobile-keyboard=true] .live-panel{top:calc(var(--mobile-dock-top) + 44px)!important;height:calc(var(--mobile-dock-height) - 44px)}
 body.mobile-chess-chat.live-chat-open[data-mobile-keyboard=true] .live-history{padding:0;margin:0 0 4px}
 @media(max-width:768px),(pointer:coarse) and (max-height:768px){
- body:not(.mobile-chess-chat) .live-panel{left:max(12px,env(safe-area-inset-left));width:calc(100vw - max(12px,env(safe-area-inset-left)) - max(12px,env(safe-area-inset-right)));top:calc(var(--mobile-top,0px) + env(safe-area-inset-top) + 12px);bottom:auto;height:calc(var(--mobile-height,100dvh) - var(--mobile-bottom-inset,72px) - env(safe-area-inset-top) - 24px)}
- .live-panel>.panel-surface{padding:12px}
+ body:not(.mobile-chess-chat) .live-panel{left:max(12px,env(safe-area-inset-left));width:calc(100vw - max(12px,env(safe-area-inset-left)) - max(12px,env(safe-area-inset-right)));top:var(--mobile-dock-top,45dvh);bottom:auto;height:var(--mobile-dock-height,55dvh)}
+ .live-panel>.panel-surface{padding:12px;border-radius:24px 24px 0 0;backdrop-filter:blur(var(--chat-glass-blur-mobile,16px)) saturate(1.1);-webkit-backdrop-filter:blur(var(--chat-glass-blur-mobile,16px)) saturate(1.1)}
  .live-panel .panel-header h2{font-size:18px}
  .live-panel .live-intro{margin:8px 0;font-size:11px}
  body[data-mobile-keyboard=true] .live-panel .live-intro,body[data-mobile-keyboard=true] .live-panel .live-name{display:none}
+ body[data-mobile-keyboard=true]:not(.mobile-chess-chat) .live-panel{top:calc(var(--mobile-top,0px) + env(safe-area-inset-top) + 8px);height:calc(var(--mobile-height,100dvh) - var(--mobile-bottom-inset,8px) - env(safe-area-inset-top) - 16px)}
  .live-panel .live-new-message{min-height:44px;flex:none}
 }
+
+.live-panel textarea::placeholder{color:#adc4be;opacity:1}

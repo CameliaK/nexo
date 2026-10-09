@@ -1,3 +1,5 @@
+import { attachGlassPanel } from './chat-surface';
+import { setChessChatLayout, desktopChatRegions } from './chess-chat-layout';
 import { mobileViewport } from './mobile-layout';
 import { icon } from './icons';
 import type { BackendArchitecture } from './backend/types';
@@ -6,10 +8,10 @@ import type { Chats } from './chat';
 /** Dock the existing chats and system entrance; their instances and data stay intact. */
 export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAgent():void},portal:{element:HTMLElement;button:HTMLButtonElement},architecture:BackendArchitecture){
  const body=document.body,agent=document.getElementById('companion-panel')!,live=document.getElementById('live-panel')!;
- const button=document.createElement('button');button.type='button';button.className='mobile-chess-chat-toggle';
+ const button=document.createElement('button');button.type='button';button.className='mobile-chess-chat-toggle chess-chat-toggle';
  const badge=document.createElement('span');badge.className='mobile-chat-badge';badge.hidden=true;
  const label=document.createElement('span');const glyph=document.createElement('span');glyph.innerHTML=icon('chat');button.append(glyph,label,badge);button.setAttribute('aria-controls','mobile-chat-controls');button.setAttribute('aria-expanded','false');
- const controls=document.createElement('nav');controls.id='mobile-chat-controls';controls.className='mobile-chat-controls';controls.hidden=true;
+ const controls=document.createElement('nav');controls.id='mobile-chat-controls';controls.className='mobile-chat-controls chess-chat-controls';controls.hidden=true;
  const assistant=document.createElement('button'),owner=document.createElement('button'),close=document.createElement('button');
  for(const item of [assistant,owner,close])item.type='button';close.innerHTML=icon('close');controls.append(assistant,owner,close);
  const sheetHeader=document.createElement('header');sheetHeader.className='mobile-system-header';
@@ -17,10 +19,11 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  const summary=document.createElement('ul');summary.id='mobile-system-components';summary.className='sr-only';summary.dataset.i18nIgnore='';summary.hidden=true;portal.element.append(summary);
  const safe=document.createElement('div');safe.className='mobile-safe-probe';safe.setAttribute('aria-hidden','true');body.append(button,controls,safe);
  const hiddenState=new Map<HTMLElement,boolean>();
- let active=false,chat:'agent'|'live'|null=null,expanded=false,previous:HTMLElement|null=null,swipe:{id:number;y:number;surface:'chat'|'system'}|null=null;
+ let active=false,mobile=false,releaseAgent:(()=>void)|null=null,chat:'agent'|'live'|null=null,expanded=false,previous:HTMLElement|null=null,swipe:{id:number;y:number;surface:'chat'|'system'}|null=null;
  const isMobile=()=>innerWidth<=768||(matchMedia('(pointer: coarse)').matches&&innerHeight<=768);
  const emit=()=>dispatchEvent(new Event('nexo:mobile-layout'));
  function measure(){
+  const regions=desktopChatRegions(innerWidth,innerHeight);for(const [key,value]of Object.entries({left:regions.left,width:regions.width,top:regions.top,panelTop:regions.panelTop,bottom:regions.bottom}))body.style.setProperty('--desktop-chat-'+key,value+'px');
   const visual=window.visualViewport,styles=getComputedStyle(safe),stable=safe.getBoundingClientRect().height;const height=Math.min(visual?.height||innerHeight,stable||innerHeight);
   body.style.setProperty('--mobile-height',height+'px');body.style.setProperty('--mobile-top',(visual?.offsetTop||0)+'px');
   body.dataset.mobileKeyboard=String(height<innerHeight*.75);
@@ -38,16 +41,29 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  function syncUnread(){
   const count=Number(document.getElementById('floating-live-chat')?.dataset.unread||0);badge.hidden=count===0;badge.textContent=String(count);relabel();
  }
- function closeChat(restore=true){
+ function hideCurrent(){
+  releaseAgent?.();releaseAgent=null;
   if(chat==='agent')universe.closeAgent();else if(chat==='live')chats.closeLive();
-  chat=null;controls.hidden=true;body.classList.remove('mobile-chess-chat');button.setAttribute('aria-expanded','false');measure();emit();if(restore)button.focus({preventScroll:true});
+ }
+ function closeChat(restore=true){
+  if(!chat)return;
+  hideCurrent();chat=null;controls.hidden=true;
+  body.classList.remove('mobile-chess-chat','desktop-chess-chat','chess-chat-open');
+  setChessChatLayout(false,matchMedia('(prefers-reduced-motion: reduce)').matches);
+  button.setAttribute('aria-expanded','false');measure();emit();if(restore)button.focus({preventScroll:true});
  }
  function select(which:'agent'|'live'){
   if(!active)return;
-  if(chat&&chat!==which)closeChat(false);
-  chat=which;controls.hidden=false;body.classList.add('mobile-chess-chat');button.setAttribute('aria-expanded','true');
+  if(chat&&chat!==which)hideCurrent();
+  const wasOpen=!!chat;chat=which;controls.hidden=false;
+  body.classList.add('chess-chat-open');body.classList.toggle('mobile-chess-chat',mobile);body.classList.toggle('desktop-chess-chat',!mobile);
+  if(!wasOpen)setChessChatLayout(!mobile,matchMedia('(prefers-reduced-motion: reduce)').matches);
+  button.setAttribute('aria-expanded','true');
   assistant.setAttribute('aria-pressed',String(which==='agent'));owner.setAttribute('aria-pressed',String(which==='live'));
-  if(which==='agent')universe.openAgent();else chats.openLive();
+  if(which==='agent'){
+   universe.openAgent();releaseAgent?.();releaseAgent=attachGlassPanel(agent,()=>closeChat());
+   document.getElementById('nexo-input')?.focus({preventScroll:true});
+  }else chats.openLive(button);
   measure();emit();
  }
  function systemSheet(value:boolean){
@@ -58,23 +74,23 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
   emit();
  }
  function sync(){
-  const next=isMobile()&&body.classList.contains('is-chess');
-  if(next===active)return;
-  // Close docked surfaces while their mobile layout is still active; avoid starting
-  // a world-panel morph during teardown.
+  const next=body.classList.contains('is-chess'),nextMobile=next&&isMobile();
+  if(next===active&&nextMobile===mobile)return;
   if(!next){systemSheet(false);closeChat(false)}
-  active=next;body.classList.toggle('mobile-chess',active);
-  if(active){
+  for(const [element,inert]of hiddenState)element.inert=inert;hiddenState.clear();
+  active=next;mobile=nextMobile;
+  body.classList.toggle('mobile-chess',mobile);body.classList.toggle('desktop-chess',active&&!mobile);
+  if(mobile){
    for(const element of document.querySelectorAll<HTMLElement>('main, .topbar, footer, #companion-target, #floating-live-chat, .floating-chess, .language-node, .welcome-help, .account-node, #content-card, #system-legend, .owner-pagination')){hiddenState.set(element,element.inert);element.inert=true;}
-   if(!agent.hidden){chat='agent';controls.hidden=false;body.classList.add('mobile-chess-chat')}
-   else if(!live.hidden){chat='live';controls.hidden=false;body.classList.add('mobile-chess-chat')}
-  }else{
-   for(const [element,inert]of hiddenState)element.inert=inert;hiddenState.clear();
+  }
+  if(active){
+   if(chat){body.classList.toggle('mobile-chess-chat',mobile);body.classList.toggle('desktop-chess-chat',!mobile);setChessChatLayout(!mobile,true)}
+   else if(!agent.hidden)select('agent');else if(!live.hidden)select('live');
   }
   measure();syncUnread();emit();
  }
  button.onclick=()=>chat?closeChat():select('live');assistant.onclick=()=>select('agent');owner.onclick=()=>select('live');close.onclick=()=>closeChat();systemClose.onclick=()=>systemSheet(false);
- const openSystem=(event:Event)=>{if(!active)return;event.preventDefault();event.stopImmediatePropagation();systemSheet(true)};
+ const openSystem=(event:Event)=>{if(!mobile)return;event.preventDefault();event.stopImmediatePropagation();systemSheet(true)};
  portal.button.addEventListener('click',openSystem,{capture:true});
  const key=(event:KeyboardEvent)=>{
   if(!active)return;
@@ -82,7 +98,7 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
   if(chat&&event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();closeChat()}
  };
  const focus=(event:FocusEvent)=>{if(expanded&&!portal.element.contains(event.target as Node))systemClose.focus({preventScroll:true})};
- const down=(event:PointerEvent)=>{const target=event.target as HTMLElement;if(expanded&&target.closest('.mobile-system-header'))swipe={id:event.pointerId,y:event.clientY,surface:'system'};else if(chat&&target.closest('.panel-header, .mobile-chat-controls'))swipe={id:event.pointerId,y:event.clientY,surface:'chat'}};
+ const down=(event:PointerEvent)=>{const target=event.target as HTMLElement;if(!mobile)return;if(expanded&&target.closest('.mobile-system-header'))swipe={id:event.pointerId,y:event.clientY,surface:'system'};else if(chat&&target.closest('.panel-header, .mobile-chat-controls'))swipe={id:event.pointerId,y:event.clientY,surface:'chat'}};
  const up=(event:PointerEvent)=>{if(swipe?.id===event.pointerId&&event.clientY-swipe.y>55){if(swipe.surface==='system')systemSheet(false);else closeChat()}swipe=null};
  const cancel=()=>{swipe=null};
  const resize=()=>{measure();sync();if(active)emit()};
@@ -96,5 +112,5 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  window.addEventListener('nexo:chess-state',sync);window.addEventListener('resize',resize);window.visualViewport?.addEventListener('resize',resize);window.visualViewport?.addEventListener('scroll',resize);
  window.addEventListener('nexo:live-compose',resize);
  const stopLanguage=languageStore.subscribe(relabel);measure();relabel();sync();
- return {dispose(){observer.disconnect();stopLanguage();active=false;systemSheet(false);closeChat(false);for(const [element,inert]of hiddenState)element.inert=inert;body.classList.remove('mobile-chess');button.remove();controls.remove();safe.remove();sheetHeader.remove();summary.remove();portal.button.removeEventListener('click',openSystem,{capture:true});document.removeEventListener('focusin',focus,{capture:true});document.removeEventListener('keydown',key,{capture:true});document.removeEventListener('pointerdown',down);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cancel);window.removeEventListener('nexo:chess-state',sync);window.removeEventListener('resize',resize);window.removeEventListener('nexo:live-compose',resize);window.visualViewport?.removeEventListener('resize',resize);window.visualViewport?.removeEventListener('scroll',resize)}};
+ return {dispose(){observer.disconnect();stopLanguage();active=false;systemSheet(false);closeChat(false);for(const [element,inert]of hiddenState)element.inert=inert;setChessChatLayout(false,true);body.classList.remove('mobile-chess','desktop-chess');button.remove();controls.remove();safe.remove();sheetHeader.remove();summary.remove();portal.button.removeEventListener('click',openSystem,{capture:true});document.removeEventListener('focusin',focus,{capture:true});document.removeEventListener('keydown',key,{capture:true});document.removeEventListener('pointerdown',down);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cancel);window.removeEventListener('nexo:chess-state',sync);window.removeEventListener('resize',resize);window.removeEventListener('nexo:live-compose',resize);window.visualViewport?.removeEventListener('resize',resize);window.visualViewport?.removeEventListener('scroll',resize)}};
 }

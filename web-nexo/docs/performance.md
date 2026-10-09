@@ -216,3 +216,46 @@ tres pasadas sin pruebas concurrentes: **43.2 ms** hasta interacción,
 no se observa regresión. El panel de chat normal reduce el universo a 30 FPS,
 usa una superficie opaca y cachea la geometría de cabecera fuera del bucle.
 [Medición](chat-fix/performance.json), [validación y reproducción](chat-fix/README.md).
+
+## Chat de vidrio y ajedrez — 2026-10-08
+
+Producción, Apple M2 / Chrome 154, DPR 2 y 12 nodos generados; tres pasadas
+secuenciales por escenario, sin compilaciones ni otras pruebas concurrentes.
+El benchmark estándar conserva exactamente la secuencia de la base publicada:
+arrastre de cinco segundos y apertura del ajedrez.
+
+| Métrica estándar, 1366×768 | Chat-fix publicado | Chat-glass |
+| --- | ---: | ---: |
+| Tablero interactivo | 43,2 ms | 38,8 ms |
+| FPS medios al arrastrar | 60,05 | 60,24 |
+| Fotogramas perdidos inesperados al abrir | 1 | 1 |
+| Tareas largas >50 ms al abrir | 0 | 0 |
+
+[Medición estándar](chat-glass/performance-standard.json). No se observa regresión
+frente a la base. El cálculo de pérdidas distingue la cadencia de reposo de 30 FPS
+del ajedrez de los fotogramas inesperados, como en las mediciones anteriores.
+
+Para medir específicamente el coste del vidrio se añade `PERF_CHAT_GLASS=1`:
+la misma página hace otro arrastre de cinco segundos con el chat abierto, después
+lo cierra y abre el ajedrez. El universo permanece activo a 60 FPS.
+
+| Perfil en Chrome, 12 nodos, DPR 2 | Chat cerrado | Vidrio abierto | Tareas largas durante vidrio |
+| --- | ---: | ---: | ---: |
+| Escritorio 1366×768, blur 20 px | 60,03 FPS | 60,02 FPS | 0 |
+| Pixel 7 emulado 393×851, blur 16 px | 60,03 FPS | 60,05 FPS | 0 |
+
+La diferencia queda dentro de la variación entre pasadas. Se conserva el radio
+móvil de 16 px. En esta secuencia ampliada el tablero fue interactivo en 53,7 ms
+en escritorio y 48,0 ms en móvil, sin tareas largas al abrir. No se mezclan estos
+tiempos con la tabla estándar porque incluyen una sesión de chat y otro arrastre
+antes de abrir el tablero. Los FPS móviles se midieron en la misma máquina M2;
+no representan el rendimiento de un teléfono físico.
+
+[Datos de vidrio escritorio](chat-glass/performance.json),
+[datos de vidrio móvil](chat-glass/performance-mobile.json),
+[pruebas, contraste, capturas y comandos](chat-glass/README.md).
+
+La superficie aplica el filtro una sola vez al panel; no se animan blur ni
+sombras. La oclusión usa coordenadas proyectadas y un rectángulo de panel cacheado.
+El reflujo del juego comparte el bucle y reloj existentes de 250 ms, mantiene
+las casillas y pausa el trabajo cuando se oculta la pestaña.

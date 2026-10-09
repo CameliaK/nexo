@@ -1,0 +1,22 @@
+/* A shared dock, independent of the game and chat data. */
+body.desktop-chess .chess-chat-toggle{display:flex;position:fixed;right:24px;top:112px;align-items:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid #b6f3dc55;border-radius:24px;background:#142c27cc;color:#d6f6e9;z-index:var(--z-controls);font-size:13px}
+.chess-chat-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor}
+body.desktop-chess .chess-chat-controls:not([hidden]){display:flex;position:fixed;left:var(--desktop-chat-left);top:var(--desktop-chat-top);width:var(--desktop-chat-width);height:52px;padding:0 12px;gap:6px;border:1px solid #b6f3dc30;border-bottom:0;border-radius:18px 18px 0 0;background:rgba(8,19,26,var(--chat-glass-alpha));backdrop-filter:blur(var(--chat-glass-blur)) saturate(1.1);-webkit-backdrop-filter:blur(var(--chat-glass-blur)) saturate(1.1);z-index:calc(var(--z-panels) + 1)}
+body.desktop-chess-chat .live-panel,body.desktop-chess-chat .companion-panel{position:fixed!important;left:var(--desktop-chat-left)!important;right:auto!important;top:var(--desktop-chat-panelTop)!important;bottom:var(--desktop-chat-bottom)!important;width:var(--desktop-chat-width)!important;height:auto;max-height:none;transform:translateX(calc((1 - var(--chess-chat-progress,0))*428px))!important;z-index:var(--z-panels);filter:none}
+body.desktop-chess .chess-chat-controls{transform:translateX(calc((1 - var(--chess-chat-progress,0))*428px))}
+body.desktop-chess-chat .panel-surface{height:100%;max-height:none;display:flex;flex-direction:column;overflow:hidden;clip-path:none;border:1px solid #b6f3dc30;border-radius:0 0 18px 18px;background:rgba(8,19,26,var(--chat-glass-alpha));backdrop-filter:blur(var(--chat-glass-blur)) saturate(1.1);-webkit-backdrop-filter:blur(var(--chat-glass-blur)) saturate(1.1);padding:16px;box-shadow:0 12px 32px #0003}
+body.desktop-chess-chat .panel-surface:before{display:none}
+body.desktop-chess-chat .panel-header{display:none}
+body.desktop-chess-chat .panel-body{flex:1;min-height:0;max-height:none;overflow-y:auto;display:flex;flex-direction:column;padding:0}
+body.desktop-chess-chat .chat-history{flex:1;min-height:0;max-height:none;overflow-y:auto}
+body.desktop-chess-chat .panel-compose{flex:none;padding:8px 0 0}
+body.chess-chat-open .chat-glass .chat-message{background:#0c1c23e0;color:#e6f1ec;border-radius:14px}
+body.chess-chat-open .chat-glass input,body.chess-chat-open .chat-glass textarea{color:#e7f5ef;background:#09151bf0}
+body.chess-chat-open .chat-glass textarea::placeholder{color:#adc4be;opacity:1}
+body.mobile-chess-chat .companion-panel>.panel-surface{background:rgba(8,19,26,var(--chat-glass-alpha));backdrop-filter:blur(var(--chat-glass-blur-mobile)) saturate(1.1);-webkit-backdrop-filter:blur(var(--chat-glass-blur-mobile)) saturate(1.1)}
+@media(max-height:650px){body.desktop-chess .chess-chat-toggle{top:24px}}
+.chess-chat-toggle .mobile-chat-badge:not([hidden]){animation:chess-chat-unread 1.6s ease-out infinite}
+@keyframes chess-chat-unread{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.65}}
+@media(prefers-reduced-motion:reduce){.chess-chat-toggle .mobile-chat-badge:not([hidden]){animation:none}}
+/* The universe heading describes the background level, not the active game. */
+body.desktop-chess .orientation,body.desktop-chess .level-mark,body.desktop-chess .node-detail{visibility:hidden;pointer-events:none}
