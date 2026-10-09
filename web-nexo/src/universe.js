@@ -1,6 +1,6 @@
 import { desktopChatRegions } from './chess-chat-layout';
 import { icon } from './icons';
-import { chatSurfaceBounds, placeChatUnderlay } from './chat-surface';
+import { chatSurfaceBounds, placeChatUnderlay, attachGlassPanel, setChatSurfaceBounds } from './chat-surface';
 import { mobileSystemBox } from './mobile-layout';
 import { createCameraGestures, clampZoom } from './camera-gestures';
 import { formationPhase } from './node-forming';
@@ -895,9 +895,18 @@ function renderTravel(now){
 }
 let hoverEdge=null, panelOpen=false, speech=null, pendingSpeech=null;
 const panelWorld={x:0,y:0};let panelDrag=null;
+let releaseRootGlass=null,panelPlacement='';
 function panelProjection(){return{x:width/2+panelWorld.x*zoom+pan.x+parallax.x*6,y:height*.53+panelWorld.y*zoom+pan.y+parallax.y*6}}
 function anchorPanel(x,y){panelWorld.x=(x-width/2-pan.x-parallax.x*6)/zoom;panelWorld.y=(y-height*.53-pan.y-parallax.y*6)/zoom}
-function placePanel(){if(!panelOpen)return;if(document.body.classList.contains('chess-chat-open'))return;if(pinnedAgent){anchorPanel(pinnedAgent.x,pinnedAgent.y);$('companion-panel').style.transform=`translate(${pinnedAgent.x}px,${pinnedAgent.y}px) scale(1)`;return}const p=panelProjection();$('companion-panel').style.transform=`translate(${p.x}px,${p.y}px) scale(${zoom})`}
+function placePanel(){
+  if(!panelOpen||document.body.classList.contains('chess-chat-open'))return;
+  if(pinnedAgent)anchorPanel(pinnedAgent.x,pinnedAgent.y);
+  const panel=$('companion-panel'),p=panelProjection(),pw=Math.min(width<650?320:336,width-32);
+  const x=Math.round(clamp(p.x,16,Math.max(16,width-pw-16))),y=Math.round(clamp(p.y,100,Math.max(100,height-240)));
+  const key=`${x}/${y}/${height}`;if(panelPlacement===key)return;panelPlacement=key;
+  panel.style.left=x+'px';panel.style.top=y+'px';panel.style.transform='none';panel.style.setProperty('--agent-room',Math.max(140,height-y-24)+'px');
+  if(releaseRootGlass){const bounds=panel.getBoundingClientRect();setChatSurfaceBounds(panel,bounds);if(typeof dispatchEvent==='function')dispatchEvent(new Event('nexo:chat-layout'))}
+}
 
 function say(title,text,key='context',duration=8500){
   if(!text)return;pendingSpeech=null;
@@ -920,11 +929,13 @@ function openPanel(keyboard=false){
   if(panelOpen){closePanel(keyboard);return}
   panelOpen=true;anchorPanel(width<650?Math.max(16,(width-320)/2):Math.max(30,width-662),Math.max(100,Math.min(height*.27,height-615)));placePanel();companion.locked=true;companion.keyboard=keyboard;
   $('companion-panel').hidden=false;$('speech-bubble').hidden=true;
+  if(!document.body.classList.contains('chess-chat-open'))releaseRootGlass ||= attachGlassPanel($('companion-panel'),()=>closePanel(true));
   $('companion-target').setAttribute('aria-expanded','true');$('companion-target').setAttribute('aria-label',t('guide.close'));
   if(!speech)say(level.title,level.intro,'level');
   $('close-panel').focus({preventScroll:true});
 }
 function closePanel(keyboard=false){
+  releaseRootGlass?.();releaseRootGlass=null;panelPlacement='';
   panelOpen=false;pinnedAgent=null;document.body.classList.remove('generated-camera-focused');$('companion-panel').hidden=true;
   $('companion-target').setAttribute('aria-expanded','false');$('companion-target').setAttribute('aria-label',t('guide.open'));
   companion.locked=keyboard;companion.keyboard=keyboard;
@@ -1252,5 +1263,5 @@ function openOwnerGame(id,isCurrent=()=>true){return new Promise(resolve=>{
 
 $('companion-target').setAttribute('aria-label',t('guide.open'));
 $('level-title').setAttribute('tabindex','-1');resize();nodes=instantiate(root);bindNodes();updateUI();setPaused(paused);say(t('guide.journey'),root.intro,'welcome',12000);frameId=requestAnimationFrame(render);
-return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){gestures.dispose();formingRuns.clear();cancelGeneratedFocus();focusControls.remove();if(typeof removeEventListener==='function')removeEventListener('pointerdown',cancelFocusInput,{capture:true});if(typeof removeEventListener==='function')removeEventListener('wheel',cancelFocusInput,{capture:true});if(typeof removeEventListener==='function')removeEventListener('keydown',cancelFocusInput,{capture:true});document.removeEventListener?.('click',cancelFocusInput,{capture:true});disposed=true;if(typeof cancelAnimationFrame==='function')cancelAnimationFrame(frameId);ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},closeAgent:()=>closePanel(false),spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;chatTarget.dataset.unread=String(count);syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){drag=null;gestures.cancel();pointer={x:0,y:0};companion.present=false;chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>{chatTarget.hidden=!chatPosition;chatTarget.focus({preventScroll:true})},firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id,formGenerated,finishForming,clearFormations,focusGenerated,backGenerated,cancelGeneratedFocus};
+return {refreshLanguage,setOwnerGames,openChess,openOwnerGame,dispose(){releaseRootGlass?.();gestures.dispose();formingRuns.clear();cancelGeneratedFocus();focusControls.remove();if(typeof removeEventListener==='function')removeEventListener('pointerdown',cancelFocusInput,{capture:true});if(typeof removeEventListener==='function')removeEventListener('wheel',cancelFocusInput,{capture:true});if(typeof removeEventListener==='function')removeEventListener('keydown',cancelFocusInput,{capture:true});document.removeEventListener?.('click',cancelFocusInput,{capture:true});disposed=true;if(typeof cancelAnimationFrame==='function')cancelAnimationFrame(frameId);ownerPagination.remove();previewTimer.clear();system.media?.dispose();morphCanvas?.remove();chatTarget.remove();chessTarget?.remove()},navigate:navigateAsync,isSystem:()=>!!level.system,exitSystem:exitSystemAsync,openAgent:()=>{if(!panelOpen)openPanel(false)},closeAgent:()=>closePanel(false),spawnGenerated,removeGenerated,inspectGenerated,setUnread:(count)=>{liveUnread=count;chatTarget.dataset.unread=String(count);syncGenerated()},setChatMessage,setLiveOpen:(open)=>{livePanelOpen=open;if(open){drag=null;gestures.cancel();pointer={x:0,y:0};companion.present=false;chatHovered=false;chatFocused=false;previewTimer.hover(false);previewTimer.clear();chatPreview.hidden=true;pendingSpeech=null;if(speech)speech.expires=performance.now()}chatTarget.setAttribute('aria-expanded',String(open))},morphLivePanel,focusLiveNode:()=>{chatTarget.hidden=!chatPosition;chatTarget.focus({preventScroll:true})},firstRootNode:()=>level===root&&!travel&&!systemTravel&&!system.chess?.isOpen()?nodes.find(node=>!node.generated)?.el??null:null,nodeExists:(id)=>records.has(id),nodeLabel:(id)=>records.get(id)?.label||id,formGenerated,finishForming,clearFormations,focusGenerated,backGenerated,cancelGeneratedFocus};
 }

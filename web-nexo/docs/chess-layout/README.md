@@ -52,3 +52,26 @@ el ajedrez. Los nodos generados mantienen el aviso sin desplazar la cámara.
 con y sin movimiento reducido, interrupciones, foco, borradores, pestaña y aviso:
 [C-morph.json](C-morph.json). Las medidas admiten menos de 0,5 px de redondeo,
 como las pruebas de geometría; no admiten reflujo del tablero.
+
+## D — vidrio uniforme
+
+Reproducción sobre producción: capturas en memoria arriba y abajo y registro de
+estilos en [D-before.json](D-before.json). El asistente usaba `clip-path` en la
+superficie, `will-change: transform` en el padre y dos scrolls anidados. Su fondo
+mezclaba un relleno verde del 15 % con un pseudo-elemento oscuro del 56 %, sin
+`backdrop-filter`. El scroll movía toda esa superficie.
+
+Ahora el fondo y el blur permanecen fijos; únicamente el cuerpo desplaza texto.
+Cabecera y pie son transparentes sobre ese mismo fondo. Se retiraron el recorte,
+el transform escalado y las promociones de composición de los ancestros; el
+pequeño detalle de esquina vive en un pseudo-elemento decorativo. Asistente, chat
+en vivo, información y ayudas comparten los tokens de vidrio (64 %, blur 20 px,
+16 px en móvil, prefijo Safari). La capa de etiquetas se oculta solo donde queda
+bajo el panel, mediante el mecanismo existente de oclusión. Al completar respuestas
+el cuerpo sigue desplazándose al final.
+
+194 pruebas, build y `npm run test:assistant-glass` en verde. Seis casos de
+Chromium/WebKit a 1440, 1280 y 390 px: [D-glass.json](D-glass.json). Se muestrean
+píxeles PNG en una zona vacía, sobre un fondo de control idéntico, arriba y abajo.
+La diferencia de opacidad efectiva es 0 en todos los casos (< 5 %). Las capturas
+persistidas se producen juntas al terminar E.

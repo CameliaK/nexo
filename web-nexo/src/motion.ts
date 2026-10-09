@@ -17,6 +17,7 @@ export function applyMotionTokens(doc: Document = document) {
   doc.documentElement.style.setProperty('--motion-ease-out', motion.easeOut);
   doc.documentElement.style.setProperty('--motion-chess-chat',motion.chessChat+'ms');
   doc.documentElement.style.setProperty('--chat-glass-alpha',String(surfaces.chatAlpha));
+  doc.documentElement.style.setProperty('--glass-rgb','8,19,26');
   doc.documentElement.style.setProperty('--chat-glass-blur',surfaces.chatBlur+'px');
   doc.documentElement.style.setProperty('--chat-glass-blur-mobile',surfaces.mobileChatBlur+'px');
   for(const key of ['universe','labels','controls','panels','modals'] as const)doc.documentElement.style.setProperty('--z-'+key,String(surfaces[key]));

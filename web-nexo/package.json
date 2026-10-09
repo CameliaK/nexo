@@ -24,7 +24,8 @@
     "test:chat-glass": "node scripts/chat-glass-browser.mjs",
     "test:chess-cleanup": "node scripts/chess-cleanup-browser.mjs",
     "test:chess-geometry": "node scripts/chess-geometry-browser.mjs",
-    "test:chess-morph": "node scripts/chess-morph-browser.mjs"
+    "test:chess-morph": "node scripts/chess-morph-browser.mjs",
+    "test:assistant-glass": "node scripts/assistant-glass-browser.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

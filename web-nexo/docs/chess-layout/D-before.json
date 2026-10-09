@@ -1,0 +1,152 @@
+[
+  {
+    "engine": "chromium",
+    "samples": [
+      [
+        {
+          "element": "companion-panel",
+          "background": "rgba(0, 0, 0, 0)",
+          "clip": "none",
+          "filter": "none",
+          "willChange": "transform",
+          "transform": "matrix(1, 0, 0, 1, 778, 243)",
+          "overflow": "visible",
+          "blur": "none",
+          "scroll": 0
+        },
+        {
+          "element": "panel-surface",
+          "background": "rgba(147, 203, 186, 0.15)",
+          "clip": "polygon(13px 0px, calc(100% - 22px) 0px, 100% 22px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0px calc(100% - 13px), 0px 13px)",
+          "filter": "none",
+          "willChange": "auto",
+          "transform": "none",
+          "overflow": "auto",
+          "blur": "none",
+          "scroll": 0
+        },
+        {
+          "element": "panel-body",
+          "background": "rgba(0, 0, 0, 0)",
+          "clip": "none",
+          "filter": "none",
+          "willChange": "auto",
+          "transform": "none",
+          "overflow": "auto",
+          "blur": "none",
+          "scroll": 0
+        }
+      ],
+      [
+        {
+          "element": "companion-panel",
+          "background": "rgba(0, 0, 0, 0)",
+          "clip": "none",
+          "filter": "none",
+          "willChange": "transform",
+          "transform": "matrix(1, 0, 0, 1, 778, 243)",
+          "overflow": "visible",
+          "blur": "none",
+          "scroll": 0
+        },
+        {
+          "element": "panel-surface",
+          "background": "rgba(147, 203, 186, 0.15)",
+          "clip": "polygon(13px 0px, calc(100% - 22px) 0px, 100% 22px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0px calc(100% - 13px), 0px 13px)",
+          "filter": "none",
+          "willChange": "auto",
+          "transform": "none",
+          "overflow": "auto",
+          "blur": "none",
+          "scroll": 120
+        },
+        {
+          "element": "panel-body",
+          "background": "rgba(0, 0, 0, 0)",
+          "clip": "none",
+          "filter": "none",
+          "willChange": "auto",
+          "transform": "none",
+          "overflow": "auto",
+          "blur": "none",
+          "scroll": 0
+        }
+      ]
+    ]
+  },
+  {
+    "engine": "webkit",
+    "samples": [
+      [
+        {
+          "element": "companion-panel",
+          "background": "rgba(0, 0, 0, 0)",
+          "clip": "none",
+          "filter": "none",
+          "willChange": "transform",
+          "transform": "matrix(1, 0, 0, 1, 778, 243)",
+          "overflow": "visible",
+          "blur": "none",
+          "scroll": 0
+        },
+        {
+          "element": "panel-surface",
+          "background": "rgba(147, 203, 186, 0.15)",
+          "clip": "polygon(13px 0px, calc(100% - 22px) 0px, 100% 22px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0px calc(100% - 13px), 0px 13px)",
+          "filter": "none",
+          "willChange": "auto",
+          "transform": "none",
+          "overflow": "auto",
+          "blur": "none",
+          "scroll": 0
+        },
+        {
+          "element": "panel-body",
+          "background": "rgba(0, 0, 0, 0)",
+          "clip": "none",
+          "filter": "none",
+          "willChange": "auto",
+          "transform": "none",
+          "overflow": "auto",
+          "blur": "none",
+          "scroll": 0
+        }
+      ],
+      [
+        {
+          "element": "companion-panel",
+          "background": "rgba(0, 0, 0, 0)",
+          "clip": "none",
+          "filter": "none",
+          "willChange": "transform",
+          "transform": "matrix(1, 0, 0, 1, 778, 243)",
+          "overflow": "visible",
+          "blur": "none",
+          "scroll": 0
+        },
+        {
+          "element": "panel-surface",
+          "background": "rgba(147, 203, 186, 0.15)",
+          "clip": "polygon(13px 0px, calc(100% - 22px) 0px, 100% 22px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0px calc(100% - 13px), 0px 13px)",
+          "filter": "none",
+          "willChange": "auto",
+          "transform": "none",
+          "overflow": "auto",
+          "blur": "none",
+          "scroll": 120
+        },
+        {
+          "element": "panel-body",
+          "background": "rgba(0, 0, 0, 0)",
+          "clip": "none",
+          "filter": "none",
+          "willChange": "auto",
+          "transform": "none",
+          "overflow": "auto",
+          "blur": "none",
+          "scroll": 0
+        }
+      ]
+    ]
+  }
+]

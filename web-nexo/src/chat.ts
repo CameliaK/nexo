@@ -281,7 +281,7 @@ export class Chats {
     }
     const run=this.runs.get(event.run_id);
     if(event.type==='process.step'&&run){const row=this.steps.get(event.data.step);if(row){row.dataset.state=event.data.status;row.textContent=(event.data.label?translateText(event.data.label):stepLabels()[event.data.step])+(event.data.status==='done'?t('step.done'):event.data.status==='skipped'?t('step.skipped'):'')}}
-    if(event.type==='answer.chunk'&&run){run.answer.textContent+=event.data.text;this.agentHistory.scrollTop=this.agentHistory.scrollHeight;if(document.body.classList.contains('generated-camera-focused')){const body=document.querySelector('#companion-panel .panel-body')!;body.scrollTop=body.scrollHeight}}
+    if(event.type==='answer.chunk'&&run){run.answer.textContent+=event.data.text;const body=document.querySelector('#companion-panel .panel-body')!;body.scrollTop=body.scrollHeight}
     if(event.type==='rag.search'&&run)this.sources.textContent=t('step.search',{query:event.data.query});
     if(event.type==='rag.result'&&run){this.sources.replaceChildren(element('p',event.data.used?t('step.sources'):t('step.noSources')));for(const hit of event.data.hits)this.sources.append(element('span',hit.title,'source-link'))}
     if(event.type==='route.plan'&&run){run.path=[];for(const id of event.data.path){if(!this.ids.has(id))break;run.path.push(id)}this.routeLabel.textContent=t('step.route',{path:run.path.map(id=>this.universe.nodeLabel(id)).join(' › ')})}
