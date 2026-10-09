@@ -259,3 +259,66 @@ La superficie aplica el filtro una sola vez al panel; no se animan blur ni
 sombras. La oclusión usa coordenadas proyectadas y un rectángulo de panel cacheado.
 El reflujo del juego comparte el bucle y reloj existentes de 250 ms, mantiene
 las casillas y pausa el trabajo cuando se oculta la pestaña.
+
+## Disposición estable del ajedrez — 2026-10-08
+
+La composición usa columnas reservadas, sin reflujo del tablero al abrir el chat.
+El reproductor existente de formación dura 900 ms y usa el render de 60 FPS
+durante la transición; en reposo el ajedrez conserva sus 30 FPS. El asistente
+ahora tiene un único fondo de vidrio fijo y scroll solamente en el cuerpo, sin
+recorte ni `will-change`/transform escalado en sus ancestros.
+
+Producción, Apple M2 / Chrome 154, DPR 2, 12 nodos generados. Tres pasadas
+secuenciales por perfil; sin otras pruebas o compilaciones concurrentes.
+La repetición estándar se conservó después de investigar una pausa aislada
+durante la formación. Su fase adicional ocurre **después** de medir la apertura,
+por lo que los seis resultados de apertura/arrastre conservan el protocolo.
+
+| Métrica estándar, 1366×768 | Chat-glass publicado | Chess-layout, seis pasadas |
+| --- | ---: | ---: |
+| Tablero interactivo, media | 38,8 ms | 46,1 ms |
+| Tablero interactivo, mediana | 35,5 ms | 42,9 ms |
+| FPS medios al arrastrar | 60,24 | 60,21 |
+| Fotogramas perdidos inesperados al abrir | 1 | 1,17 |
+| Tareas largas >50 ms al abrir | 0 | 0 |
+
+La primera apertura de la serie estándar tardó 74,1 ms; las otras cinco,
+35,7–44,5 ms. La diferencia de medias es 7,2 ms, menos de un fotograma de
+60 Hz; se cumple el presupuesto de 250 ms y no hay pérdida apreciable de FPS.
+Se informa el pequeño incremento de tiempo en lugar de afirmar igualdad exacta.
+[Primera serie](chess-layout/performance-standard.json),
+[repetición y formación instrumentada](chess-layout/performance-repeat.json).
+
+| Asistente con vidrio, 12 nodos | Cerrado | Abierto | Tareas largas con vidrio |
+| --- | ---: | ---: | ---: |
+| Escritorio 1366×768, blur 20 px | 60,04 FPS | 60,00 FPS | 0 |
+| Pixel 7 emulado 393×851, blur 16 px | 60,25 FPS | 60,01 FPS | 0 |
+
+No se redujo el radio móvil: las medidas permanecen en 60 FPS.
+[Escritorio](chess-layout/performance-assistant.json),
+[móvil emulado](chess-layout/performance-assistant-mobile.json).
+Estos perfiles incluyen otro arrastre y un panel antes del ajedrez, por lo que
+sus tiempos de apertura (40,7 y 39,0 ms) no se mezclan con la tabla estándar.
+
+La repetición de formación mide **60,11 FPS** durante el token de **900 ms**,
+con RAF del navegador en 60,00 FPS, intervalos máximos de 18,1–19,0 ms,
+ningún intervalo de más de 40 ms y cero tareas largas. La serie anterior
+registró una pausa aislada de 532,5 ms sin tarea larga, que redujo la primera
+pasada a 25,9 FPS; las otras dos fueron de 60 FPS. Se conserva esa observación
+en [performance-formation.json](chess-layout/performance-formation.json).
+No se reprodujo al repetir tres pasadas instrumentadas y no se atribuye una
+causa sin evidencia. No se puede asegurar que nunca ocurra una pausa externa
+al ejecutar el sitio en otra máquina.
+
+Comandos adicionales, sobre el mismo servidor de producción:
+
+```sh
+PERF_URL=http://127.0.0.1:4196 PERF_CAPTURE=0 npm run perf -- docs/chess-layout/performance-standard.json
+PERF_URL=http://127.0.0.1:4196 PERF_CAPTURE=0 PERF_ASSISTANT_GLASS=1 npm run perf -- docs/chess-layout/performance-assistant.json
+PERF_URL=http://127.0.0.1:4196 PERF_CAPTURE=0 PERF_ASSISTANT_GLASS=1 PERF_MOBILE=1 npm run perf -- docs/chess-layout/performance-assistant-mobile.json
+PERF_URL=http://127.0.0.1:4196 PERF_CAPTURE=0 PERF_CHESS_CHAT=1 npm run perf -- docs/chess-layout/performance-repeat.json
+```
+
+Los FPS móviles corresponden al M2 con emulación. Falta verificar el desenfoque
+GPU y teclado/áreas seguras de Safari en un teléfono físico.
+[Geometría real, regresiones y capturas](chess-layout/README.md).

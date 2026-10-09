@@ -8,7 +8,7 @@ const runs=Number(process.env.PERF_RUNS||3),output=process.argv[2]||'docs/perfor
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
 const generated=Array.from({length:12},(_,i)=>({id:'gen_perf_'+i,generated:true,label:'Generated '+(i+1),summary:'Performance fixture',created_at:'2026-10-05T18:00:00Z',sources:[{title:'Fixture',ref:'aprendizaje'}],layout:'text',content:{body:'Neutral reproducible fixture.'}}));
 const game={id:'perf-game',color:'w',fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',moves:[],turn:'player',status:'active',updated_at:'2026-10-05T18:00:00Z'};
-const results=[],glass=process.env.PERF_CHAT_GLASS==='1',mobile=process.env.PERF_MOBILE==='1';
+const results=[],glass=process.env.PERF_CHAT_GLASS==='1'||process.env.PERF_ASSISTANT_GLASS==='1',assistant=process.env.PERF_ASSISTANT_GLASS==='1',formation=process.env.PERF_CHESS_CHAT==='1',mobile=process.env.PERF_MOBILE==='1';
 const viewport=mobile?{width:393,height:851}:{width:1366,height:768};
 try{
  for(let run=0;run<runs;run++){
@@ -38,6 +38,7 @@ try{
    };
    new PerformanceObserver(list=>{for(const task of list.getEntries())perf.tasks.push({start:task.startTime,duration:task.duration})}).observe({type:'longtask',buffered:true});
    document.addEventListener('click',event=>{
+    if(event.target.closest?.('#floating-live-chat')&&document.body.classList.contains('is-chess')){perf.chatStart=performance.now();perf.chatRaf=[];perf.chatVisibility=[{at:perf.chatStart,hidden:document.hidden}];const sample=t=>{perf.chatRaf.push(t);if(t<perf.chatStart+1000)requestAnimationFrame(sample)};requestAnimationFrame(sample)}
     if(!event.target.closest?.('#floating-chess'))return;
     perf.start=performance.now();perf.interactive=null;
     // Measure inside the browser from the click, not after Playwright's
@@ -62,11 +63,11 @@ try{
   const closed=await measureCamera(),fps=closed.fps;
   let glassCamera=null;
   if(glass){
-   await page.locator('#floating-live-chat').click({force:true});await page.waitForTimeout(650);
+   if(assistant){await page.locator('#companion-target').focus();await page.keyboard.press('Enter')}else await page.locator('#floating-live-chat').click({force:true});await page.waitForTimeout(650);
    glassCamera=await measureCamera();
-   const surface=await page.locator('#live-panel>.panel-surface').evaluate(e=>({background:getComputedStyle(e).backgroundColor,blur:getComputedStyle(e).backdropFilter}));
-   glassCamera.surface=surface;
-   await page.keyboard.press('Escape');await page.locator('#live-panel').waitFor({state:'hidden'});await page.waitForTimeout(300);
+   const surface=await page.locator(assistant?'#companion-panel>.panel-surface':'#live-panel>.panel-surface').evaluate(e=>({background:getComputedStyle(e).backgroundColor,blur:getComputedStyle(e).backdropFilter}));
+   glassCamera.surface=surface;glassCamera.panel=assistant?'assistant':'live';
+   await page.keyboard.press('Escape');await page.locator(assistant?'#companion-panel':'#live-panel').waitFor({state:'hidden'});await page.waitForTimeout(300);
   }
   await page.locator('#floating-chess').click({force:true});
   await page.waitForFunction(()=>typeof window.__perf.interactive==='number');
@@ -77,7 +78,12 @@ try{
    return {unexpectedLostFrames:intervals.reduce((sum,gap,i)=>sum+Math.max(0,Math.round(gap/(1000/(budgets[frames.indexOf(f[i+1])]||60)))-1),0),lostFrames:intervals.reduce((sum,gap)=>sum+Math.max(0,Math.round(gap/(1000/60))-1),0),frameIntervals:intervals.length,longTasks:tasks.filter(t=>t.start>=start&&t.start<end&&t.duration>50),maxFrameMs:Math.max(...intervals)};
   });
   const board=await page.locator('.chess-board').boundingBox();
-  results.push({run:run+1,interactiveMs:interactive,cameraFps:fps,...(glass?{glassCamera}:{}),...opening,board});
+  let chatFormation=null;
+  if(formation&&!mobile){
+   await page.locator('#floating-live-chat').click({force:true});await page.waitForFunction(()=>!document.querySelector('#live-panel').hidden&&!document.querySelector('#live-panel').dataset.chatMorph);
+   chatFormation=await page.evaluate(()=>{const perf=window.__perf,start=perf.chatStart,duration=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-chess-chat')),end=start+duration,f=perf.frames.filter(t=>t>=start&&t<=end),gaps=f.slice(1).map((v,i)=>v-f[i]),raf=perf.chatRaf.filter(t=>t>=start&&t<=end);return {durationMs:duration,fps:(f.length-1)*1000/(f.at(-1)-f[0]),maxFrameMs:Math.max(...gaps),browserRafFps:(raf.length-1)*1000/(raf.at(-1)-raf[0]),visibility:perf.chatVisibility,lateFrames:gaps.flatMap((gap,i)=>gap>40?[{gap,beforeBudget:perf.budgets[perf.frames.indexOf(f[i])],afterBudget:perf.budgets[perf.frames.indexOf(f[i+1])]}]:[]),longTasks:perf.tasks.filter(t=>t.start>=start&&t.start<end&&t.duration>50)}});
+  }
+  results.push({run:run+1,interactiveMs:interactive,cameraFps:fps,...(glass?{glassCamera}:{}),...(chatFormation?{chatFormation}:{}),...opening,board});
   if(run===0&&process.env.PERF_CAPTURE!=='0')await page.screenshot({path:output.replace(/\.json$/,'.png'),scale:'css'});
   await context.close();
  }

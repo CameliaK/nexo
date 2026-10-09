@@ -14,7 +14,7 @@ body.desktop-chess .chess-actions button>span{font-size:11px;line-height:1.35;wh
 body.desktop-chess .chess-actions .chess-resign{grid-column:1/-1;color:#809b90;border-color:#b6f3dc18;background:transparent}
 body.desktop-chess .chess-session-line{flex:none;font-size:11px;line-height:1.45;margin:0;min-width:0;overflow-wrap:anywhere}
 body.desktop-chess .chess-session-line a,body.desktop-chess .chess-session-line button{white-space:normal}
-body.desktop-chess .chess-heading h2{white-space:normal;overflow:visible;text-overflow:clip;font-size:24px}
+body.desktop-chess .chess-scene .chess-heading h2{white-space:normal;overflow:visible;text-overflow:clip;font-size:24px}
 body.desktop-chess .chess-scene .chess-player{height:36px;width:var(--chess-black-width);min-width:0}
 body.desktop-chess .chess-help{display:block;font-size:10px;white-space:normal}
 body.desktop-chess .chess-local-note{display:none}

@@ -88,7 +88,7 @@ async function layout(page,docked){
  assert.equal(await page.locator('#live-panel').getAttribute('aria-modal'),'false');
  if(!docked)assert.equal(metrics.mainInert,false);
  if(docked){const board=await page.locator('.chess-board').boundingBox(),nav=await page.locator('.mobile-chat-controls').boundingBox();assert.ok(board.y+board.height<=nav.y+1,'The game clears the chat controls even with a four-line draft and keyboard')}
- if(await page.locator('body.desktop-chess-chat').count()){const board=await page.locator('.chess-board').boundingBox();assert.ok(board.x+board.width<metrics.panel.x,'Desktop board clears chat column')}
+ if(await page.locator('body.desktop-chess-chat').count()){const board=await page.locator('.chess-board').boundingBox();assert.ok(!intersects(board,metrics.panel),'Desktop board clears the reserved left chat column')}
  return metrics;
 }
 async function scenarios(f,{engine,touch,docked,lang,chess=false}){
@@ -133,7 +133,7 @@ async function scenarios(f,{engine,touch,docked,lang,chess=false}){
  const compact=await input.boundingBox();await input.fill('Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6');const expanded=await input.boundingBox();assert.ok(expanded.height>compact.height&&expanded.height<=120,'Textarea grows up to four lines');await layout(p,docked);await input.fill('');
  if(!docked){
   await p.keyboard.press('Tab');assert.equal(await p.locator('main').evaluate(e=>e.inert),false,'Glass panel leaves outside focus available');
-  if(!touch&&!chess){const zoom=await p.locator('#zoom-label').textContent();await p.mouse.move(1200,500);await p.mouse.wheel(0,-100);await p.waitForTimeout(350);assert.notEqual(await p.locator('#zoom-label').textContent(),zoom)}
+  if(!touch&&!chess){const zoom=await p.locator('#zoom-label').textContent();const point=await p.evaluate(()=>{for(const y of [innerHeight*.8,innerHeight*.7])for(const x of [innerWidth*.75,innerWidth*.6,innerWidth*.85])if(document.elementFromPoint(x,y)?.id==='space')return{x,y};throw Error('No canvas point outside the chat')});await p.mouse.move(point.x,point.y);await p.mouse.wheel(0,-100);await p.waitForTimeout(350);assert.notEqual(await p.locator('#zoom-label').textContent(),zoom)}
  }
  const screenshot=await layout(p,docked);
  if(capture&&engine==='webkit')await p.screenshot({path:output+`/390x844-${docked?'chess-chat':'live-chat'}.png`,scale:'css'});

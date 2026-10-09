@@ -45,7 +45,7 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
         </div>
         <aside class="chess-aside">
           <div class="chess-status"><span class="chess-eyebrow">${t('chess.status')}</span><h2 class="chess-status-title"></h2><p class="chess-status-detail"></p></div>
-          <details class="chess-history"><summary class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span><span class="chess-last-move">—</span><span class="history-chevron">${uiIcon('back')}</span></summary><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></details>
+          <section class="chess-history" aria-label="${t('chess.history')}"><div class="chess-history-heading"><span class="chess-eyebrow">${t('chess.moves')}</span><span class="chess-move-count">00</span><span class="chess-last-move">—</span></div><div class="chess-history-scroll"><p class="chess-empty">${t('chess.first')}</p><ol class="chess-moves" aria-label="${t('chess.history')}"></ol></div></section>
           <div class="chess-actions"><button type="button" class="chess-flip">${uiIcon('flip')} <span>${t('chess.flip')}</span></button><button type="button" class="chess-restart">${uiIcon('restart')} <span>${t('chess.new')}</span></button><button type="button" class="chess-claim" hidden>${t('chess.claim')}</button></div>
           <p class="chess-local-note">${t('chess.note')}</p>
         </aside>
@@ -83,9 +83,8 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
     const data=document.body.dataset;
     const mobile=document.body.classList.contains('mobile-chess');
     const status=$('.chess-status'),statusParent=mobile?$('.chess-shell'):$('.chess-aside');if(status.parentElement!==statusParent)statusParent.prepend(status);
-    if(mobile&&dialog.dataset.mobile!=='true')($<HTMLDetailsElement>('.chess-history')).open=innerHeight>700;dialog.dataset.mobile=String(mobile);dialog.dataset.compactChat=String(mobile&&document.body.classList.contains('mobile-chess-chat')&&Number(data.mobileHeight)<480&&innerWidth<innerHeight);
+    dialog.dataset.mobile=String(mobile);dialog.dataset.compactChat=String(mobile&&document.body.classList.contains('mobile-chess-chat')&&Number(data.mobileHeight)<480&&innerWidth<innerHeight);
     const layout=document.body.classList.contains('mobile-chess')?mobileChessLayout({width:innerWidth,height:Number(data.mobileHeight)||innerHeight,safeTop:Number(data.safeTop)||0,safeBottom:Number(data.safeBottom)||0,offsetTop:Number(data.mobileTop)||0,browserInset:Number(data.mobileInset)||undefined,composerHeight:document.body.classList.contains('live-chat-open')?Number(data.liveComposerHeight)||0:0,chat:document.body.classList.contains('mobile-chess-chat'),landscape:innerWidth>innerHeight}):chessLayout({width:innerWidth,height:innerHeight},currentView);
-    if(!mobile)($<HTMLDetailsElement>('.chess-history')).open=true;
     const changed=JSON.stringify(camera)!==JSON.stringify(layout.camera);camera=layout.camera;dialog.dataset.layout=layout.stacked?'stacked':'side';dialog.dataset.density=layout.compact?'compact':'normal';
     const {header,close,black,white,help,aside}=layout;
     if(mobile){const status=(layout as ReturnType<typeof mobileChessLayout>).status;for(const [key,value] of Object.entries(status))dialog.style.setProperty('--chess-status-'+key,value+'px')}
@@ -230,8 +229,10 @@ export function createChessUI(remote?: AccountChess, openAccount?: () => void) {
   function hidePopover(){document.body.classList.remove('is-chess-modal');backdrop.classList.remove('is-history-sheet');backdrop.hidden=true;popover.replaceChildren();$('.chess-shell').inert=false;popoverReturn?.focus({preventScroll:true})}
   function refreshMoveLine(){
     const moves=remote?.game?.moves||viewHistory;moveLine.setAttribute('aria-label',t('chess.history'));moveStrip.replaceChildren();
-    for(const [i,move] of moves.entries()){const chip=document.createElement('span');chip.textContent=(i%2?'':String(Math.floor(i/2)+1)+'. ')+move.san;if(i===moves.length-1)chip.className='is-last';moveStrip.append(chip)}
-    if(!moves.length)moveStrip.textContent=t('chess.first');moveStrip.scrollLeft=moveStrip.scrollWidth;
+    // A bounded preview; the button still opens the complete vertical history.
+    const start=Math.max(0,moves.length-(innerWidth>innerHeight?2:4));
+    for(let i=start;i<moves.length;i++){const move=moves[i],chip=document.createElement('span');chip.textContent=(i%2?'':String(Math.floor(i/2)+1)+'. ')+move.san;if(i===moves.length-1)chip.className='is-last';moveStrip.append(chip)}
+    if(!moves.length)moveStrip.textContent=t('chess.first');
     if(backdrop.classList.contains('is-history-sheet')){const list=popover.querySelector('.history-sheet-list');if(list)list.replaceChildren($('.chess-moves').cloneNode(true))}
   }
   function showHistory(){

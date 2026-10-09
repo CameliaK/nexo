@@ -2,8 +2,8 @@ import { chromium, webkit, devices } from 'playwright';
 export { chromium, webkit, devices };
 export const origin=process.env.MOBILE_URL||'http://127.0.0.1:4196';
 export const initialGame={id:'mobile-qa',color:'w',fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',moves:[],turn:'player',status:'active',updated_at:'2026-10-07T00:00:00Z'};
-export async function mobileFixture(browser,options,language='es'){
- const context=await browser.newContext({...options}),page=await context.newPage(),errors=[],requests=[];let socket,game=structuredClone(initialGame);
+export async function mobileFixture(browser,options,language='es',startingGame=initialGame){
+ const context=await browser.newContext({...options}),page=await context.newPage(),errors=[],requests=[];let socket,game=structuredClone(startingGame);
  page.on('pageerror',e=>errors.push(e.message));
  await context.addInitScript(lang=>{localStorage.setItem('nexo.welcome.dismissed.v1','1');localStorage.setItem('nexo.language',lang);localStorage.setItem('nexo.auth.token','mobile-fixture');localStorage.setItem('nexo.visitor_id','mobile-fixture')},language);
  await page.routeWebSocket(/\/ws\?/,ws=>socket=ws);

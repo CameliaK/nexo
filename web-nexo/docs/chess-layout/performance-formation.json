@@ -1,0 +1,91 @@
+{
+  "interactiveMeasurement": "click-capture-raf-legal-selection-v2",
+  "at": "2026-10-09T02:49:40.574Z",
+  "url": "http://127.0.0.1:4196",
+  "browser": "154.0.8037.98",
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M2",
+    "cores": 8
+  },
+  "viewport": "1366x768",
+  "dpr": 2,
+  "generatedNodes": 12,
+  "openingWindowMs": 1800,
+  "summary": {
+    "interactiveMs": 39.36666667461395,
+    "cameraFps": 60.087207046865075,
+    "lostFrames": 12,
+    "unexpectedLostFrames": 1,
+    "longTasks": 0
+  },
+  "results": [
+    {
+      "run": 1,
+      "interactiveMs": 46.30000001192093,
+      "cameraFps": 60.20853685273652,
+      "chatFormation": {
+        "durationMs": 900,
+        "fps": 25.92717844592701,
+        "maxFrameMs": 532.5,
+        "longTasks": []
+      },
+      "unexpectedLostFrames": 1,
+      "lostFrames": 12,
+      "frameIntervals": 95,
+      "longTasks": [],
+      "maxFrameMs": 36,
+      "board": {
+        "x": 438.5625,
+        "y": 286.359375,
+        "width": 508.859375,
+        "height": 311.25
+      }
+    },
+    {
+      "run": 2,
+      "interactiveMs": 37.80000001192093,
+      "cameraFps": 59.7880779020193,
+      "chatFormation": {
+        "durationMs": 900,
+        "fps": 60.24781175482347,
+        "maxFrameMs": 18.600000023841858,
+        "longTasks": []
+      },
+      "unexpectedLostFrames": 1,
+      "lostFrames": 12,
+      "frameIntervals": 95,
+      "longTasks": [],
+      "maxFrameMs": 34.69999998807907,
+      "board": {
+        "x": 438.5625,
+        "y": 286.359375,
+        "width": 508.859375,
+        "height": 311.25
+      }
+    },
+    {
+      "run": 3,
+      "interactiveMs": 34,
+      "cameraFps": 60.2650063858394,
+      "chatFormation": {
+        "durationMs": 900,
+        "fps": 59.995472039441246,
+        "maxFrameMs": 16.900000005960464,
+        "longTasks": []
+      },
+      "unexpectedLostFrames": 1,
+      "lostFrames": 12,
+      "frameIntervals": 95,
+      "longTasks": [],
+      "maxFrameMs": 33.5,
+      "board": {
+        "x": 438.5625,
+        "y": 286.359375,
+        "width": 508.859375,
+        "height": 311.25
+      }
+    }
+  ]
+}

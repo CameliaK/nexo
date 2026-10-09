@@ -43,7 +43,7 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
  function finishChat(restore=true){
   releaseAgent?.();releaseAgent=null;chat=null;phase='idle';controls.hidden=true;controls.inert=false;
   body.classList.remove('mobile-chess-chat','desktop-chess-chat','chess-chat-open');
-  node.setAttribute('aria-expanded','false');measure();emit();if(restore&&!mobile)universe.focusLiveNode();
+  node.setAttribute('aria-expanded','false');node.setAttribute('aria-controls','live-panel');measure();emit();if(restore&&!mobile)universe.focusLiveNode();
  }
  function closeChat(restore=true,immediate=false){
   if(!chat)return;phase='closing';
@@ -57,6 +57,7 @@ export function createMobileChess(chats:Chats,universe:{openAgent():void;closeAg
   chat=lastTab=which;controls.hidden=false;
   if(switching){releaseAgent?.();releaseAgent=null;if(previous==='agent')universe.closeAgent();else chats.closeLive(true)}
   body.classList.add('chess-chat-open','desktop-chess-chat');node.setAttribute('aria-expanded','true');
+  node.setAttribute('aria-controls',which==='agent'?'companion-panel':'live-panel');
   assistant.setAttribute('aria-pressed',String(which==='agent'));owner.setAttribute('aria-pressed',String(which==='live'));
   phase=switching?'idle':'opening';
   if(which==='agent'){

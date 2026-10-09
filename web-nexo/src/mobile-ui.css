@@ -5,7 +5,7 @@ body.mobile-chess-chat .chess-scene .chess-aside{display:none!important}
 body.mobile-chess .chess-history{display:none!important}
 body.mobile-chess .chess-scene .chess-moves-open{display:flex;align-items:center;gap:8px;background:none;border:0;min-height:32px;width:100%;padding:0;text-align:left;color:#8cae9f}
 .chess-moves-open>.ui-icon{width:16px;height:16px}
-.chess-move-strip{display:flex;gap:10px;flex:1;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none;font:11px 'Space Grotesk',sans-serif;padding-block:5px;touch-action:pan-x}
+.chess-move-strip{display:flex;gap:10px;flex:1;min-width:0;flex-wrap:wrap;font:11px 'Space Grotesk',sans-serif;padding-block:5px}
 .chess-move-strip .is-last{color:#d8f9e9}
 body.mobile-chess .chess-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:8px;margin:0}
 body.mobile-chess .chess-actions button{height:58px;min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:4px 0;background:none;border:0;box-shadow:none;color:#b3dacc}

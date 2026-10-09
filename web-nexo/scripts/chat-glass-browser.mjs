@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {mobileFixture,chromium,webkit,devices} from './mobile-fixture.mjs';
-const output=fileURLToPath(new URL('../docs/chat-glass/',import.meta.url));
+const output=fileURLToPath(new URL(process.env.GLASS_QA_OUTPUT||'../docs/chat-glass/',import.meta.url));
 await mkdir(output,{recursive:true});
 const capture=process.env.QA_CAPTURE==='1',reports=[];
 const overlap=(a,b)=>a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;
@@ -53,9 +53,9 @@ async function game(f,touch,reduced){
  await f.chess();const before=await p.locator('.chess-board').boundingBox();
  if(touch){assert.equal(await p.locator('#floating-live-chat').isVisible(),false);await p.keyboard.press('Escape');await p.waitForFunction(()=>!document.body.classList.contains('is-chess'));return {mobileWithoutChat:true};}
  const squares=await p.locator('.chess-board [data-square]').count();assert.equal(squares,64);
- await press(p,'#floating-live-chat',touch);await p.waitForTimeout(350);assert.equal(await p.locator('body.is-chess').count(),1);
+ await press(p,'#floating-live-chat',touch);await p.waitForFunction(()=>!document.querySelector('#live-panel').dataset.chatMorph);assert.equal(await p.locator('body.is-chess').count(),1);
  const result=await glass(p),board=await p.locator('.chess-board').boundingBox(),system=await p.locator('#system-window').boundingBox();assert.equal(overlap(board,result.rect),false);assert.equal(overlap(system,result.rect),false);
- if(!touch){assert.ok(board.width<before.width,'Board reflows to make room');assert.equal(overlap(system,board),false)}
+ if(!touch){assert.ok(Math.abs(board.width-before.width)<.5,'Reserved columns keep the board unchanged');assert.equal(overlap(system,board),false)}
  assert.equal(await p.locator('.chess-board [data-square]').count(),squares,'Existing squares are reused during reflow');
  await p.locator('#live-panel textarea').focus();await p.keyboard.type('Chat while playing');await p.keyboard.press('ArrowLeft');assert.equal(await p.locator('.chess-square[aria-selected=true]').count(),0,'Typing does not select or move a chess piece');await p.locator('#live-panel .chat-send').click();await p.locator('[data-message-id="mobile-msg"][data-delivery="sent"]').waitFor();assert.equal(await p.locator('.message-retry').count(),0);assert.equal(await p.locator('body.is-chess').count(),1);
  f.send('run.start',1,{kind:'live_out',content_version:3},'glass-live-hop');f.send('trace.hop',2,{hop_id:'glass-hop',from:'gateway',to:'owner_channel',phase:'start',label:'Sending message'},'glass-live-hop');

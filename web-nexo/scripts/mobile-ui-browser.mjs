@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {chromium,webkit,devices,mobileFixture} from './mobile-fixture.mjs';
-const output=fileURLToPath(new URL('../docs/mobile/ui/',import.meta.url)),capture=process.env.QA_CAPTURE==='1',reports=[];
+const output=fileURLToPath(new URL(process.env.UI_QA_OUTPUT||'../docs/mobile/ui/',import.meta.url)),capture=process.env.QA_CAPTURE==='1',reports=[];
 await mkdir(output,{recursive:true});
 const intersects=(a,b)=>a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;
 async function snapshot(page,name,width,engine){if(capture&&engine==='webkit'&&(width===390||width===360))await page.screenshot({path:`${output}/after-${name}-${width}.png`,scale:'css'})}

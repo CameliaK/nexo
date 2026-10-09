@@ -1,0 +1,115 @@
+{
+  "interactiveMeasurement": "click-capture-raf-legal-selection-v2",
+  "at": "2026-10-09T02:52:55.246Z",
+  "url": "http://127.0.0.1:4196",
+  "browser": "154.0.8037.98",
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M2",
+    "cores": 8
+  },
+  "viewport": "1366x768",
+  "dpr": 2,
+  "generatedNodes": 12,
+  "openingWindowMs": 1800,
+  "summary": {
+    "interactiveMs": 43.433333337306976,
+    "cameraFps": 60.19921743832645,
+    "lostFrames": 12.333333333333334,
+    "unexpectedLostFrames": 1.3333333333333333,
+    "longTasks": 0
+  },
+  "results": [
+    {
+      "run": 1,
+      "interactiveMs": 43.400000005960464,
+      "cameraFps": 60.12658227848101,
+      "chatFormation": {
+        "durationMs": 900,
+        "fps": 59.96831862533641,
+        "maxFrameMs": 19,
+        "browserRafFps": 60.00226423638633,
+        "visibility": [
+          {
+            "at": 10211.199999988079,
+            "hidden": false
+          }
+        ],
+        "lateFrames": [],
+        "longTasks": []
+      },
+      "unexpectedLostFrames": 1,
+      "lostFrames": 12,
+      "frameIntervals": 95,
+      "longTasks": [],
+      "maxFrameMs": 34.89999997615814,
+      "board": {
+        "x": 438.5625,
+        "y": 286.359375,
+        "width": 508.859375,
+        "height": 311.25
+      }
+    },
+    {
+      "run": 2,
+      "interactiveMs": 44.5,
+      "cameraFps": 60.245723541334314,
+      "chatFormation": {
+        "durationMs": 900,
+        "fps": 60.35071737727105,
+        "maxFrameMs": 18.099999994039536,
+        "browserRafFps": 60.00226423638633,
+        "visibility": [
+          {
+            "at": 9268.40000000596,
+            "hidden": false
+          }
+        ],
+        "lateFrames": [],
+        "longTasks": []
+      },
+      "unexpectedLostFrames": 1,
+      "lostFrames": 12,
+      "frameIntervals": 94,
+      "longTasks": [],
+      "maxFrameMs": 36.099999994039536,
+      "board": {
+        "x": 438.5625,
+        "y": 286.359375,
+        "width": 508.859375,
+        "height": 311.25
+      }
+    },
+    {
+      "run": 3,
+      "interactiveMs": 42.400000005960464,
+      "cameraFps": 60.225346495164025,
+      "chatFormation": {
+        "durationMs": 900,
+        "fps": 60.00905797182446,
+        "maxFrameMs": 18.700000017881393,
+        "browserRafFps": 60.0022642363862,
+        "visibility": [
+          {
+            "at": 9114.800000011921,
+            "hidden": false
+          }
+        ],
+        "lateFrames": [],
+        "longTasks": []
+      },
+      "unexpectedLostFrames": 2,
+      "lostFrames": 13,
+      "frameIntervals": 94,
+      "longTasks": [],
+      "maxFrameMs": 33.599999994039536,
+      "board": {
+        "x": 438.5625,
+        "y": 286.359375,
+        "width": 508.859375,
+        "height": 311.25
+      }
+    }
+  ]
+}
