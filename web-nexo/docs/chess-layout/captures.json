@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-09T02:45:28.845Z",
+  "singleBatch": true,
+  "files": [
+    "1440x900-chess-closed.png",
+    "1440x900-chess-forming.png",
+    "1440x900-chess-live.png",
+    "1440x900-chess-assistant.png",
+    "1440x900-assistant-top.png",
+    "1440x900-assistant-bottom.png",
+    "1280x720-chess-closed.png",
+    "1280x720-chess-forming.png",
+    "1280x720-chess-live.png",
+    "1280x720-chess-assistant.png",
+    "1280x720-assistant-top.png",
+    "1280x720-assistant-bottom.png",
+    "390x844-chess-closed.png",
+    "390x844-chess-unread.png",
+    "390x844-assistant-top.png",
+    "390x844-assistant-bottom.png"
+  ]
+}

@@ -1,3 +1,4 @@
+import { desktopChatRegions } from '../chess-chat-layout';
 import { mobileSystemBox, mobileViewport, type MobileViewport } from '../mobile-layout';
 import { box, project3D, type Camera } from './spatial';
 
@@ -21,6 +22,19 @@ export function fitChessCamera(camera:Camera,area:Rect):Camera{
 }
 
 export function chessLayout({width,height}:ChessViewport,view:ChessView={zoom:1,pan:{x:0,y:0}},reservedRight=0){
+  if(width>900){
+    const columns=desktopChatRegions(width,height),region=columns.center,playerHeight=36,gap=12;
+    const area={left:region.left+4,right:region.right-4,top:region.top+playerHeight+gap,bottom:region.bottom-playerHeight-gap-24};
+    const projection={x:0,y:0,scale:1,tilt:1,yaw:-.10,distance:22},unit=chessBounds(projection);
+    const scale=Math.min((area.right-area.left)/(unit.right-unit.left),(area.bottom-area.top)/(unit.bottom-unit.top),880/(unit.right-unit.left))*.99;
+    const base={...projection,scale,x:(area.left+area.right)/2-(unit.left+unit.right)*scale/2,y:(area.top+area.bottom)/2-(unit.top+unit.bottom)*scale/2};
+    const fittedScale=Math.min(base.scale*view.zoom,(area.right-area.left)/(unit.right-unit.left),(area.bottom-area.top)/(unit.bottom-unit.top));
+    const camera=fitChessCamera({...base,scale:fittedScale,x:(area.left+area.right)/2-(unit.left+unit.right)*fittedScale/2,y:(area.top+area.bottom)/2-(unit.top+unit.bottom)*fittedScale/2},area),bounds=chessBounds(camera);
+    return {camera,area,stacked:false,compact:columns.compact||height<780,header:columns.header,close:columns.close,
+      black:{left:bounds.left,top:bounds.top-playerHeight-gap,width:bounds.right-bounds.left,height:playerHeight},
+      white:{left:bounds.left,top:bounds.bottom+gap,width:bounds.right-bounds.left,height:playerHeight},
+      help:{left:bounds.left,top:bounds.bottom+gap+playerHeight+4,width:bounds.right-bounds.left},aside:{...columns.aside}};
+  }
   width=Math.max(320,width-reservedRight);
   const short=height<600,stacked=width<960&&!(width>=700&&height<650);
   const margin=width<650?12:28,footer=short?84:width<650?height<720?86:100:104;

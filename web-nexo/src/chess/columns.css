@@ -1,0 +1,29 @@
+/* One desktop layout. Only the history scrolls, never the whole control rail. */
+body.desktop-chess .chess-scene .chess-aside{height:var(--chess-aside-height);max-height:none;overflow:visible;display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid #b6f3dc30;border-radius:12px;background:rgba(8,19,26,.64);min-width:0}
+body.desktop-chess .chess-status{flex:none;min-width:0}.chess-status-title{overflow-wrap:anywhere}
+body.desktop-chess .chess-status-title{font-size:21px;margin:6px 0;line-height:1.15}
+body.desktop-chess .chess-status-detail:empty{display:none}
+body.desktop-chess .chess-aside .chess-history{display:flex;flex-direction:column;flex:1;min-height:48px;margin:0;padding-top:0}
+body.desktop-chess .chess-history-heading{flex:none;pointer-events:none}
+body.desktop-chess .chess-history-heading:after{display:none}
+body.desktop-chess .chess-history-scroll{flex:1;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;margin-top:8px}
+body.desktop-chess .chess-moves .is-last{background:#b6f3dc12;color:#d8f9e9}
+body.desktop-chess .chess-scene .chess-actions{flex:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+body.desktop-chess .chess-scene .chess-actions button{min-width:0;min-height:44px;width:100%;height:auto;padding:8px;white-space:normal;gap:6px}
+body.desktop-chess .chess-actions button>span{font-size:11px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;min-width:0}
+body.desktop-chess .chess-actions .chess-resign{grid-column:1/-1;color:#809b90;border-color:#b6f3dc18;background:transparent}
+body.desktop-chess .chess-session-line{flex:none;font-size:11px;line-height:1.45;margin:0;min-width:0;overflow-wrap:anywhere}
+body.desktop-chess .chess-session-line a,body.desktop-chess .chess-session-line button{white-space:normal}
+body.desktop-chess .chess-scene .chess-heading h2{white-space:normal;overflow:visible;text-overflow:clip;font-size:24px}
+body.desktop-chess .chess-scene .chess-player{height:36px;width:var(--chess-black-width);min-width:0}
+body.desktop-chess .chess-help{display:block;font-size:10px;white-space:normal}
+body.desktop-chess .chess-local-note{display:none}
+body.desktop-chess .chess-scene[data-density=compact] .chess-aside{padding:12px;gap:8px}
+body.desktop-chess .chess-scene[data-density=compact] .chess-status-title{font-size:18px}
+
+.chess-left-column{display:none}
+body.desktop-chess .chess-left-column{display:block;position:absolute;left:var(--desktop-chat-left);top:var(--desktop-chat-top);width:var(--desktop-chat-width);height:calc(100dvh - var(--desktop-chat-top) - var(--desktop-chat-bottom));pointer-events:none}
+body.desktop-chess .chess-scene .chess-close{width:144px;min-width:144px;height:44px;padding:8px;border-radius:6px;gap:8px;white-space:normal}
+body.desktop-chess .chess-close:active{transform:translateX(-100%) scale(.94)}
+.chess-history .history-chevron>.ui-icon{width:12px;height:12px}
+body.desktop-chess #companion-target{visibility:hidden;pointer-events:none}

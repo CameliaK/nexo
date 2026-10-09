@@ -15,7 +15,7 @@ export interface Universe {
   navigate(id:string):Promise<unknown>;isSystem():boolean;exitSystem():Promise<unknown>;openAgent():void;
   formGenerated?(runId:string,sources:string[]):void;finishForming?(runId:string):void;clearFormations?():void;
   spawnGenerated(node:GeneratedNode,anchor?:string|null,restored?:boolean,runId?:string):void;removeGenerated(id:string):void;
-  inspectGenerated(id:string):void;setUnread(count:number):void;setChatMessage(text:string,from:'owner'|'visitor'):void;setLiveOpen(open:boolean):void;morphLivePanel(panel:HTMLElement,opening:boolean,complete:()=>void):void;focusLiveNode():void;nodeExists(id:string):boolean;nodeLabel(id:string):string;
+  inspectGenerated(id:string):void;setUnread(count:number):void;setChatMessage(text:string,from:'owner'|'visitor'):void;setLiveOpen(open:boolean):void;morphLivePanel(panel:HTMLElement,opening:boolean,complete:()=>void,options?:{immediate?:boolean}):void;focusLiveNode():void;nodeExists(id:string):boolean;nodeLabel(id:string):string;
 }
 function element<K extends keyof HTMLElementTagNameMap>(tag:K,text='',className='') {const e=document.createElement(tag);e.textContent=text;e.className=className;return e}
 const read=(key:string)=>{try{return localStorage.getItem(key)}catch{return null}};
@@ -31,7 +31,7 @@ export class Chats {
   private waitHint='';private state:ConnectionState='closed';private busy=false;private agentCooldown=0;private liveCooldown=0;private pendingSend=false;private lastQuestion='';private stopped=false;
   private inbox:EventInbox;private runs=new Map<string,AgentRun>();private activeRun:string|null=null;
   private routeQueue:string[]=[];private routing=false;private generated=new Map<string,GeneratedNode>();
-  private ids=new Set(portfolio.nodes.map(n=>n.id));private liveRows=new Map<string,LiveRow>();private liveOpen=false;private liveTransition:'opening'|'closing'|null=null;private closeAfterOpen=false;private unread=new Set<string>();
+  private ids=new Set(portfolio.nodes.map(n=>n.id));private liveRows=new Map<string,LiveRow>();private liveOpen=false;private liveTransition:'opening'|'closing'|null=null;private unread=new Set<string>();
   private livePanel=element('section','','live-panel');private liveHistory=element('div','','chat-history live-history');
   private liveInput=element('textarea');private liveName=element('input');private nameWrap=element('label','','live-name');
   private liveHint=element('p','','chat-hint');private liveCounter=element('span','','chat-counter');private liveSend=element('button',t('common.send'),'chat-send');
@@ -141,25 +141,22 @@ export class Chats {
     this.inventory.append(element('summary',t('generated.label')),this.inventoryList);this.inventory.hidden=true;document.body.append(this.inventory);
   }
   private liveOpener:HTMLElement|null=null;
-  openLive(opener:HTMLElement|null=null){
-    if(this.liveOpen||this.liveTransition)return;
-    this.liveOpener=opener;this.liveOpen=true;this.liveTransition='opening';this.livePanel.hidden=false;this.universe.setLiveOpen(true);
+  openLive(opener:HTMLElement|null=null,immediate=false){
+    if(this.liveOpen&&this.liveTransition!=='closing')return;
+    this.liveOpener=opener||this.liveOpener;this.liveOpen=true;this.liveTransition='opening';this.livePanel.hidden=false;this.universe.setLiveOpen(true);
     if(typeof window!=='undefined')document.body.classList.add('live-chat-open');
-    this.releaseLiveSurface=attachGlassPanel(this.livePanel,()=>this.closeLive());this.resizeLiveDraft();
+    this.releaseLiveSurface ||= attachGlassPanel(this.livePanel,()=>this.closeLive());this.resizeLiveDraft();
     this.unread.clear();save('nexo.live.readAt',new Date().toISOString());this.updateUnread();
     this.universe.morphLivePanel(this.livePanel,true,()=>{
-      this.liveTransition=null;
-      if(this.closeAfterOpen){this.closeAfterOpen=false;this.closeLive();return}
-      this.liveInput.focus({preventScroll:true});this.scrollLiveEnd();
-    });
+      this.liveTransition=null;this.liveInput.focus({preventScroll:true});this.scrollLiveEnd();
+    },{immediate});
   }
-  closeLive(){
-    if(this.liveTransition==='opening'){this.closeAfterOpen=true;return}
-    if(!this.liveOpen||this.liveTransition)return;
+  closeLive(immediate=false){
+    if(!this.liveOpen||this.liveTransition==='closing'&&!immediate)return;
     this.liveTransition='closing';this.liveInput.blur();
     this.universe.morphLivePanel(this.livePanel,false,()=>{
-      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;if(typeof window!=='undefined')document.body.classList.remove('live-chat-open');this.universe.setLiveOpen(false);this.updateUnread();if(this.liveOpener)this.liveOpener.focus({preventScroll:true});else this.universe.focusLiveNode();this.liveOpener=null;
-    });
+      this.liveOpen=false;this.liveTransition=null;this.livePanel.hidden=true;this.releaseLiveSurface?.();this.releaseLiveSurface=null;if(typeof window!=='undefined')document.body.classList.remove('live-chat-open');this.universe.setLiveOpen(false);this.updateUnread();if(this.liveOpener&&this.liveOpener.id!=='floating-live-chat')this.liveOpener.focus({preventScroll:true});else this.universe.focusLiveNode();this.liveOpener=null;
+    },{immediate});
   }
   escape(){if(this.liveOpen){this.closeLive();return true}return false}
   private updateUnread(){this.universe.setUnread(this.unread.size);}
@@ -284,7 +281,7 @@ export class Chats {
     }
     const run=this.runs.get(event.run_id);
     if(event.type==='process.step'&&run){const row=this.steps.get(event.data.step);if(row){row.dataset.state=event.data.status;row.textContent=(event.data.label?translateText(event.data.label):stepLabels()[event.data.step])+(event.data.status==='done'?t('step.done'):event.data.status==='skipped'?t('step.skipped'):'')}}
-    if(event.type==='answer.chunk'&&run){run.answer.textContent+=event.data.text;this.agentHistory.scrollTop=this.agentHistory.scrollHeight;if(document.body.classList.contains('generated-camera-focused')){const body=document.querySelector('#companion-panel .panel-body')!;body.scrollTop=body.scrollHeight}}
+    if(event.type==='answer.chunk'&&run){run.answer.textContent+=event.data.text;const body=document.querySelector('#companion-panel .panel-body')!;body.scrollTop=body.scrollHeight}
     if(event.type==='rag.search'&&run)this.sources.textContent=t('step.search',{query:event.data.query});
     if(event.type==='rag.result'&&run){this.sources.replaceChildren(element('p',event.data.used?t('step.sources'):t('step.noSources')));for(const hit of event.data.hits)this.sources.append(element('span',hit.title,'source-link'))}
     if(event.type==='route.plan'&&run){run.path=[];for(const id of event.data.path){if(!this.ids.has(id))break;run.path.push(id)}this.routeLabel.textContent=t('step.route',{path:run.path.map(id=>this.universe.nodeLabel(id)).join(' › ')})}

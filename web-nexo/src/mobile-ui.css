@@ -5,7 +5,7 @@ body.mobile-chess-chat .chess-scene .chess-aside{display:none!important}
 body.mobile-chess .chess-history{display:none!important}
 body.mobile-chess .chess-scene .chess-moves-open{display:flex;align-items:center;gap:8px;background:none;border:0;min-height:32px;width:100%;padding:0;text-align:left;color:#8cae9f}
 .chess-moves-open>.ui-icon{width:16px;height:16px}
-.chess-move-strip{display:flex;gap:10px;flex:1;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none;font:11px 'Space Grotesk',sans-serif;padding-block:5px;touch-action:pan-x}
+.chess-move-strip{display:flex;gap:10px;flex:1;min-width:0;flex-wrap:wrap;font:11px 'Space Grotesk',sans-serif;padding-block:5px}
 .chess-move-strip .is-last{color:#d8f9e9}
 body.mobile-chess .chess-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:8px;margin:0}
 body.mobile-chess .chess-actions button{height:58px;min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:4px 0;background:none;border:0;box-shadow:none;color:#b3dacc}
@@ -23,13 +23,10 @@ body.mobile-chess .is-history-sheet .chess-popover{position:relative;width:100%;
 @media(orientation:landscape){body.mobile-chess .chess-actions{grid-template-columns:1fr;gap:4px}body.mobile-chess .chess-actions button{height:44px;flex-direction:row;gap:12px;justify-content:flex-start}}
 
 body.mobile-chess .chess-scene{height:100svh}
-body.mobile-chess.is-chess-modal .mobile-chess-chat-toggle,body.mobile-chess.is-chess-modal .system-enter{pointer-events:none!important}
 
 .chat-empty,.privacy-summary{display:none}
 .message-meta{display:flex;gap:8px;align-items:center;color:#78978c;font-size:9px;margin-top:6px}
 .message-meta .message-state{margin:0}
-body.mobile-chess .mobile-chess-chat-toggle{border-radius:999px;padding:7px 12px;background:#132921d9;border:1px solid #b6f3dc35;gap:7px}
-body.mobile-chess .mobile-chess-chat-toggle .ui-icon{width:18px;height:18px}
 body.mobile-chess .mobile-chat-controls:not([hidden]){top:var(--mobile-dock-top);height:64px;gap:4px;border:0;border-radius:24px 24px 0 0;background:#14252bec;backdrop-filter:blur(8px);padding:16px 12px 4px}
 .mobile-chat-controls:before{content:'';position:absolute;top:7px;left:calc(50% - 18px);width:36px;height:3px;border-radius:2px;background:#b6f3dc55}
 body.mobile-chess .mobile-chat-controls button{font-size:10px;line-height:1.2;flex:1;border:0;border-radius:12px;min-height:44px;color:#89a99e}

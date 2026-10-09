@@ -1,0 +1,38 @@
+/* One stationary backdrop. Only descendants containing text scroll. */
+.speech-surface,.panel-surface{
+ background:rgba(var(--glass-rgb,8,19,26),var(--chat-glass-alpha,.64));
+ backdrop-filter:blur(var(--chat-glass-blur,20px)) saturate(1.1);
+ -webkit-backdrop-filter:blur(var(--chat-glass-blur,20px)) saturate(1.1);
+ clip-path:none;mask:none;filter:none;will-change:auto;opacity:1;
+ border:1px solid #b6f3dc30;border-radius:18px;box-shadow:0 12px 32px #0003;
+}
+.speech-surface:before,.panel-surface:before{display:none}
+/* Cut corners are decoration, never a clipping ancestor of the backdrop. */
+.panel-surface:after{content:'';position:absolute;right:8px;top:8px;width:14px;height:14px;border-top:1px solid #b6f3dc55;border-right:1px solid #b6f3dc55;clip-path:polygon(0 0,100% 0,100% 100%);pointer-events:none}
+.companion-panel,.content-card,.speech-bubble,.live-panel{filter:none;will-change:auto;clip-path:none;mask:none;opacity:1}
+.companion-panel{transform:none;max-height:none;overflow:visible}
+body:not(.desktop-chess-chat) .companion-panel>.panel-surface{
+ height:min(650px,65dvh,var(--agent-room,65dvh));max-height:none;min-height:0;
+ display:flex;flex-direction:column;overflow:hidden;padding:18px;
+}
+.companion-panel .panel-header,.companion-panel .panel-compose,.companion-panel .panel-footer{flex:none;background:none}
+.companion-panel .panel-body{flex:1;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;overflow-anchor:none;padding:14px 0;background:none;filter:none;mask:none;clip-path:none;opacity:1}
+.companion-panel .agent-history{flex:none;max-height:none;overflow:visible;padding:0 0 8px}
+.companion-panel .panel-body .chat-message{background:#0c1c23e0;color:#e6f1ec;border-radius:14px}
+.companion-panel .chat-message.visitor{background:#152d35eb}
+.companion-panel .chat-message p{color:#e6f1ec}
+.companion-panel .message-meta,.companion-panel .message-author{color:#adc4be}
+.companion-panel .panel-compose>div:not(.chat-suggestions):not(.chat-privacy-bar){background:none}
+.companion-panel input{color:#e7f5ef;background:#09151bf0;min-width:0}
+.companion-panel input::placeholder{color:#adc4be;opacity:1}
+.companion-panel .panel-footer{padding-top:10px}
+.content-card{overflow:visible}
+.content-card>.panel-surface{display:flex;flex-direction:column;max-height:calc(100dvh - 160px);overflow:hidden}
+.content-card .panel-header{flex:none}
+.content-card .panel-body{min-height:0;overflow:auto;filter:none;mask:none;opacity:1;background:none}
+@media(max-width:650px){
+ .speech-surface,.panel-surface{backdrop-filter:blur(var(--chat-glass-blur-mobile,16px)) saturate(1.1);-webkit-backdrop-filter:blur(var(--chat-glass-blur-mobile,16px)) saturate(1.1)}
+ body:not(.desktop-chess-chat) .companion-panel>.panel-surface{padding:14px}
+ body.generated-camera-focused:not(.desktop-chess-chat) .companion-panel>.panel-surface{height:26dvh;padding:12px}
+ .companion-panel .panel-body{padding:8px 0}
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "chromium",
+    "reduced": false,
+    "passed": true
+  },
+  {
+    "name": "chromium",
+    "reduced": true,
+    "passed": true
+  },
+  {
+    "name": "webkit",
+    "reduced": false,
+    "passed": true
+  },
+  {
+    "name": "webkit",
+    "reduced": true,
+    "passed": true
+  }
+]

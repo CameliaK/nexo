@@ -2,8 +2,8 @@ import { chromium, webkit, devices } from 'playwright';
 export { chromium, webkit, devices };
 export const origin=process.env.MOBILE_URL||'http://127.0.0.1:4196';
 export const initialGame={id:'mobile-qa',color:'w',fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',moves:[],turn:'player',status:'active',updated_at:'2026-10-07T00:00:00Z'};
-export async function mobileFixture(browser,options,language='es'){
- const context=await browser.newContext({...options}),page=await context.newPage(),errors=[],requests=[];let socket,game=structuredClone(initialGame);
+export async function mobileFixture(browser,options,language='es',startingGame=initialGame){
+ const context=await browser.newContext({...options}),page=await context.newPage(),errors=[],requests=[];let socket,game=structuredClone(startingGame);
  page.on('pageerror',e=>errors.push(e.message));
  await context.addInitScript(lang=>{localStorage.setItem('nexo.welcome.dismissed.v1','1');localStorage.setItem('nexo.language',lang);localStorage.setItem('nexo.auth.token','mobile-fixture');localStorage.setItem('nexo.visitor_id','mobile-fixture')},language);
  await page.routeWebSocket(/\/ws\?/,ws=>socket=ws);
@@ -25,5 +25,11 @@ export async function mobileFixture(browser,options,language='es'){
  });
  await page.goto(origin);await page.waitForFunction(()=>document.querySelector('#floating-chess')?.getAttribute('aria-label')?.includes(' · ')&&!document.querySelector('#floating-chess')?.classList.contains('is-locked'));
  await page.waitForTimeout(300);
- return {context,page,errors,requests,send(type,seq,data,run_id='mobile-trace'){socket.send(JSON.stringify({v:2,type,seq,data,run_id,ts:new Date().toISOString()}))},async chess(){const box=await page.locator('#floating-chess').boundingBox();const hit=await page.evaluate(({x,y})=>document.elementFromPoint(x,y)?.outerHTML,{x:box.x+box.width/2,y:box.y+box.height/2});if(!hit?.includes('floating-chess'))throw Error('Chess input intercepted: '+hit);await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);await page.locator('.chess-scene.is-ready').waitFor().catch(error=>{console.error(errors);throw error});await page.waitForFunction(()=>document.querySelector('.chess-scene')?.dataset.transition==='resting')}};
+ return {context,page,errors,requests,send(type,seq,data,run_id='mobile-trace'){socket.send(JSON.stringify({v:2,type,seq,data,run_id,ts:new Date().toISOString()}))},async chess(){
+ for(let attempt=0;attempt<10;attempt++){
+  const r=await page.locator('#floating-chess').boundingBox(),v=page.viewportSize();if(r&&r.x>=0&&r.y>=104&&r.x+r.width<=v.width&&r.y+r.height<=v.height-100)break;
+  const clamp=n=>Math.max(-160,Math.min(160,n));const dx=clamp(v.width*.5-r.x-r.width/2),dy=clamp(v.height*.55-r.y-r.height/2);
+  await page.mouse.move(4,v.height*.4);await page.mouse.down();await page.mouse.move(4+dx,v.height*.4+dy,{steps:8});await page.mouse.up();await page.waitForTimeout(80);
+ }
+ const box=await page.locator('#floating-chess').boundingBox();const hit=await page.evaluate(({x,y})=>document.elementFromPoint(x,y)?.outerHTML,{x:box.x+box.width/2,y:box.y+box.height/2});if(!hit?.includes('floating-chess'))throw Error('Chess input intercepted: '+hit);await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);await page.locator('.chess-scene.is-ready').waitFor().catch(error=>{console.error(errors);throw error});await page.waitForFunction(()=>document.querySelector('.chess-scene')?.dataset.transition==='resting')}};
 }

@@ -1,0 +1,440 @@
+[
+  {
+    "engine": "chromium",
+    "width": 1440,
+    "height": 900,
+    "styles": [
+      {
+        "element": "companion-panel chat-glass",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "visible",
+        "scroll": 0
+      },
+      {
+        "element": "panel-surface",
+        "background": "rgba(8, 19, 26, 0.64)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "blur(20px) saturate(1.1)",
+        "overflow": "hidden",
+        "scroll": 0
+      },
+      {
+        "element": "panel-body",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "auto",
+        "scroll": 1740
+      }
+    ],
+    "sample": {
+      "x": 783,
+      "y": 477,
+      "width": 7,
+      "height": 18
+    },
+    "colors": [
+      [
+        48,
+        66,
+        75
+      ],
+      [
+        48,
+        66,
+        75
+      ]
+    ],
+    "effectiveOpacity": [
+      0.6428571428571429,
+      0.6428571428571429
+    ],
+    "difference": 0,
+    "positions": [
+      0,
+      1740
+    ]
+  },
+  {
+    "engine": "chromium",
+    "width": 1280,
+    "height": 720,
+    "styles": [
+      {
+        "element": "companion-panel chat-glass",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "visible",
+        "scroll": 0
+      },
+      {
+        "element": "panel-surface",
+        "background": "rgba(8, 19, 26, 0.64)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "blur(20px) saturate(1.1)",
+        "overflow": "hidden",
+        "scroll": 0
+      },
+      {
+        "element": "panel-body",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "auto",
+        "scroll": 1861
+      }
+    ],
+    "sample": {
+      "x": 623,
+      "y": 292.20000000000005,
+      "width": 7,
+      "height": 18
+    },
+    "colors": [
+      [
+        48,
+        66,
+        75
+      ],
+      [
+        48,
+        66,
+        75
+      ]
+    ],
+    "effectiveOpacity": [
+      0.6428571428571429,
+      0.6428571428571429
+    ],
+    "difference": 0,
+    "positions": [
+      0,
+      1861
+    ]
+  },
+  {
+    "engine": "chromium",
+    "width": 390,
+    "height": 844,
+    "styles": [
+      {
+        "element": "companion-panel chat-glass",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "visible",
+        "scroll": 0
+      },
+      {
+        "element": "panel-surface",
+        "background": "rgba(8, 19, 26, 0.64)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "blur(16px) saturate(1.1)",
+        "overflow": "hidden",
+        "scroll": 0
+      },
+      {
+        "element": "panel-body",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "auto",
+        "scroll": 1697
+      }
+    ],
+    "sample": {
+      "x": 40,
+      "y": 447.4375,
+      "width": 7,
+      "height": 18
+    },
+    "colors": [
+      [
+        48,
+        66,
+        75
+      ],
+      [
+        48,
+        66,
+        75
+      ]
+    ],
+    "effectiveOpacity": [
+      0.6428571428571429,
+      0.6428571428571429
+    ],
+    "difference": 0,
+    "positions": [
+      0,
+      1697
+    ]
+  },
+  {
+    "engine": "webkit",
+    "width": 1440,
+    "height": 900,
+    "styles": [
+      {
+        "element": "companion-panel chat-glass",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "visible",
+        "scroll": 0
+      },
+      {
+        "element": "panel-surface",
+        "background": "rgba(8, 19, 26, 0.64)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "blur(20px) saturate(1.1)",
+        "overflow": "hidden",
+        "scroll": 0
+      },
+      {
+        "element": "panel-body",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "auto",
+        "scroll": 1740
+      }
+    ],
+    "sample": {
+      "x": 783,
+      "y": 477,
+      "width": 7,
+      "height": 18
+    },
+    "colors": [
+      [
+        48,
+        66,
+        75
+      ],
+      [
+        48,
+        66,
+        75
+      ]
+    ],
+    "effectiveOpacity": [
+      0.6428571428571429,
+      0.6428571428571429
+    ],
+    "difference": 0,
+    "positions": [
+      0,
+      1740
+    ]
+  },
+  {
+    "engine": "webkit",
+    "width": 1280,
+    "height": 720,
+    "styles": [
+      {
+        "element": "companion-panel chat-glass",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "visible",
+        "scroll": 0
+      },
+      {
+        "element": "panel-surface",
+        "background": "rgba(8, 19, 26, 0.64)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "blur(20px) saturate(1.1)",
+        "overflow": "hidden",
+        "scroll": 0
+      },
+      {
+        "element": "panel-body",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "auto",
+        "scroll": 1861
+      }
+    ],
+    "sample": {
+      "x": 623,
+      "y": 292.20000000000005,
+      "width": 7,
+      "height": 18
+    },
+    "colors": [
+      [
+        48,
+        66,
+        75
+      ],
+      [
+        48,
+        66,
+        75
+      ]
+    ],
+    "effectiveOpacity": [
+      0.6428571428571429,
+      0.6428571428571429
+    ],
+    "difference": 0,
+    "positions": [
+      0,
+      1861
+    ]
+  },
+  {
+    "engine": "webkit",
+    "width": 390,
+    "height": 844,
+    "styles": [
+      {
+        "element": "companion-panel chat-glass",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "visible",
+        "scroll": 0
+      },
+      {
+        "element": "panel-surface",
+        "background": "rgba(8, 19, 26, 0.64)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "blur(16px) saturate(1.1)",
+        "overflow": "hidden",
+        "scroll": 0
+      },
+      {
+        "element": "panel-body",
+        "background": "rgba(0, 0, 0, 0)",
+        "clip": "none",
+        "mask": "none",
+        "filter": "none",
+        "willChange": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "blur": "none",
+        "overflow": "auto",
+        "scroll": 1697
+      }
+    ],
+    "sample": {
+      "x": 40,
+      "y": 447.4375,
+      "width": 7,
+      "height": 18
+    },
+    "colors": [
+      [
+        48,
+        66,
+        75
+      ],
+      [
+        48,
+        66,
+        75
+      ]
+    ],
+    "effectiveOpacity": [
+      0.6428571428571429,
+      0.6428571428571429
+    ],
+    "difference": 0,
+    "positions": [
+      0,
+      1697
+    ]
+  }
+]
